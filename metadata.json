@@ -1,0 +1,6 @@
+{
+  "name": "FeedCalc Pro - ZAKARYA Bessioud",
+  "description": "حاسبة الأعلاف الذكية للدواجن والمواشي والإبل والماعز الحلوب والخنازير والأرانب والنحل والأسماك - إعداد وتطوير م. زكريا بسيود ZAKARYA Bessioud (عربي, English, Français, Español, Deutsch, 中文)",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

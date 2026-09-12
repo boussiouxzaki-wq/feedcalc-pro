@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>حاسبة الأعلاف الذكية | FeedCalc Pro Standalone</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Cairo', system-ui, -apple-system, sans-serif; }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-900 min-h-screen flex flex-col">
+  <header class="bg-gradient-to-r from-emerald-700 via-emerald-800 to-teal-900 text-white shadow-lg">
+    <div class="max-w-6xl mx-auto px-4 py-6 flex flex-col md:flex-row items-center justify-between gap-4">
+      <div class="flex items-center gap-3">
+        <div class="size-12 rounded-2xl bg-white/10 flex items-center justify-center text-3xl shadow-inner border border-white/20">🌾</div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="text-2xl font-black tracking-tight">FeedCalc Pro</h1>
+            <span class="bg-amber-400 text-slate-950 font-black text-xs px-2 py-0.5 rounded-full uppercase">Global</span>
+          </div>
+          <p class="text-xs text-emerald-100/90 mt-0.5">حاسبة الأعلاف الذكية للدواجن، المواشي، والاستزراع المائي</p>
+        </div>
+      </div>
+      <div class="text-xs text-emerald-100 bg-white/10 px-4 py-2 rounded-xl border border-white/15 text-center">
+        <span class="font-bold text-white">المهندس المطور:</span> ZAKARYA Bessioud | <a href="tel:+213655870392" class="underline">+213 655 870 392</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-6xl mx-auto px-4 py-8 flex-1 w-full grid grid-cols-1 lg:grid-cols-12 gap-8">
+    <!-- Form -->
+    <div class="lg:col-span-6 bg-white rounded-2xl p-6 border border-slate-200 shadow-sm space-y-5">
+      <h2 class="text-lg font-bold text-slate-900 border-b border-slate-100 pb-3 flex items-center gap-2">
+        <span>⚙️</span> بيانات القطيع والتغذية
+      </h2>
+
+      <div>
+        <label class="block text-xs font-bold text-slate-700 mb-1.5">نوع الكائن الحي (النوع):</label>
+        <select id="species" onchange="updateCalculations()" class="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm font-semibold text-slate-800 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-emerald-500">
+          <option value="broiler" data-rate="0.085" data-fcr="1.60" data-freq="3" data-unit="طائر">1. دجاج التسمين (Broiler Chickens)</option>
+          <option value="layer" data-rate="0.055" data-fcr="2.00" data-freq="2" data-unit="طائر">2. دجاج البيض (Layer Hens)</option>
+          <option value="turkey" data-rate="0.065" data-fcr="2.40" data-freq="3" data-unit="طائر">3. الديك الرومي (Turkeys)</option>
+          <option value="quail" data-rate="0.100" data-fcr="2.60" data-freq="2" data-unit="طائر">4. طائر السمان (Quail)</option>
+          <option value="duck" data-rate="0.075" data-fcr="2.20" data-freq="2" data-unit="طائر">5. البط المائي (Ducks)</option>
+          <option value="sheep" data-rate="0.035" data-fcr="6.50" data-freq="2" data-unit="رأس">6. الأغنام والخراف (Sheep & Lambs)</option>
+          <option value="goat" data-rate="0.038" data-fcr="6.20" data-freq="2" data-unit="رأس">7. الماعز (Goats)</option>
+          <option value="cattle" data-rate="0.028" data-fcr="7.00" data-freq="2" data-unit="رأس">8. أبقار التسمين والحلوب (Cattle)</option>
+          <option value="camel" data-rate="0.020" data-fcr="8.50" data-freq="2" data-unit="رأس">9. الإبل والجمال (Camels)</option>
+          <option value="rabbit" data-rate="0.050" data-fcr="3.20" data-freq="2" data-unit="أرنب">10. الأرانب (Rabbits)</option>
+          <option value="horse" data-rate="0.022" data-fcr="7.50" data-freq="3" data-unit="حصان">11. الخيول (Horses)</option>
+          <option value="tilapia" data-rate="0.030" data-fcr="1.35" data-freq="3" data-unit="سمكة">12. سمك البلطي (Tilapia)</option>
+          <option value="catfish" data-rate="0.028" data-fcr="1.40" data-freq="2" data-unit="سمكة">13. سمك السلور / القرموط (Catfish)</option>
+        </select>
+      </div>
+
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1.5">العدد الإجمالي:</label>
+          <input type="number" id="count" value="500" min="1" oninput="updateCalculations()" class="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm font-bold text-slate-800 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-emerald-500" />
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1.5">متوسط الوزن (كجم):</label>
+          <input type="number" id="weight" value="1.5" step="0.05" min="0.01" oninput="updateCalculations()" class="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm font-bold text-slate-800 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-emerald-500" />
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1.5">سعر الكيلو:</label>
+          <input type="number" id="cost" value="0.85" step="0.05" oninput="updateCalculations()" class="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm font-bold text-slate-800 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-emerald-500" />
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1.5">العملة:</label>
+          <select id="currency" onchange="updateCalculations()" class="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm font-semibold text-slate-800 bg-slate-50">
+            <option value="$">دولار ($ USD)</option>
+            <option value="€">يورو (€ EUR)</option>
+            <option value="ر.س">ريال سعودي (SAR)</option>
+            <option value="د.إ">درهم إماراتي (AED)</option>
+            <option value="DA">دينار جزائري (DZD)</option>
+            <option value="ج.م">جنيه مصري (EGP)</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Results -->
+    <div class="lg:col-span-6 bg-white rounded-2xl p-6 border border-slate-200 shadow-sm space-y-6">
+      <h2 class="text-lg font-bold text-emerald-800 border-b border-emerald-100 pb-3 flex items-center justify-between">
+        <span>📊 خطة التغذية اليومية المحسوبة</span>
+        <span class="text-xs bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full font-bold">نتائج مباشرة</span>
+      </h2>
+
+      <div class="rounded-2xl bg-gradient-to-b from-emerald-50 to-teal-50/30 p-6 text-center border border-emerald-200/80">
+        <span class="text-xs font-bold uppercase text-emerald-800 tracking-wider">إجمالي العلف اليومي المطلوب</span>
+        <div class="text-5xl font-black text-emerald-700 my-2 tracking-tight">
+          <span id="dailyTotal">63.75</span> <span class="text-xl font-bold text-slate-500">كجم / يوم</span>
+        </div>
+        <div class="text-xs text-slate-600 font-medium" id="perUnitSummary">
+          لكل طير: ~128 غرام يومياً
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 gap-4">
+        <div class="rounded-xl border border-slate-100 bg-slate-50 p-3.5">
+          <span class="text-xs text-slate-500 font-semibold block">عدد الوجبات اليومية:</span>
+          <span class="text-base font-black text-slate-800" id="frequency">3 وجبات</span>
+          <span class="text-xs text-emerald-700 font-bold block mt-1" id="perMeal">~21.25 كجم/وجبة</span>
+        </div>
+        <div class="rounded-xl border border-slate-100 bg-slate-50 p-3.5">
+          <span class="text-xs text-slate-500 font-semibold block">معامل التحويل (FCR):</span>
+          <span class="text-base font-black text-slate-800" id="fcrVal">1.65</span>
+          <span class="text-xs text-slate-500 block mt-1" id="fcrEfficiency">كفاءة تحويل: 60.6%</span>
+        </div>
+      </div>
+
+      <div class="rounded-xl border border-amber-200 bg-amber-50/60 p-4 flex items-center justify-between">
+        <div>
+          <span class="text-xs font-bold text-amber-900 block">التكلفة اليومية التقديرية</span>
+          <span class="text-xl font-black text-amber-950" id="dailyCost">4.19</span>
+        </div>
+        <div class="text-left">
+          <span class="text-xs font-bold text-amber-900 block">التكلفة الشهرية (30 يوم)</span>
+          <span class="text-xl font-black text-amber-950" id="monthlyCost">,625.63</span>
+        </div>
+      </div>
+
+      <button onclick="copySummary()" class="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm rounded-xl transition shadow-md">
+        📋 نسخ ملخص التقرير للحفظ
+      </button>
+    </div>
+  </main>
+
+  <footer class="bg-slate-900 text-slate-400 text-xs py-5 mt-auto border-t border-slate-800">
+    <div class="max-w-6xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-right">
+      <div>FeedCalc Pro &copy; 2026 — تطوير: <strong class="text-white">ZAKARYA Bessioud</strong></div>
+      <div>واتساب / هاتف: <a href="https://wa.me/213655870392" class="text-emerald-400 font-bold">+213 655 870 392</a> | <a href="mailto:boussiouxzaki@gmail.com" class="text-slate-300">boussiouxzaki@gmail.com</a></div>
+    </div>
+  </footer>
+
+  <script>
+    function updateCalculations() {
+      const select = document.getElementById('species');
+      const opt = select.options[select.selectedIndex];
+      const rate = parseFloat(opt.getAttribute('data-rate'));
+      const fcr = parseFloat(opt.getAttribute('data-fcr'));
+      const freq = parseInt(opt.getAttribute('data-freq'));
+      const unit = opt.getAttribute('data-unit');
+
+      const count = parseFloat(document.getElementById('count').value) || 0;
+      const weight = parseFloat(document.getElementById('weight').value) || 0;
+      const costPerKg = parseFloat(document.getElementById('cost').value) || 0;
+      const curr = document.getElementById('currency').value;
+
+      const dailyPerUnit = weight * rate;
+      const dailyTotal = dailyPerUnit * count;
+      const perMeal = dailyTotal / freq;
+
+      document.getElementById('dailyTotal').innerText = dailyTotal.toFixed(2);
+      document.getElementById('perUnitSummary').innerText = 'لكل ' + unit + ': ~' + Math.round(dailyPerUnit * 1000) + ' غرام يومياً';
+      document.getElementById('frequency').innerText = freq + ' وجبات';
+      document.getElementById('perMeal').innerText = '~' + perMeal.toFixed(2) + ' كجم/وجبة';
+      document.getElementById('fcrVal').innerText = fcr;
+      document.getElementById('fcrEfficiency').innerText = 'كفاءة تحويل: ' + ((1 / fcr) * 100).toFixed(1) + '%';
+
+      const dCost = dailyTotal * costPerKg;
+      document.getElementById('dailyCost').innerText = curr + ' ' + dCost.toFixed(2);
+      document.getElementById('monthlyCost').innerText = curr + ' ' + (dCost * 30).toFixed(2);
+    }
+
+    function copySummary() {
+      const daily = document.getElementById('dailyTotal').innerText;
+      const text = '📊 تقرير FeedCalc Pro: إجمالي العلف اليومي: ' + daily + ' كجم - تطوير: ZAKARYA Bessioud (+213655870392)';
+      navigator.clipboard.writeText(text).then(() => alert('تم نسخ التقرير بنجاح!'));
+    }
+
+    updateCalculations();
+  </script>
+</body>
+</html>
