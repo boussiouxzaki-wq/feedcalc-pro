@@ -2,7 +2,13 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { Species, FeedType, CalculationInput, CalculationResult, Language } from '../types';
 import { TRANSLATIONS, formatNum } from './translations';
-import { getCurrencySymbol } from '../data/currencies';
+
+export interface PdfReportExportResult {
+  success: boolean;
+  method: 'direct_download' | 'opened_in_new_tab' | 'blob_ready';
+  blobUrl: string;
+  fileName: string;
+}
 
 export async function generatePdfReport(params: {
   species: Species;
@@ -10,10 +16,10 @@ export async function generatePdfReport(params: {
   input: CalculationInput;
   result: CalculationResult;
   lang: Language;
-}): Promise<void> {
+}): Promise<PdfReportExportResult> {
   const { species, feedType, input, result, lang } = params;
   const t = TRANSLATIONS[lang];
-  const currencySymbol = getCurrencySymbol(input.currency || 'USD');
+  const currencyCode = input.currency || 'USD';
   const weightUnitStr = input.weightUnit === 'lb' ? 'lb' : 'kg';
 
   // Initialize jsPDF document (A4 format, portrait)
@@ -122,13 +128,13 @@ export async function generatePdfReport(params: {
     body: [
       [
         'Species',
-        species.nameEn || species.name,
-        `${species.category === 'aquatic' ? 'Aquaculture' : 'Livestock / Poultry'} (${species.name})`,
+        species.nameEn || species.id,
+        `${species.category === 'aquatic' ? 'Aquaculture' : 'Livestock / Poultry'} (${species.nameEn || species.id})`,
       ],
       [
         'Herd / Stock Count',
-        `${formatNum(Number(input.count), 0)} ${species.unitEn || species.unit}`,
-        `Total live stock population`,
+        `${formatNum(Number(input.count), 0)} ${species.unitEn || 'heads'}`,
+        'Total live stock population',
       ],
       [
         'Average Unit Weight',
@@ -137,7 +143,7 @@ export async function generatePdfReport(params: {
       ],
       [
         'Feed Formula',
-        feedType.nameEn || feedType.name,
+        feedType.nameEn || feedType.name || 'Standard Formula',
         `Protein: ${feedType.protein}% | Energy: ${feedType.energy} kcal/kg ${feedType.isCustom ? '(Custom Formula)' : '(Standard Formula)'}`,
       ],
       [
@@ -180,8 +186,8 @@ export async function generatePdfReport(params: {
       ],
       [
         'Recommended Timings',
-        result.feedingTimes.join('  •  '),
-        `Balanced intervals for optimal digestion & conversion`,
+        result.feedingTimes.join('  -  '),
+        'Balanced intervals for optimal digestion & conversion',
       ],
       [
         'Nutritional Intake',
@@ -192,8 +198,8 @@ export async function generatePdfReport(params: {
         ? [
             [
               'Estimated Cost',
-              `${currencySymbol}${result.dailyCost.toFixed(2)} daily`,
-              `${result.monthlyCost ? `${currencySymbol}${result.monthlyCost.toFixed(2)}` : '-'} monthly (30-day projection)`,
+              `${currencyCode} ${result.dailyCost.toFixed(2)} daily`,
+              `${result.monthlyCost ? `${currencyCode} ${result.monthlyCost.toFixed(2)}` : '-'} monthly (30-day projection)`,
             ],
           ]
         : []),
@@ -244,12 +250,51 @@ export async function generatePdfReport(params: {
     margin,
     pageHeight - 7
   );
-  doc.text(`Page 1 of 1`, pageWidth - margin, pageHeight - 7, { align: 'right' });
+  doc.text('Page 1 of 1', pageWidth - margin, pageHeight - 7, { align: 'right' });
 
-  // Trigger download with sanitized filename
-  const cleanSpeciesName = (species.nameEn || species.name).replace(/\s+/g, '_');
+  // Generate clean ASCII filename
+  const cleanSpeciesId = (species.nameEn || species.id).replace(/[^a-zA-Z0-9_-]/g, '_');
   const dateStr = new Date().toISOString().slice(0, 10);
-  const fileName = `FeedCalc_Report_${cleanSpeciesName}_${dateStr}.pdf`;
+  const fileName = `FeedCalc_Report_${cleanSpeciesId}_${dateStr}.pdf`;
 
-  doc.save(fileName);
+  // Output as Blob
+  const blob = doc.output('blob');
+  const blobUrl = URL.createObjectURL(blob);
+
+  let method: 'direct_download' | 'opened_in_new_tab' | 'blob_ready' = 'direct_download';
+
+  // Strategy 1: Programmatic link click
+  try {
+    const link = document.createElement('a');
+    link.href = blobUrl;
+    link.download = fileName;
+    link.target = '_blank';
+    link.rel = 'noopener noreferrer';
+    document.body.appendChild(link);
+    link.click();
+    setTimeout(() => {
+      try {
+        document.body.removeChild(link);
+      } catch {}
+    }, 500);
+  } catch (downloadErr) {
+    console.warn('Direct file download link click failed, trying window.open fallback:', downloadErr);
+    try {
+      const newWin = window.open(blobUrl, '_blank');
+      if (newWin) {
+        method = 'opened_in_new_tab';
+      } else {
+        method = 'blob_ready';
+      }
+    } catch {
+      method = 'blob_ready';
+    }
+  }
+
+  return {
+    success: true,
+    method,
+    blobUrl,
+    fileName,
+  };
 }

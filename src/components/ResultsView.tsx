@@ -20,6 +20,10 @@ import {
   Sparkles,
   Stethoscope,
   ShieldAlert,
+  Download,
+  ExternalLink,
+  Eye,
+  X,
 } from 'lucide-react';
 import { Species, FeedType, CalculationInput, CalculationResult, Language } from '../types';
 import { TRANSLATIONS, formatNum } from '../utils/translations';
@@ -34,6 +38,7 @@ interface ResultsViewProps {
   result: CalculationResult | null;
   onReset: () => void;
   lang: Language;
+  onToast?: (message: string, type?: 'success' | 'error' | 'info') => void;
 }
 
 export const ResultsView: React.FC<ResultsViewProps> = ({
@@ -43,9 +48,12 @@ export const ResultsView: React.FC<ResultsViewProps> = ({
   result,
   onReset,
   lang,
+  onToast,
 }) => {
   const [copied, setCopied] = useState(false);
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
+  const [pdfReportData, setPdfReportData] = useState<{ blobUrl: string; fileName: string } | null>(null);
+  const [isPdfModalOpen, setIsPdfModalOpen] = useState(false);
   const t = TRANSLATIONS[lang];
 
   if (!result || !species || !feedType) {
@@ -298,15 +306,51 @@ ${devLine}`;
     if (!species || !feedType || !result || isGeneratingPdf) return;
     try {
       setIsGeneratingPdf(true);
-      await generatePdfReport({
+      const res = await generatePdfReport({
         species,
         feedType,
         input,
         result,
         lang,
       });
+
+      setPdfReportData({ blobUrl: res.blobUrl, fileName: res.fileName });
+      setIsPdfModalOpen(true);
+
+      if (onToast) {
+        if (res.method === 'direct_download') {
+          onToast(
+            lang === 'ar'
+              ? 'تم تجهيز وتنزيل ملف التقرير بنجاح!'
+              : 'PDF report generated and downloaded successfully!',
+            'success'
+          );
+        } else if (res.method === 'opened_in_new_tab') {
+          onToast(
+            lang === 'ar'
+              ? 'تم فتح التقرير في نافذة جديدة للمعاينة والتحميل.'
+              : 'PDF opened in a new tab for preview and download.',
+            'info'
+          );
+        } else {
+          onToast(
+            lang === 'ar'
+              ? 'تم تجهيز ملف التقرير بنجاح! يمكنك الآن تنزيله أو معاينته.'
+              : 'Report ready! You can now download or preview it.',
+            'info'
+          );
+        }
+      }
     } catch (err) {
       console.error('Failed to generate PDF report:', err);
+      if (onToast) {
+        onToast(
+          lang === 'ar'
+            ? 'تعذر التنزيل المباشر داخل المتصفح. يمكنك استخدام زر الطباعة لحفظه كـ PDF.'
+            : 'Download blocked by sandbox. Use the Print button to Save as PDF.',
+          'error'
+        );
+      }
     } finally {
       setIsGeneratingPdf(false);
     }
@@ -740,6 +784,106 @@ ${devLine}`;
           </button>
         </div>
       </div>
+
+      {/* PDF Report Preview & Download Modal */}
+      {isPdfModalOpen && pdfReportData && (
+        <div
+          id="pdf-download-modal"
+          className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/70 backdrop-blur-xs"
+        >
+          <div className="relative w-full max-w-2xl rounded-2xl bg-white p-5 sm:p-6 shadow-2xl border border-slate-200 flex flex-col max-h-[92vh]">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between pb-3.5 border-b border-slate-100">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 rounded-xl bg-emerald-100 text-emerald-700 shrink-0">
+                  <FileText className="size-5" />
+                </div>
+                <div>
+                  <h3 className="text-sm sm:text-base font-bold text-slate-900">
+                    {lang === 'ar' ? 'تقرير التغذية والحسابات (ملف PDF)' : 'Feeding & Nutrition PDF Report'}
+                  </h3>
+                  <p className="text-[11px] text-slate-500 font-mono truncate max-w-[240px] sm:max-w-md">
+                    {pdfReportData.fileName}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                id="btn-close-pdf-modal"
+                onClick={() => setIsPdfModalOpen(false)}
+                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition cursor-pointer"
+              >
+                <X className="size-5" />
+              </button>
+            </div>
+
+            {/* Modal Body / Info & iframe preview */}
+            <div className="py-3.5 space-y-3 flex-1 overflow-hidden flex flex-col">
+              <div className="rounded-lg bg-emerald-50/80 border border-emerald-200/80 p-3 text-xs text-emerald-900 flex items-start gap-2">
+                <Check className="size-4 text-emerald-600 shrink-0 mt-0.5" />
+                <span className="leading-relaxed">
+                  {lang === 'ar'
+                    ? 'تم إنشاء ملف التقرير بنجاح! إذا منع متصفحك أو إطار المعاينة التنزيل المباشر، يمكنك النقر على زر التنزيل أدناه أو فتحه في نافذة مستقلة أو طباعته مباشرة.'
+                    : 'PDF report ready! If your browser or iframe blocks automatic downloads, use the buttons below to download, open in a new tab, or print.'}
+                </span>
+              </div>
+
+              {/* Embedded PDF Viewer */}
+              <div className="flex-1 min-h-[280px] sm:min-h-[340px] rounded-xl border border-slate-200 overflow-hidden bg-slate-100 shadow-inner">
+                <iframe
+                  src={pdfReportData.blobUrl}
+                  title="PDF Preview"
+                  className="w-full h-full min-h-[280px] sm:min-h-[340px] border-0"
+                />
+              </div>
+            </div>
+
+            {/* Modal Actions Footer */}
+            <div className="pt-3 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2">
+              <div className="flex flex-wrap items-center gap-2">
+                <a
+                  href={pdfReportData.blobUrl}
+                  download={pdfReportData.fileName}
+                  id="btn-modal-direct-download"
+                  className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-2 text-xs font-bold shadow-xs transition cursor-pointer"
+                >
+                  <Download className="size-4" />
+                  <span>{lang === 'ar' ? 'تنزيل ملف PDF' : 'Download PDF'}</span>
+                </a>
+
+                <button
+                  type="button"
+                  id="btn-modal-open-new-tab"
+                  onClick={() => window.open(pdfReportData.blobUrl, '_blank')}
+                  className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 px-3 py-2 text-xs font-semibold transition cursor-pointer"
+                >
+                  <ExternalLink className="size-3.5 text-slate-500" />
+                  <span>{lang === 'ar' ? 'فتح في نافذة جديدة' : 'Open in New Window'}</span>
+                </button>
+
+                <button
+                  type="button"
+                  id="btn-modal-print-pdf"
+                  onClick={handlePrint}
+                  className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 px-3 py-2 text-xs font-semibold transition cursor-pointer"
+                >
+                  <Printer className="size-3.5 text-slate-500" />
+                  <span>{lang === 'ar' ? 'طباعة / حفظ كـ PDF' : 'Print / Save as PDF'}</span>
+                </button>
+              </div>
+
+              <button
+                type="button"
+                id="btn-modal-dismiss-pdf"
+                onClick={() => setIsPdfModalOpen(false)}
+                className="px-3 py-2 text-xs font-semibold text-slate-500 hover:text-slate-800 transition cursor-pointer"
+              >
+                {lang === 'ar' ? 'إغلاق' : 'Close'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -434,6 +434,7 @@ export default function App() {
                 result={calculationResult}
                 onReset={handleReset}
                 lang={lang}
+                onToast={showToast}
               />
             </div>
           </div>
