@@ -1,5 +1,5 @@
 import React from 'react';
-import { Wheat, ShieldCheck, Phone, MessageSquare, Mail, Stethoscope, ShieldAlert } from 'lucide-react';
+import { Wheat, ShieldCheck, Phone, MessageSquare, Mail, ShieldAlert } from 'lucide-react';
 import { Language } from '../types';
 import { TRANSLATIONS } from '../utils/translations';
 
@@ -30,20 +30,6 @@ export const Footer: React.FC<FooterProps> = ({ lang, onOpenIpModal, onOpenAdmin
         <p className="mt-2 text-[11px] sm:text-xs text-slate-500 max-w-xl mx-auto leading-relaxed">
           {t.footerDisclaimer}
         </p>
-
-        {/* Mandatory Veterinary Disclaimer Card */}
-        <div
-          id="footer-veterinary-disclaimer"
-          className="mt-4 max-w-2xl mx-auto rounded-xl border border-rose-200/80 bg-rose-50/60 p-3 text-start sm:text-center text-rose-950 shadow-2xs space-y-1"
-        >
-          <div className="flex items-center justify-start sm:justify-center gap-1.5 font-bold text-rose-900 text-xs">
-            <Stethoscope className="size-3.5 text-rose-600 shrink-0" />
-            <span>{t.veterinaryDisclaimerTitle}</span>
-          </div>
-          <p className="text-[11px] text-rose-900/85 leading-relaxed">
-            {t.veterinaryDisclaimerText}
-          </p>
-        </div>
 
         {/* Author / Developer Contact Card */}
         <div className="mt-6 inline-flex flex-col sm:flex-row items-center gap-3 rounded-2xl border border-emerald-200 bg-gradient-to-r from-emerald-50/70 via-white to-emerald-50/70 p-3.5 sm:px-6 shadow-xs">
