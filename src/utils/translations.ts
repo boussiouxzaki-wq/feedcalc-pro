@@ -69,6 +69,12 @@ export interface Translations {
   advisoryTitle: string;
   advisoryAquatic: string;
   advisoryLand: string;
+  breedingAlertTitle: string;
+  breedingCycleLabel: string;
+  breedingOptimalTimeLabel: string;
+  breedingGestationLabel: string;
+  breedingSignsLabel: string;
+  breedingAdviceLabel: string;
   copyReport: string;
   copied: string;
   print: string;
@@ -190,6 +196,12 @@ export const TRANSLATIONS: Record<Language, Translations> = {
     advisoryTitle: 'توصيات إدارة القطيع والحوض:',
     advisoryAquatic: 'يُنصح بنثر العلف الطافي بانتظام على سطح الماء في أماكن هادئة بالتيار لمراقبة شهية الأسماك وتجنب تراكم العلف غير المأكول في القاع حفاظاً على نسبة الأكسجين الذائب وجودة المياه.',
     advisoryLand: 'يجب توفير مياه شرب عذبة ونظيفة بشكل دائم بمعدل لا يقل عن ضعف كمية العلف المستهلكة. راقب استهلاك العلف اليومي وتأكد من التهوية الجيدة للوقاية من الإجهاد الحراري.',
+    breedingAlertTitle: 'تنبيه مواعيد التلقيح والتناسل (إدارة القطيع):',
+    breedingCycleLabel: 'دورة الشبق / التكرار:',
+    breedingOptimalTimeLabel: 'الموعد والتوقيت الأمثل للتلقيح:',
+    breedingGestationLabel: 'مدة الحمل / الحضانة:',
+    breedingSignsLabel: 'علامات ومؤشرات الجاهزية والشبق:',
+    breedingAdviceLabel: 'إرشادات الخصوبة ونسب الإخصاب:',
     copyReport: 'نسخ التقرير',
     copied: 'تم نسخ التقرير',
     print: 'طباعة',
@@ -310,6 +322,12 @@ export const TRANSLATIONS: Record<Language, Translations> = {
     advisoryTitle: 'Management Recommendations:',
     advisoryAquatic: 'Distribute floating pellets evenly across feeding zones. Monitor feeding response carefully to prevent unconsumed feed decomposition, protecting dissolved oxygen levels.',
     advisoryLand: 'Provide constant access to clean freshwater at a minimum 2:1 ratio relative to feed intake. Maintain proper ventilation and monitor daily intake adjustments.',
+    breedingAlertTitle: 'Breeding & Insemination Alert (Herd Management):',
+    breedingCycleLabel: 'Estrus Cycle / Interval:',
+    breedingOptimalTimeLabel: 'Optimal Insemination Window:',
+    breedingGestationLabel: 'Gestation / Incubation:',
+    breedingSignsLabel: 'Estrus & Readiness Indicators:',
+    breedingAdviceLabel: 'Fertility & Management Advisory:',
     copyReport: 'Copy Report',
     copied: 'Report Copied!',
     print: 'Print',
@@ -430,6 +448,12 @@ export const TRANSLATIONS: Record<Language, Translations> = {
     advisoryTitle: 'Recommandations d\'élevage :',
     advisoryAquatic: 'Distribuez les granulés de manière homogène sur la surface de l\'eau. Surveillez la prise alimentaire pour éviter l\'accumulation au fond et préserver le taux d\'oxygène dissous.',
     advisoryLand: 'Veillez à un approvisionnement continu en eau propre et fraîche (au moins 2 fois la quantité d\'aliment sec). Surveillez la ventilation pour prévenir le stress thermique.',
+    breedingAlertTitle: 'Alerte Calendrier de Reproduction et Insémination :',
+    breedingCycleLabel: 'Cycle œstral / Fréquence :',
+    breedingOptimalTimeLabel: 'Période optimale d\'insémination / saillie :',
+    breedingGestationLabel: 'Durée de gestation / Incubation :',
+    breedingSignsLabel: 'Signes de chaleurs et réceptivité :',
+    breedingAdviceLabel: 'Conseil de fertilité et conduite du troupeau :',
     copyReport: 'Copier le rapport',
     copied: 'Rapport copié !',
     print: 'Imprimer',
@@ -550,6 +574,12 @@ export const TRANSLATIONS: Record<Language, Translations> = {
     advisoryTitle: 'Recomendaciones de manejo:',
     advisoryAquatic: 'Distribuya los pellets flotantes de manera uniforme en la superficie del agua. Observe el apetito para evitar restos en el fondo y preservar el oxígeno disuelto.',
     advisoryLand: 'Proporcione acceso continuo a agua limpia y fresca (al menos el doble del consumo de alimento). Asegure una buena ventilación para evitar estrés térmico.',
+    breedingAlertTitle: 'Alerta de Calendario de Reproducción e Inseminación:',
+    breedingCycleLabel: 'Ciclo estral / Intervalo:',
+    breedingOptimalTimeLabel: 'Momento óptimo de inseminación / monta:',
+    breedingGestationLabel: 'Duración de gestación / incubación:',
+    breedingSignsLabel: 'Signos de celo y receptividad:',
+    breedingAdviceLabel: 'Recomendación de fertilidad y manejo:',
     copyReport: 'Copiar informe',
     copied: '¡Informe copiado!',
     print: 'Imprimir',
@@ -669,6 +699,12 @@ export const TRANSLATIONS: Record<Language, Translations> = {
     advisoryTitle: '科学投饲与管理建议:',
     advisoryAquatic: '投喂浮水料应均匀撒布于食台或水面，遵循“定时、定点、定质、定量”四定原则，根据天气、水温及残饵情况及时调控。',
     advisoryLand: '确保畜禽充足洁净饮水（饮水量通常为采食量的2-3倍），保持良好舍内通风与适宜温湿度，避免应激反应。',
+    breedingAlertTitle: '种群繁育周期与人工配种预警提醒:',
+    breedingCycleLabel: '发情周期 / 繁育间隔:',
+    breedingOptimalTimeLabel: '最佳配种 / 输精时机:',
+    breedingGestationLabel: '妊娠期 / 孵化期:',
+    breedingSignsLabel: '发情鉴定与受配体征:',
+    breedingAdviceLabel: '繁殖育种与受胎率管理建议:',
     copyReport: '复制计算报告',
     copied: '报告已复制到剪贴板！',
     print: '打印报告',
@@ -789,6 +825,12 @@ export const TRANSLATIONS: Record<Language, Translations> = {
     advisoryTitle: 'Management-Empfehlungen:',
     advisoryAquatic: 'Schwimmfutter gleichmäßig in den Fresszonen verteilen. Fressverhalten beobachten, um Futterreste und Sauerstoffzehrung im Wasser zu vermeiden.',
     advisoryLand: 'Stets frisches, sauberes Trinkwasser bereitstellen (mind. 2:1 zum Futter). Für gute Belüftung sorgen und Futteraufnahme täglich kontrollieren.',
+    breedingAlertTitle: 'Zucht- & Besamungskalender-Hinweis (Herdenmanagement):',
+    breedingCycleLabel: 'Brunstzyklus / Intervall:',
+    breedingOptimalTimeLabel: 'Optimaler Besamungszeitpunkt:',
+    breedingGestationLabel: 'Trächtigkeitsdauer / Brutzeit:',
+    breedingSignsLabel: 'Brunstsymptome & Paarungsbereitschaft:',
+    breedingAdviceLabel: 'Fruchtbarkeits- & Managementhinweis:',
     copyReport: 'Bericht kopieren',
     copied: 'Bericht kopiert!',
     print: 'Drucken',

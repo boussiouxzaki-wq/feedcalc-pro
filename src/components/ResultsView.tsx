@@ -16,11 +16,14 @@ import {
   Phone,
   FileText,
   Loader2,
+  CalendarClock,
+  Sparkles,
 } from 'lucide-react';
 import { Species, FeedType, CalculationInput, CalculationResult, Language } from '../types';
 import { TRANSLATIONS, formatNum } from '../utils/translations';
 import { generatePdfReport } from '../utils/pdfGenerator';
 import { getCurrencySymbol } from '../data/currencies';
+import { getBreedingSchedule } from '../data/breedingData';
 
 interface ResultsViewProps {
   species: Species | null;
@@ -138,6 +141,27 @@ export const ResultsView: React.FC<ResultsViewProps> = ({
   const weightUnitStr = input.weightUnit === 'lb' ? 'lb' : 'kg';
   const feedRateUnitStr = input.weightUnit === 'lb' ? 'lb / day' : t.feedPerDayUnit;
 
+  const breeding = species ? getBreedingSchedule(species.id) : null;
+
+  const getBreedingField = (key: 'cycle' | 'optimalTime' | 'gestation' | 'signs' | 'advice') => {
+    if (!breeding) return '';
+    switch (lang) {
+      case 'de':
+        return breeding[`${key}De` as keyof typeof breeding] || breeding[`${key}En` as keyof typeof breeding] || breeding[key];
+      case 'zh':
+        return breeding[`${key}Zh` as keyof typeof breeding] || breeding[`${key}En` as keyof typeof breeding] || breeding[key];
+      case 'fr':
+        return breeding[`${key}Fr` as keyof typeof breeding] || breeding[`${key}En` as keyof typeof breeding] || breeding[key];
+      case 'es':
+        return breeding[`${key}Es` as keyof typeof breeding] || breeding[`${key}En` as keyof typeof breeding] || breeding[key];
+      case 'en':
+        return breeding[`${key}En` as keyof typeof breeding] || breeding[key];
+      case 'ar':
+      default:
+        return breeding[key];
+    }
+  };
+
   const handleCopySummary = () => {
     let report = '';
     const devLine = `Dev: ${t.devName} (${t.devPhone})`;
@@ -158,7 +182,14 @@ export const ResultsView: React.FC<ResultsViewProps> = ({
 📌 الطاقة اليومية: ${result.dailyEnergy} ميجا كال
 📌 كفاءة التحويل: ${result.feedConversionEfficiency}%
 ${result.dailyCost ? `💰 التكلفة اليومية التقديرية: ${currencySymbol}${result.dailyCost}` : ''}
-${result.monthlyCost ? `💰 التكلفة الشهرية (30 يوم): ${currencySymbol}${result.monthlyCost}` : ''}
+${result.monthlyCost ? `💰 التكلفة الشهرية (30 يوم): ${currencySymbol}${result.monthlyCost}` : ''}${breeding ? `
+----------------------------------------
+🔔 ${t.breedingAlertTitle}
+• ${t.breedingCycleLabel} ${getBreedingField('cycle')}
+• ${t.breedingOptimalTimeLabel} ${getBreedingField('optimalTime')}
+• ${t.breedingGestationLabel} ${getBreedingField('gestation')}
+• ${t.breedingSignsLabel} ${getBreedingField('signs')}
+• 💡 ${t.breedingAdviceLabel} ${getBreedingField('advice')}` : ''}
 ----------------------------------------
 تطوير: ${t.devName} | هاتف: ${t.devPhone}`;
     } else if (lang === 'fr') {
@@ -177,7 +208,14 @@ ${result.monthlyCost ? `💰 التكلفة الشهرية (30 يوم): ${curren
 📌 Énergie consommée : ${result.dailyEnergy} Mcal
 📌 Efficacité de conversion : ${result.feedConversionEfficiency}%
 ${result.dailyCost ? `💰 Coût quotidien estimé : ${currencySymbol}${result.dailyCost}` : ''}
-${result.monthlyCost ? `💰 Coût mensuel (30 jours) : ${currencySymbol}${result.monthlyCost}` : ''}
+${result.monthlyCost ? `💰 Coût mensuel (30 jours) : ${currencySymbol}${result.monthlyCost}` : ''}${breeding ? `
+----------------------------------------
+🔔 ${t.breedingAlertTitle}
+• ${t.breedingCycleLabel} ${getBreedingField('cycle')}
+• ${t.breedingOptimalTimeLabel} ${getBreedingField('optimalTime')}
+• ${t.breedingGestationLabel} ${getBreedingField('gestation')}
+• ${t.breedingSignsLabel} ${getBreedingField('signs')}
+• 💡 ${t.breedingAdviceLabel} ${getBreedingField('advice')}` : ''}
 ----------------------------------------
 Développé par : ${t.devName} | Tél : ${t.devPhone}`;
     } else if (lang === 'es') {
@@ -196,7 +234,14 @@ Développé par : ${t.devName} | Tél : ${t.devPhone}`;
 📌 Energía diaria: ${result.dailyEnergy} Mcal
 📌 Eficiencia de conversión: ${result.feedConversionEfficiency}%
 ${result.dailyCost ? `💰 Coste diario estimado: ${currencySymbol}${result.dailyCost}` : ''}
-${result.monthlyCost ? `💰 Coste mensual (30 días): ${currencySymbol}${result.monthlyCost}` : ''}
+${result.monthlyCost ? `💰 Coste mensual (30 días): ${currencySymbol}${result.monthlyCost}` : ''}${breeding ? `
+----------------------------------------
+🔔 ${t.breedingAlertTitle}
+• ${t.breedingCycleLabel} ${getBreedingField('cycle')}
+• ${t.breedingOptimalTimeLabel} ${getBreedingField('optimalTime')}
+• ${t.breedingGestationLabel} ${getBreedingField('gestation')}
+• ${t.breedingSignsLabel} ${getBreedingField('signs')}
+• 💡 ${t.breedingAdviceLabel} ${getBreedingField('advice')}` : ''}
 ----------------------------------------
 Desarrollado por: ${t.devName} | Tel: ${t.devPhone}`;
     } else if (lang === 'zh') {
@@ -215,7 +260,14 @@ Desarrollado por: ${t.devName} | Tel: ${t.devPhone}`;
 📌 全群日消耗代谢能: ${result.dailyEnergy} 兆卡 (Mcal)
 📌 饲料转化效率: ${result.feedConversionEfficiency}%
 ${result.dailyCost ? `💰 每日预估饲料成本: ${currencySymbol}${result.dailyCost}` : ''}
-${result.monthlyCost ? `💰 每月预估成本 (30天): ${currencySymbol}${result.monthlyCost}` : ''}
+${result.monthlyCost ? `💰 每月预估成本 (30天): ${currencySymbol}${result.monthlyCost}` : ''}${breeding ? `
+----------------------------------------
+🔔 ${t.breedingAlertTitle}
+• ${t.breedingCycleLabel} ${getBreedingField('cycle')}
+• ${t.breedingOptimalTimeLabel} ${getBreedingField('optimalTime')}
+• ${t.breedingGestationLabel} ${getBreedingField('gestation')}
+• ${t.breedingSignsLabel} ${getBreedingField('signs')}
+• 💡 ${t.breedingAdviceLabel} ${getBreedingField('advice')}` : ''}
 ----------------------------------------
 首席开发者: ${t.devName} | 咨询电话: ${t.devPhone}`;
     } else if (lang === 'de') {
@@ -234,7 +286,14 @@ ${result.monthlyCost ? `💰 每月预估成本 (30天): ${currencySymbol}${resu
 📌 Tägliche Energie: ${result.dailyEnergy} Mcal
 📌 Futterverwertungseffizienz: ${result.feedConversionEfficiency}%
 ${result.dailyCost ? `💰 Geschätzte Tageskosten: ${currencySymbol}${result.dailyCost}` : ''}
-${result.monthlyCost ? `💰 Monatliche Kosten (30 Tage): ${currencySymbol}${result.monthlyCost}` : ''}
+${result.monthlyCost ? `💰 Monatliche Kosten (30 Tage): ${currencySymbol}${result.monthlyCost}` : ''}${breeding ? `
+----------------------------------------
+🔔 ${t.breedingAlertTitle}
+• ${t.breedingCycleLabel} ${getBreedingField('cycle')}
+• ${t.breedingOptimalTimeLabel} ${getBreedingField('optimalTime')}
+• ${t.breedingGestationLabel} ${getBreedingField('gestation')}
+• ${t.breedingSignsLabel} ${getBreedingField('signs')}
+• 💡 ${t.breedingAdviceLabel} ${getBreedingField('advice')}` : ''}
 ----------------------------------------
 Entwickelt von: ${t.devName} | Tel: ${t.devPhone}`;
     } else {
@@ -253,7 +312,14 @@ Entwickelt von: ${t.devName} | Tel: ${t.devPhone}`;
 📌 Daily Energy: ${result.dailyEnergy} Mcal
 📌 Efficiency: ${result.feedConversionEfficiency}%
 ${result.dailyCost ? `💰 Estimated Daily Cost: ${currencySymbol}${result.dailyCost}` : ''}
-${result.monthlyCost ? `💰 30-Day Monthly Cost: ${currencySymbol}${result.monthlyCost}` : ''}
+${result.monthlyCost ? `💰 30-Day Monthly Cost: ${currencySymbol}${result.monthlyCost}` : ''}${breeding ? `
+----------------------------------------
+🔔 ${t.breedingAlertTitle}
+• ${t.breedingCycleLabel} ${getBreedingField('cycle')}
+• ${t.breedingOptimalTimeLabel} ${getBreedingField('optimalTime')}
+• ${t.breedingGestationLabel} ${getBreedingField('gestation')}
+• ${t.breedingSignsLabel} ${getBreedingField('signs')}
+• 💡 ${t.breedingAdviceLabel} ${getBreedingField('advice')}` : ''}
 ----------------------------------------
 ${devLine}`;
     }
@@ -550,15 +616,89 @@ ${devLine}`;
           ))}
         </div>
 
-        {/* Practical Farming Advisory Note */}
-        <div className="rounded-xl border border-emerald-200/70 bg-emerald-50/40 p-3.5 text-xs text-slate-600 leading-relaxed space-y-1">
-          <div className="flex items-center gap-1.5 font-bold text-emerald-900">
-            <AlertCircle className="size-3.5 text-emerald-600 shrink-0" />
-            <span>{t.advisoryTitle}</span>
+        {/* Practical Farming Advisory & Herd Management Recommendations */}
+        <div className="space-y-3">
+          {/* General Husbandry & Water Advisory Note */}
+          <div className="rounded-xl border border-emerald-200/70 bg-emerald-50/40 p-3.5 text-xs text-slate-600 leading-relaxed space-y-1">
+            <div className="flex items-center gap-1.5 font-bold text-emerald-900">
+              <AlertCircle className="size-3.5 text-emerald-600 shrink-0" />
+              <span>{t.advisoryTitle}</span>
+            </div>
+            <p>
+              {species.category === 'aquatic' ? t.advisoryAquatic : t.advisoryLand}
+            </p>
           </div>
-          <p>
-            {species.category === 'aquatic' ? t.advisoryAquatic : t.advisoryLand}
-          </p>
+
+          {/* Species-Specific Breeding & Insemination Alert Card */}
+          {breeding && (
+            <div
+              id="breeding-schedule-alert"
+              className="rounded-xl border border-amber-200/80 bg-gradient-to-br from-amber-50/60 via-white to-orange-50/40 p-4 text-xs shadow-xs space-y-3"
+            >
+              <div className="flex items-center justify-between gap-2 border-b border-amber-100 pb-2">
+                <div className="flex items-center gap-2 font-bold text-amber-950 text-xs sm:text-sm">
+                  <div className="p-1.5 bg-amber-100/90 text-amber-800 rounded-lg shrink-0">
+                    <CalendarClock className="size-4" />
+                  </div>
+                  <span>{t.breedingAlertTitle}</span>
+                </div>
+                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-200/60 shrink-0">
+                  {speciesName}
+                </span>
+              </div>
+
+              {/* Grid of Key Breeding Metrics */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                {/* Cycle Interval */}
+                <div className="p-2.5 rounded-lg bg-white/90 border border-amber-100 shadow-2xs space-y-1">
+                  <span className="text-[10px] font-semibold text-amber-800 block">
+                    {t.breedingCycleLabel}
+                  </span>
+                  <p className="text-[11px] font-bold text-slate-800 leading-snug">
+                    {getBreedingField('cycle')}
+                  </p>
+                </div>
+
+                {/* Optimal Insemination Time */}
+                <div className="p-2.5 rounded-lg bg-amber-50/80 border border-amber-200/80 shadow-2xs space-y-1 sm:col-span-2">
+                  <span className="text-[10px] font-semibold text-amber-900 flex items-center gap-1">
+                    <Sparkles className="size-3 text-amber-600 shrink-0" />
+                    {t.breedingOptimalTimeLabel}
+                  </span>
+                  <p className="text-[11px] font-bold text-amber-950 leading-snug">
+                    {getBreedingField('optimalTime')}
+                  </p>
+                </div>
+              </div>
+
+              {/* Gestation / Incubation & Signs */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-slate-700">
+                <div className="p-2.5 rounded-lg bg-white/80 border border-slate-200/70 space-y-1">
+                  <span className="text-[10px] font-semibold text-slate-500 block">
+                    {t.breedingGestationLabel}
+                  </span>
+                  <p className="text-[11px] font-medium text-slate-800 leading-snug">
+                    {getBreedingField('gestation')}
+                  </p>
+                </div>
+
+                <div className="p-2.5 rounded-lg bg-white/80 border border-slate-200/70 space-y-1">
+                  <span className="text-[10px] font-semibold text-slate-500 block">
+                    {t.breedingSignsLabel}
+                  </span>
+                  <p className="text-[11px] font-medium text-slate-700 leading-snug">
+                    {getBreedingField('signs')}
+                  </p>
+                </div>
+              </div>
+
+              {/* Technical Advisory & Fertility Tip */}
+              <div className="pt-1 text-[11px] text-amber-900/90 leading-relaxed border-t border-amber-100/80 flex items-start gap-1.5">
+                <span className="font-bold text-amber-900 shrink-0">💡 {t.breedingAdviceLabel}</span>
+                <span>{getBreedingField('advice')}</span>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Action Toolbar */}

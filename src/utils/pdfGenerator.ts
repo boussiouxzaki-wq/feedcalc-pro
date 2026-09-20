@@ -3,6 +3,7 @@ import autoTable from 'jspdf-autotable';
 import { Species, FeedType, CalculationInput, CalculationResult, Language } from '../types';
 import { TRANSLATIONS, formatNum } from './translations';
 import { getCurrencySymbol } from '../data/currencies';
+import { getBreedingSchedule } from '../data/breedingData';
 
 export async function generatePdfReport(params: {
   species: Species;
@@ -231,21 +232,29 @@ export async function generatePdfReport(params: {
     ],
   });
 
-  // Technical & Scientific Management Note Box
-  const finalY3 = (doc as any).lastAutoTable?.finalY || 235;
+  // Technical & Scientific Management Note & Herd Breeding Alerts
+  const finalY3 = (doc as any).lastAutoTable?.finalY || 215;
+  const breeding = getBreedingSchedule(species.id);
 
+  let currentY = finalY3 + 4;
+  if (currentY + (breeding ? 58 : 20) > pageHeight - 14) {
+    doc.addPage();
+    currentY = 14;
+  }
+
+  // 1. General Management Advisory Box
   doc.setFillColor(249, 250, 251);
   doc.setDrawColor(229, 231, 235);
   doc.setLineWidth(0.4);
-  doc.roundedRect(margin, finalY3 + 6, pageWidth - margin * 2, 22, 2, 2, 'FD');
+  doc.roundedRect(margin, currentY, pageWidth - margin * 2, 16, 2, 2, 'FD');
 
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(8.5);
+  doc.setFontSize(8);
   doc.setTextColor(31, 41, 55);
-  doc.text('Technical Management Advisory:', margin + 4, finalY3 + 12);
+  doc.text('Technical Management Advisory:', margin + 4, currentY + 5);
 
   doc.setFont('helvetica', 'normal');
-  doc.setFontSize(7.8);
+  doc.setFontSize(7.2);
   doc.setTextColor(75, 85, 99);
   const advisoryText =
     species.category === 'aquatic'
@@ -253,7 +262,61 @@ export async function generatePdfReport(params: {
       : 'Provide clean, cool drinking water ad libitum (at least 2.5x feed mass). Ensure proper barn ventilation and avoid feeding during peak midday heat to prevent thermal stress.';
   
   const splitAdvisory = doc.splitTextToSize(advisoryText, pageWidth - margin * 2 - 8);
-  doc.text(splitAdvisory, margin + 4, finalY3 + 17);
+  doc.text(splitAdvisory, margin + 4, currentY + 10);
+
+  currentY += 18;
+
+  // 2. Species-Specific Breeding & Insemination Alert Box
+  if (breeding) {
+    doc.setFillColor(254, 252, 232); // Amber 50
+    doc.setDrawColor(245, 158, 11);  // Amber 500
+    doc.setLineWidth(0.4);
+    doc.roundedRect(margin, currentY, pageWidth - margin * 2, 36, 2, 2, 'FD');
+
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(8);
+    doc.setTextColor(146, 64, 14); // Amber 800
+    doc.text(`HERD BREEDING & INSEMINATION ALERT (${(species.nameEn || species.name).toUpperCase()}):`, margin + 4, currentY + 5.5);
+
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(7.2);
+    doc.setTextColor(31, 41, 55);
+    doc.text('Cycle / Interval:', margin + 4, currentY + 11);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(55, 65, 81);
+    doc.text(breeding.cycleEn, margin + 27, currentY + 11);
+
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(180, 83, 9);
+    doc.text('Optimal Timing:', margin + 4, currentY + 17);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(17, 24, 39);
+    const splitOptimal = doc.splitTextToSize(breeding.optimalTimeEn, pageWidth - margin * 2 - 30);
+    doc.text(splitOptimal, margin + 27, currentY + 17);
+
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(31, 41, 55);
+    doc.text('Gestation / Term:', margin + 4, currentY + 23);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(55, 65, 81);
+    doc.text(breeding.gestationEn, margin + 29, currentY + 23);
+
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(31, 41, 55);
+    doc.text('Readiness Signs:', margin + 4, currentY + 29);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(55, 65, 81);
+    const splitSigns = doc.splitTextToSize(breeding.signsEn, pageWidth - margin * 2 - 30);
+    doc.text(splitSigns, margin + 27, currentY + 29);
+
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(180, 83, 9);
+    doc.text('Management Advice:', margin + 4, currentY + 34);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(75, 85, 99);
+    const splitAdvice = doc.splitTextToSize(breeding.adviceEn, pageWidth - margin * 2 - 36);
+    doc.text(splitAdvice, margin + 33, currentY + 34);
+  }
 
   // Footer bar on page
   doc.setDrawColor(229, 231, 235);

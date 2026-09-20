@@ -60,6 +60,39 @@ export interface Species {
   proteinRange: [number, number];
 }
 
+export interface BreedingSchedule {
+  cycle: string;
+  cycleEn: string;
+  cycleFr: string;
+  cycleEs: string;
+  cycleZh: string;
+  cycleDe?: string;
+  optimalTime: string;
+  optimalTimeEn: string;
+  optimalTimeFr: string;
+  optimalTimeEs: string;
+  optimalTimeZh: string;
+  optimalTimeDe?: string;
+  gestation: string;
+  gestationEn: string;
+  gestationFr: string;
+  gestationEs: string;
+  gestationZh: string;
+  gestationDe?: string;
+  signs: string;
+  signsEn: string;
+  signsFr: string;
+  signsEs: string;
+  signsZh: string;
+  signsDe?: string;
+  advice: string;
+  adviceEn: string;
+  adviceFr: string;
+  adviceEs: string;
+  adviceZh: string;
+  adviceDe?: string;
+}
+
 export interface CalculationInput {
   speciesId: string;
   age: string;
