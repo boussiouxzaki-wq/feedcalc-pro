@@ -18,6 +18,8 @@ import {
   Loader2,
   CalendarClock,
   Sparkles,
+  Stethoscope,
+  ShieldAlert,
 } from 'lucide-react';
 import { Species, FeedType, CalculationInput, CalculationResult, Language } from '../types';
 import { TRANSLATIONS, formatNum } from '../utils/translations';
@@ -182,14 +184,7 @@ export const ResultsView: React.FC<ResultsViewProps> = ({
 📌 الطاقة اليومية: ${result.dailyEnergy} ميجا كال
 📌 كفاءة التحويل: ${result.feedConversionEfficiency}%
 ${result.dailyCost ? `💰 التكلفة اليومية التقديرية: ${currencySymbol}${result.dailyCost}` : ''}
-${result.monthlyCost ? `💰 التكلفة الشهرية (30 يوم): ${currencySymbol}${result.monthlyCost}` : ''}${breeding ? `
-----------------------------------------
-🔔 ${t.breedingAlertTitle}
-• ${t.breedingCycleLabel} ${getBreedingField('cycle')}
-• ${t.breedingOptimalTimeLabel} ${getBreedingField('optimalTime')}
-• ${t.breedingGestationLabel} ${getBreedingField('gestation')}
-• ${t.breedingSignsLabel} ${getBreedingField('signs')}
-• 💡 ${t.breedingAdviceLabel} ${getBreedingField('advice')}` : ''}
+${result.monthlyCost ? `💰 التكلفة الشهرية (30 يوم): ${currencySymbol}${result.monthlyCost}` : ''}
 ----------------------------------------
 تطوير: ${t.devName} | هاتف: ${t.devPhone}`;
     } else if (lang === 'fr') {
@@ -208,14 +203,7 @@ ${result.monthlyCost ? `💰 التكلفة الشهرية (30 يوم): ${curren
 📌 Énergie consommée : ${result.dailyEnergy} Mcal
 📌 Efficacité de conversion : ${result.feedConversionEfficiency}%
 ${result.dailyCost ? `💰 Coût quotidien estimé : ${currencySymbol}${result.dailyCost}` : ''}
-${result.monthlyCost ? `💰 Coût mensuel (30 jours) : ${currencySymbol}${result.monthlyCost}` : ''}${breeding ? `
-----------------------------------------
-🔔 ${t.breedingAlertTitle}
-• ${t.breedingCycleLabel} ${getBreedingField('cycle')}
-• ${t.breedingOptimalTimeLabel} ${getBreedingField('optimalTime')}
-• ${t.breedingGestationLabel} ${getBreedingField('gestation')}
-• ${t.breedingSignsLabel} ${getBreedingField('signs')}
-• 💡 ${t.breedingAdviceLabel} ${getBreedingField('advice')}` : ''}
+${result.monthlyCost ? `💰 Coût mensuel (30 jours) : ${currencySymbol}${result.monthlyCost}` : ''}
 ----------------------------------------
 Développé par : ${t.devName} | Tél : ${t.devPhone}`;
     } else if (lang === 'es') {
@@ -234,14 +222,7 @@ Développé par : ${t.devName} | Tél : ${t.devPhone}`;
 📌 Energía diaria: ${result.dailyEnergy} Mcal
 📌 Eficiencia de conversión: ${result.feedConversionEfficiency}%
 ${result.dailyCost ? `💰 Coste diario estimado: ${currencySymbol}${result.dailyCost}` : ''}
-${result.monthlyCost ? `💰 Coste mensual (30 días): ${currencySymbol}${result.monthlyCost}` : ''}${breeding ? `
-----------------------------------------
-🔔 ${t.breedingAlertTitle}
-• ${t.breedingCycleLabel} ${getBreedingField('cycle')}
-• ${t.breedingOptimalTimeLabel} ${getBreedingField('optimalTime')}
-• ${t.breedingGestationLabel} ${getBreedingField('gestation')}
-• ${t.breedingSignsLabel} ${getBreedingField('signs')}
-• 💡 ${t.breedingAdviceLabel} ${getBreedingField('advice')}` : ''}
+${result.monthlyCost ? `💰 Coste mensual (30 días): ${currencySymbol}${result.monthlyCost}` : ''}
 ----------------------------------------
 Desarrollado por: ${t.devName} | Tel: ${t.devPhone}`;
     } else if (lang === 'zh') {
@@ -260,14 +241,7 @@ Desarrollado por: ${t.devName} | Tel: ${t.devPhone}`;
 📌 全群日消耗代谢能: ${result.dailyEnergy} 兆卡 (Mcal)
 📌 饲料转化效率: ${result.feedConversionEfficiency}%
 ${result.dailyCost ? `💰 每日预估饲料成本: ${currencySymbol}${result.dailyCost}` : ''}
-${result.monthlyCost ? `💰 每月预估成本 (30天): ${currencySymbol}${result.monthlyCost}` : ''}${breeding ? `
-----------------------------------------
-🔔 ${t.breedingAlertTitle}
-• ${t.breedingCycleLabel} ${getBreedingField('cycle')}
-• ${t.breedingOptimalTimeLabel} ${getBreedingField('optimalTime')}
-• ${t.breedingGestationLabel} ${getBreedingField('gestation')}
-• ${t.breedingSignsLabel} ${getBreedingField('signs')}
-• 💡 ${t.breedingAdviceLabel} ${getBreedingField('advice')}` : ''}
+${result.monthlyCost ? `💰 每月预估成本 (30天): ${currencySymbol}${result.monthlyCost}` : ''}
 ----------------------------------------
 首席开发者: ${t.devName} | 咨询电话: ${t.devPhone}`;
     } else if (lang === 'de') {
@@ -286,14 +260,7 @@ ${result.monthlyCost ? `💰 每月预估成本 (30天): ${currencySymbol}${resu
 📌 Tägliche Energie: ${result.dailyEnergy} Mcal
 📌 Futterverwertungseffizienz: ${result.feedConversionEfficiency}%
 ${result.dailyCost ? `💰 Geschätzte Tageskosten: ${currencySymbol}${result.dailyCost}` : ''}
-${result.monthlyCost ? `💰 Monatliche Kosten (30 Tage): ${currencySymbol}${result.monthlyCost}` : ''}${breeding ? `
-----------------------------------------
-🔔 ${t.breedingAlertTitle}
-• ${t.breedingCycleLabel} ${getBreedingField('cycle')}
-• ${t.breedingOptimalTimeLabel} ${getBreedingField('optimalTime')}
-• ${t.breedingGestationLabel} ${getBreedingField('gestation')}
-• ${t.breedingSignsLabel} ${getBreedingField('signs')}
-• 💡 ${t.breedingAdviceLabel} ${getBreedingField('advice')}` : ''}
+${result.monthlyCost ? `💰 Monatliche Kosten (30 Tage): ${currencySymbol}${result.monthlyCost}` : ''}
 ----------------------------------------
 Entwickelt von: ${t.devName} | Tel: ${t.devPhone}`;
     } else {
@@ -312,14 +279,7 @@ Entwickelt von: ${t.devName} | Tel: ${t.devPhone}`;
 📌 Daily Energy: ${result.dailyEnergy} Mcal
 📌 Efficiency: ${result.feedConversionEfficiency}%
 ${result.dailyCost ? `💰 Estimated Daily Cost: ${currencySymbol}${result.dailyCost}` : ''}
-${result.monthlyCost ? `💰 30-Day Monthly Cost: ${currencySymbol}${result.monthlyCost}` : ''}${breeding ? `
-----------------------------------------
-🔔 ${t.breedingAlertTitle}
-• ${t.breedingCycleLabel} ${getBreedingField('cycle')}
-• ${t.breedingOptimalTimeLabel} ${getBreedingField('optimalTime')}
-• ${t.breedingGestationLabel} ${getBreedingField('gestation')}
-• ${t.breedingSignsLabel} ${getBreedingField('signs')}
-• 💡 ${t.breedingAdviceLabel} ${getBreedingField('advice')}` : ''}
+${result.monthlyCost ? `💰 30-Day Monthly Cost: ${currencySymbol}${result.monthlyCost}` : ''}
 ----------------------------------------
 ${devLine}`;
     }
@@ -699,6 +659,22 @@ ${devLine}`;
               </div>
             </div>
           )}
+
+          {/* Veterinary Consultation & Liability Disclaimer Callout */}
+          <div
+            id="veterinary-disclaimer-box"
+            className="rounded-xl border border-rose-200 bg-rose-50/50 p-3.5 text-xs text-rose-950 leading-relaxed space-y-1.5 shadow-2xs"
+          >
+            <div className="flex items-center gap-2 font-bold text-rose-900">
+              <div className="p-1 rounded-md bg-rose-100 text-rose-700 shrink-0">
+                <Stethoscope className="size-3.5" />
+              </div>
+              <span className="text-xs sm:text-[13px]">{t.veterinaryDisclaimerTitle}</span>
+            </div>
+            <p className="text-[11px] sm:text-xs text-rose-900/90 leading-relaxed">
+              {t.veterinaryDisclaimerText}
+            </p>
+          </div>
         </div>
 
         {/* Action Toolbar */}

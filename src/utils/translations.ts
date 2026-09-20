@@ -83,6 +83,8 @@ export interface Translations {
   newCalculation: string;
   footerTagline: string;
   footerDisclaimer: string;
+  veterinaryDisclaimerTitle: string;
+  veterinaryDisclaimerText: string;
   scientificallyGrounded: string;
   contactDeveloper: string;
   call: string;
@@ -210,6 +212,8 @@ export const TRANSLATIONS: Record<Language, Translations> = {
     newCalculation: 'حساب جديد',
     footerTagline: 'FeedCalc Pro — أداة علمية للمزارعين ومربي الأسماك والدواجن',
     footerDisclaimer: 'النتائج المحسوبة تعتمد على المعادلات القياسية لمعدل التحويل الغذائي (FCR) وحصص التغذية اليومية بحسب معايير تغذية الحيوان العالمية.',
+    veterinaryDisclaimerTitle: 'تنبيه بيطري وإخلاء مسؤولية قانونية:',
+    veterinaryDisclaimerText: 'كافة الحسابات الغذائية وجداول التلقيح والتناسل المعروضة هي إرشادات فنية ونماذج استرشادية مبنية على المتوسطات العلمية. يجب حتماً استشارة الطبيب البيطري المعتمد أو خبير تغذية الحيوان لتشخيص الحالة الصحية الفعلية لقطيعك، وتحديد جرعات التلقيح والبرامج العلاجية واللقاحات. إدارة التطبيق والمطور لا يتحملان أي مسؤولية عن أي قرارات علاجية أو خسائر ناتجة عن التطبيق دون إشراف بيطري مباشر.',
     scientificallyGrounded: 'معايير علمية دقيقة',
     contactDeveloper: 'تواصل مع المطور',
     call: 'اتصال',
@@ -336,6 +340,8 @@ export const TRANSLATIONS: Record<Language, Translations> = {
     newCalculation: 'New Calculation',
     footerTagline: 'FeedCalc Pro — Scientific Tool for Farmers & Aquaculture Producers',
     footerDisclaimer: 'Calculations are based on standard scientific FCR guidelines and nutritional requirements. Actual consumption may vary by temperature and environment.',
+    veterinaryDisclaimerTitle: 'Veterinary Consultation & Legal Disclaimer:',
+    veterinaryDisclaimerText: 'All nutritional calculations, feeding plans, and breeding/insemination schedules provided by this application are for informational and planning purposes only. They do not constitute veterinary medical advice. Always consult a qualified licensed veterinarian or animal nutritionist before initiating treatments, hormone administration, or altering feeding regimens. The developer and FeedCalc Pro assume no liability for veterinary outcomes or herd losses.',
     scientificallyGrounded: 'Scientifically Grounded',
     contactDeveloper: 'Contact Developer',
     call: 'Call',
@@ -462,6 +468,8 @@ export const TRANSLATIONS: Record<Language, Translations> = {
     newCalculation: 'Nouveau calcul',
     footerTagline: 'FeedCalc Pro — Outil scientifique pour agriculteurs et pisciculteurs',
     footerDisclaimer: 'Calculs basés sur les équations standards d\'indice de conversion (IC/FCR) et normes internationales de nutrition animale.',
+    veterinaryDisclaimerTitle: 'Avis vétérinaire obligatoire & Exclusion de responsabilité :',
+    veterinaryDisclaimerText: 'Toutes les rations calculées et les calendriers de reproduction/saillie sont fournis à titre indicatif et éducatif. Ils ne remplacent en aucun cas l\'expertise et le diagnostic d\'un médecin vétérinaire ou nutritionniste agréé. Consultez impérativement votre vétérinaire avant tout protocole d\'insémination, traitement hormonal ou modification d\'alimentation. L\'auteur décline toute responsabilité quant aux décisions sanitaires ou pertes d\'élevage.',
     scientificallyGrounded: 'Fondé scientifiquement',
     contactDeveloper: 'Contacter le développeur',
     call: 'Appel',
@@ -588,6 +596,8 @@ export const TRANSLATIONS: Record<Language, Translations> = {
     newCalculation: 'Nuevo cálculo',
     footerTagline: 'FeedCalc Pro — Herramienta científica para ganaderos y acuicultores',
     footerDisclaimer: 'Los cálculos se basan en fórmulas estándar de índice de conversión (FCR) y requerimientos nutricionales internacionales.',
+    veterinaryDisclaimerTitle: 'Consulta veterinaria obligatoria y Descargo de responsabilidad:',
+    veterinaryDisclaimerText: 'Todas las raciones calculadas y calendarios de reproducción e inseminación son únicamente orientativos y de apoyo técnico. No sustituyen el criterio clínico de un médico veterinario colegiado o especialista en nutrición animal. Es imprescindible consultar a un veterinario antes de iniciar cualquier protocolo reproductivo, tratamiento o cambio brusco en la dieta. El desarrollador no asume responsabilidad alguna por pérdidas o incidencias en el rebaño.',
     scientificallyGrounded: 'Validación científica',
     contactDeveloper: 'Contactar al desarrollador',
     call: 'Llamar',
@@ -713,6 +723,8 @@ export const TRANSLATIONS: Record<Language, Translations> = {
     newCalculation: '清空并重新计算',
     footerTagline: 'FeedCalc Pro — 现代农牧与水产养殖科学配料专家系统',
     footerDisclaimer: '所有计算均基于国际主流动物营养学公式及行业公认的料肉比 (FCR) 标准。',
+    veterinaryDisclaimerTitle: '兽医专业咨询与免责声明:',
+    veterinaryDisclaimerText: '本系统输出的所有饲料日粮配比、营养指标及种群繁育配种周期均为基于科学理论值的参考建议，不可替代执业执照兽医师或专业动物营养专家的现场临床诊断。在实施任何人工配种、激素调控用药或重大饲喂方案调整前，请务必咨询执业兽医师。开发者及本系统不对因擅自决策造成的群体疾病或经济损失承担任何法律责任。',
     scientificallyGrounded: '权威科学论证',
     contactDeveloper: '联系主创工程师',
     call: '拨打电话',
@@ -839,6 +851,8 @@ export const TRANSLATIONS: Record<Language, Translations> = {
     newCalculation: 'Neue Berechnung',
     footerTagline: 'FeedCalc Pro — Wissenschaftliches Werkzeug für Landwirte & Aquakulturbetriebe',
     footerDisclaimer: 'Berechnungen basieren auf wissenschaftlichen FCR-Standards und Nährstoffrichtlinien. Der tatsächliche Verbrauch kann je nach Temperatur und Haltungsbedingungen variieren.',
+    veterinaryDisclaimerTitle: 'Tierärztliche Beratungspflicht & Haftungsausschluss:',
+    veterinaryDisclaimerText: 'Alle berechneten Futterrationen sowie Zucht- und Besamungskalender dienen ausschließlich als wissenschaftliche Richtwerte und Orientierungshilfe. Sie ersetzen keinesfalls die fachmännische Diagnose und Begleitung durch einen approbierten Tierarzt oder Nutztierernährungsberater. Vor jeder Hormonbehandlung, Besamungsmaßnahme oder Futterumstellung ist zwingend ein Tierarzt zu konsultieren. Entwickler und Betreiber übernehmen keine Haftung für Verluste oder Behandlungsfolgen.',
     scientificallyGrounded: 'Wissenschaftlich fundiert',
     contactDeveloper: 'Entwickler kontaktieren',
     call: 'Anrufen',
