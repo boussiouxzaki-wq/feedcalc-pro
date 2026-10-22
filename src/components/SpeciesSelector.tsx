@@ -176,9 +176,9 @@ export const SpeciesSelector: React.FC<SpeciesSelectorProps> = ({
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-4">
         {filteredSpecies.map((species) => {
           const isSelected = species.id === selectedSpeciesId;
-          // دجاج اللحم متاح دائماً ومجاناً للجميع للتجربة والمعاينة، وباقي الحيوانات مقفلة حتى التفعيل
-          const isBroiler = species.id === 'broiler';
-          const isLocked = !isActivated && !isBroiler;
+          // دجاج اللحم وسمك البلطي متاحان دائماً ومجاناً للجميع بدون تفعيل
+          const isFreeSpecies = species.id === 'broiler' || species.id === 'tilapia';
+          const isLocked = !isActivated && !isFreeSpecies;
 
           const handleClick = () => {
             if (isLocked && onRequireActivation) {

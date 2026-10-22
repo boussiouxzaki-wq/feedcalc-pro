@@ -18,7 +18,7 @@ export interface ServiceItem {
 
 /**
  * List of lockable species/services.
- * Note: 'broiler' (دجاج التسمين) is ALWAYS free for everyone and never locked!
+ * Note: 'broiler' (دجاج التسمين) and 'tilapia' (سمك البلطي) are ALWAYS free for everyone and never locked!
  */
 export const LOCKABLE_SERVICES: ServiceItem[] = [
   { id: 'layer', code: 'LAY', nameAr: 'دجاج البيض / البياض', nameEn: 'Layer Hens', emoji: '🥚' },
@@ -29,8 +29,8 @@ export const LOCKABLE_SERVICES: ServiceItem[] = [
   { id: 'rabbit', code: 'RAB', nameAr: 'الأرانب (تسمين وإنتاج)', nameEn: 'Rabbits', emoji: '🐇' },
   { id: 'camel', code: 'CAM', nameAr: 'الإبل (البعير / النوق)', nameEn: 'Camels', emoji: '🐪' },
   { id: 'honeybee', code: 'BEE', nameAr: 'النحل (طوائف وخلايا)', nameEn: 'Honeybees', emoji: '🐝' },
-  { id: 'tilapia', code: 'TIL', nameAr: 'سمك البلطي', nameEn: 'Tilapia Fish', emoji: '🐟' },
   { id: 'carp', code: 'CRP', nameAr: 'سمك الشبوط', nameEn: 'Carp Fish', emoji: '🐟' },
+  { id: 'seabass', code: 'SBA', nameAr: 'سمك القاروص البحري', nameEn: 'European Seabass', emoji: '🐟' },
   { id: 'swine', code: 'SWN', nameAr: 'الخنازير (تسمين)', nameEn: 'Swine', emoji: '🐖' },
   { id: 'all', code: 'ALL', nameAr: 'الباقة الشاملة VIP (كافة الأيقونات)', nameEn: 'All Species (VIP Full)', emoji: '👑' },
 ];
@@ -292,8 +292,8 @@ export function isMasterAdminActive(): boolean {
  * Check if a specific animal/species icon is unlocked and active
  */
 export function isSpeciesUnlocked(speciesId: string): boolean {
-  // 1. Broiler (دجاج اللحم والتسمين) is free for all visitors/clients
-  if (speciesId === 'broiler') return true;
+  // 1. Broiler (دجاج اللحم) and Tilapia (سمك البلطي) are free for all visitors/clients
+  if (speciesId === 'broiler' || speciesId === 'tilapia') return true;
 
   // 2. Master Admin Developer VIP mode
   if (isMasterAdminActive()) return true;
@@ -314,16 +314,16 @@ export function isSpeciesUnlocked(speciesId: string): boolean {
  * Returns a list of all unlocked species IDs for the current user
  */
 export function getUnlockedSpeciesIds(): string[] {
-  // Broiler is always first and unlocked
-  const unlocked = ['broiler'];
+  // Broiler & Tilapia are always free and unlocked
+  const unlocked = ['broiler', 'tilapia'];
 
   if (isMasterAdminActive()) {
-    return LOCKABLE_SERVICES.map(s => s.id).concat(['broiler']);
+    return LOCKABLE_SERVICES.map(s => s.id).concat(['broiler', 'tilapia']);
   }
 
   const activeMap = getActivatedServicesMap();
   if (activeMap['all']) {
-    return LOCKABLE_SERVICES.map(s => s.id).concat(['broiler']);
+    return LOCKABLE_SERVICES.map(s => s.id).concat(['broiler', 'tilapia']);
   }
 
   for (const serviceId of Object.keys(activeMap)) {
@@ -507,7 +507,7 @@ export function generateClientKey(
   // Example: FC-SHP-30D-K8J2QA-9F2B-ZB
   const key = `FC-${service.code}-${days}D-${timestampB36}-${checksum}-ZB`;
 
-  const formattedExpiry = expiryDate.toLocaleDateString('ar-DZ', {
+  const formattedExpiry = expiryDate.toLocaleDateString('ar-u-nu-latn', {
     year: 'numeric',
     month: 'long',
     day: 'numeric'

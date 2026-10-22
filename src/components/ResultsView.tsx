@@ -179,115 +179,115 @@ export const ResultsView: React.FC<ResultsViewProps> = ({
     if (lang === 'ar') {
       report = `📊 تقرير حاسبة الأعلاف الذكية (FeedCalc Pro)
 ----------------------------------------
-🔹 النوع: ${species.name} (${species.category === 'aquatic' ? 'استزراع مائي' : 'مزرعة'})
-🔹 العدد: ${input.count} ${species.unit} | متوسط الوزن: ${input.weight} ${weightUnitStr}
-🔹 نوع العلف: ${feedType.name} (بروتين ${feedType.protein}% - طاقة ${feedType.energy} ك.كال)
-🔹 معامل التحويل (FCR): ${result.fcr}
+🔹 النوع: ${species.name} (${species.category === 'aquatic' ? 'استزراع مائي وأسماك' : species.category === 'specialty' ? 'مناحل وإنتاج عسل' : 'دواجن وإنتاج حيواني'})
+🔹 العدد: ${formatNum(input.count, 0)} ${species.unit} | متوسط الوزن: ${formatNum(input.weight, 2)} ${weightUnitStr}
+🔹 نوع العلف: ${feedName} (بروتين: ${formatNum(feedType.protein, 1)}% | طاقة: ${formatNum(feedType.energy, 0)} ك.كال/كجم)
+🔹 معامل التحويل (FCR): ${formatNum(result.fcr, 2)}
 ----------------------------------------
-📌 الحصة اليومية الإجمالية: ${result.dailyFeedTotal} ${feedRateUnitStr}
-📌 الحصة لكل ${species.unit}: ${result.dailyFeedPerUnit} ${weightUnitStr} / يوم (~${Math.round(result.dailyFeedPerUnit * (input.weightUnit === 'lb' ? 16 : 1000))} ${input.weightUnit === 'lb' ? 'أونصة' : 'غرام'})
-📌 عدد الوجبات: ${result.feedingFrequency} وجبات (${result.feedPerMealTotal} ${weightUnitStr} لكل وجبة)
+📌 الحصة اليومية الإجمالية: ${formatNum(result.dailyFeedTotal, 3)} ${feedRateUnitStr}
+📌 الحصة لكل ${species.unit}: ${formatNum(result.dailyFeedPerUnit, 3)} ${weightUnitStr} / يوم (~${formatNum(Math.round(result.dailyFeedPerUnit * (input.weightUnit === 'lb' ? 16 : 1000)), 0)} ${input.weightUnit === 'lb' ? 'أونصة' : 'غرام'})
+📌 عدد الوجبات: ${result.feedingFrequency} وجبات (${formatNum(result.feedPerMealTotal, 3)} ${weightUnitStr} لكل وجبة)
 📌 مواعيد التغذية: ${result.feedingTimes.join(' | ')}
-📌 البروتين اليومي: ${result.dailyProtein} ${weightUnitStr}
-📌 الطاقة اليومية: ${result.dailyEnergy} ميجا كال
-📌 كفاءة التحويل: ${result.feedConversionEfficiency}%
-${result.dailyCost ? `💰 التكلفة اليومية التقديرية: ${currencySymbol}${result.dailyCost}` : ''}
-${result.monthlyCost ? `💰 التكلفة الشهرية (30 يوم): ${currencySymbol}${result.monthlyCost}` : ''}
+📌 البروتين اليومي: ${formatNum(result.dailyProtein, 2)} ${weightUnitStr}
+📌 الطاقة اليومية: ${formatNum(result.dailyEnergy, 2)} ميجا كال
+📌 كفاءة التحويل الغذائي: ${formatNum(result.feedConversionEfficiency, 1)}%
+${result.dailyCost ? `💰 التكلفة اليومية التقديرية: ${currencySymbol} ${formatNum(result.dailyCost, 2)}` : ''}
+${result.monthlyCost ? `💰 التكلفة الشهرية (تقدير 30 يوماً): ${currencySymbol} ${formatNum(result.monthlyCost, 2)}` : ''}
 ----------------------------------------
 تطوير: ${t.devName} | هاتف: ${t.devPhone}`;
     } else if (lang === 'fr') {
       report = `📊 Rapport FeedCalc Pro
 ----------------------------------------
 🔹 Espèce : ${species.nameFr} (${species.category === 'aquatic' ? 'Pisciculture' : 'Élevage'})
-🔹 Effectif : ${input.count} ${species.unitFr} | Poids moyen : ${input.weight} ${weightUnitStr}
-🔹 Aliment : ${feedType.nameFr} (Protéines ${feedType.protein}% - Énergie ${feedType.energy} kcal/kg)
-🔹 Indice de conversion (IC) : ${result.fcr}
+🔹 Effectif : ${formatNum(input.count, 0)} ${species.unitFr} | Poids moyen : ${formatNum(input.weight, 2)} ${weightUnitStr}
+🔹 Aliment : ${feedName} (Protéines ${formatNum(feedType.protein, 1)}% - Énergie ${formatNum(feedType.energy, 0)} kcal/kg)
+🔹 Indice de conversion (IC) : ${formatNum(result.fcr, 2)}
 ----------------------------------------
-📌 Ration journalière totale : ${result.dailyFeedTotal} ${feedRateUnitStr}
-📌 Par ${species.unitFr} : ${result.dailyFeedPerUnit} ${weightUnitStr}/jour
-📌 Fréquence : ${result.feedingFrequency} repas/jour (${result.feedPerMealTotal} ${weightUnitStr} par repas)
+📌 Ration journalière totale : ${formatNum(result.dailyFeedTotal, 3)} ${feedRateUnitStr}
+📌 Par ${species.unitFr} : ${formatNum(result.dailyFeedPerUnit, 3)} ${weightUnitStr}/jour
+📌 Fréquence : ${result.feedingFrequency} repas/jour (${formatNum(result.feedPerMealTotal, 3)} ${weightUnitStr} par repas)
 📌 Horaires : ${result.feedingTimes.join(' | ')}
-📌 Protéines journalières : ${result.dailyProtein} ${weightUnitStr}
-📌 Énergie consommée : ${result.dailyEnergy} Mcal
-📌 Efficacité de conversion : ${result.feedConversionEfficiency}%
-${result.dailyCost ? `💰 Coût quotidien estimé : ${currencySymbol}${result.dailyCost}` : ''}
-${result.monthlyCost ? `💰 Coût mensuel (30 jours) : ${currencySymbol}${result.monthlyCost}` : ''}
+📌 Protéines journalières : ${formatNum(result.dailyProtein, 2)} ${weightUnitStr}
+📌 Énergie consommée : ${formatNum(result.dailyEnergy, 2)} Mcal
+📌 Efficacité de conversion : ${formatNum(result.feedConversionEfficiency, 1)}%
+${result.dailyCost ? `💰 Coût quotidien estimé : ${currencySymbol} ${formatNum(result.dailyCost, 2)}` : ''}
+${result.monthlyCost ? `💰 Coût mensuel (30 jours) : ${currencySymbol} ${formatNum(result.monthlyCost, 2)}` : ''}
 ----------------------------------------
 Développé par : ${t.devName} | Tél : ${t.devPhone}`;
     } else if (lang === 'es') {
       report = `📊 Informe FeedCalc Pro
 ----------------------------------------
 🔹 Especie: ${species.nameEs} (${species.category === 'aquatic' ? 'Acuicultura' : 'Ganadería'})
-🔹 Cantidad: ${input.count} ${species.unitEs} | Peso promedio: ${input.weight} ${weightUnitStr}
-🔹 Pienso: ${feedType.nameEs} (Proteína ${feedType.protein}% - Energía ${feedType.energy} kcal/kg)
-🔹 Índice FCR: ${result.fcr}
+🔹 Cantidad: ${formatNum(input.count, 0)} ${species.unitEs} | Peso promedio: ${formatNum(input.weight, 2)} ${weightUnitStr}
+🔹 Pienso: ${feedName} (Proteína ${formatNum(feedType.protein, 1)}% - Energía ${formatNum(feedType.energy, 0)} kcal/kg)
+🔹 Índice FCR: ${formatNum(result.fcr, 2)}
 ----------------------------------------
-📌 Pienso diario total: ${result.dailyFeedTotal} ${feedRateUnitStr}
-📌 Por ${species.unitEs}: ${result.dailyFeedPerUnit} ${weightUnitStr}/día
-📌 Tomas diarias: ${result.feedingFrequency} tomas (${result.feedPerMealTotal} ${weightUnitStr} por toma)
+📌 Pienso diario total: ${formatNum(result.dailyFeedTotal, 3)} ${feedRateUnitStr}
+📌 Por ${species.unitEs}: ${formatNum(result.dailyFeedPerUnit, 3)} ${weightUnitStr}/día
+📌 Tomas diarias: ${result.feedingFrequency} tomas (${formatNum(result.feedPerMealTotal, 3)} ${weightUnitStr} por toma)
 📌 Horarios: ${result.feedingTimes.join(' | ')}
-📌 Proteína diaria: ${result.dailyProtein} ${weightUnitStr}
-📌 Energía diaria: ${result.dailyEnergy} Mcal
-📌 Eficiencia de conversión: ${result.feedConversionEfficiency}%
-${result.dailyCost ? `💰 Coste diario estimado: ${currencySymbol}${result.dailyCost}` : ''}
-${result.monthlyCost ? `💰 Coste mensual (30 días): ${currencySymbol}${result.monthlyCost}` : ''}
+📌 Proteína diaria: ${formatNum(result.dailyProtein, 2)} ${weightUnitStr}
+📌 Energía diaria: ${formatNum(result.dailyEnergy, 2)} Mcal
+📌 Eficiencia de conversión: ${formatNum(result.feedConversionEfficiency, 1)}%
+${result.dailyCost ? `💰 Coste diario estimado: ${currencySymbol} ${formatNum(result.dailyCost, 2)}` : ''}
+${result.monthlyCost ? `💰 Coste mensual (30 días): ${currencySymbol} ${formatNum(result.monthlyCost, 2)}` : ''}
 ----------------------------------------
 Desarrollado por: ${t.devName} | Tel: ${t.devPhone}`;
     } else if (lang === 'zh') {
       report = `📊 智能饲料配比与投喂计算报告 (FeedCalc Pro)
 ----------------------------------------
 🔹 养殖物种: ${species.nameZh || species.nameEn} (${species.category === 'aquatic' ? '水产养殖' : species.category === 'specialty' ? '特种/蜜蜂养殖' : '畜禽养殖'})
-🔹 饲养规模: ${input.count} ${species.unitZh || species.unitEn} | 平均体重: ${input.weight} ${weightUnitStr}
-🔹 饲料配方: ${feedType.nameZh || feedType.nameEn} (粗蛋白 ${feedType.protein}% - 代谢能 ${feedType.energy} kcal/kg)
-🔹 料肉比 / 转化系数 (FCR): ${result.fcr}
+🔹 饲养规模: ${formatNum(input.count, 0)} ${species.unitZh || species.unitEn} | 平均体重: ${formatNum(input.weight, 2)} ${weightUnitStr}
+🔹 饲料配方: ${feedName} (粗蛋白 ${formatNum(feedType.protein, 1)}% - 代谢能 ${formatNum(feedType.energy, 0)} kcal/kg)
+🔹 料肉比 / 转化系数 (FCR): ${formatNum(result.fcr, 2)}
 ----------------------------------------
-📌 全群每日饲料总量: ${result.dailyFeedTotal} ${feedRateUnitStr}
-📌 单体每日均投喂量: ${result.dailyFeedPerUnit} ${weightUnitStr}/天 (~${Math.round(result.dailyFeedPerUnit * (input.weightUnit === 'lb' ? 16 : 1000))} ${input.weightUnit === 'lb' ? '盎司' : '克'})
-📌 投喂频次: 全天 ${result.feedingFrequency} 次 (每次分摊 ${result.feedPerMealTotal} ${weightUnitStr})
+📌 全群每日饲料总量: ${formatNum(result.dailyFeedTotal, 3)} ${feedRateUnitStr}
+📌 单体每日均投喂量: ${formatNum(result.dailyFeedPerUnit, 3)} ${weightUnitStr}/天 (~${formatNum(Math.round(result.dailyFeedPerUnit * (input.weightUnit === 'lb' ? 16 : 1000)), 0)} ${input.weightUnit === 'lb' ? '盎司' : '克'})
+📌 投喂频次: 全天 ${result.feedingFrequency} 次 (每次分摊 ${formatNum(result.feedPerMealTotal, 3)} ${weightUnitStr})
 📌 建议投喂时间: ${result.feedingTimes.join(' | ')}
-📌 全群日摄入粗蛋白: ${result.dailyProtein} ${weightUnitStr}
-📌 全群日消耗代谢能: ${result.dailyEnergy} 兆卡 (Mcal)
-📌 饲料转化效率: ${result.feedConversionEfficiency}%
-${result.dailyCost ? `💰 每日预估饲料成本: ${currencySymbol}${result.dailyCost}` : ''}
-${result.monthlyCost ? `💰 每月预估成本 (30天): ${currencySymbol}${result.monthlyCost}` : ''}
+📌 全群日摄入粗蛋白: ${formatNum(result.dailyProtein, 2)} ${weightUnitStr}
+📌 全群日消耗代谢能: ${formatNum(result.dailyEnergy, 2)} 兆卡 (Mcal)
+📌 饲料转化效率: ${formatNum(result.feedConversionEfficiency, 1)}%
+${result.dailyCost ? `💰 每日预估饲料成本: ${currencySymbol} ${formatNum(result.dailyCost, 2)}` : ''}
+${result.monthlyCost ? `💰 每月预估成本 (30天): ${currencySymbol} ${formatNum(result.monthlyCost, 2)}` : ''}
 ----------------------------------------
 首席开发者: ${t.devName} | 咨询电话: ${t.devPhone}`;
     } else if (lang === 'de') {
       report = `📊 FeedCalc Pro Berechnungsbericht
 ----------------------------------------
 🔹 Tierart: ${species.nameDe || species.nameEn} (${species.category === 'aquatic' ? 'Aquakultur' : species.category === 'specialty' ? 'Spezialform / Imkerei' : 'Nutztiere / Geflügel'})
-🔹 Bestand: ${input.count} ${species.unitDe || species.unitEn} | Durchschn. Gewicht: ${input.weight} ${weightUnitStr}
-🔹 Futter: ${feedType.nameDe || feedType.nameEn} (Rohprotein ${feedType.protein}% - Energie ${feedType.energy} kcal/kg)
-🔹 Futterverwertung (FCR): ${result.fcr}
+🔹 Bestand: ${formatNum(input.count, 0)} ${species.unitDe || species.unitEn} | Durchschn. Gewicht: ${formatNum(input.weight, 2)} ${weightUnitStr}
+🔹 Futter: ${feedName} (Rohprotein ${formatNum(feedType.protein, 1)}% - Energie ${formatNum(feedType.energy, 0)} kcal/kg)
+🔹 Futterverwertung (FCR): ${formatNum(result.fcr, 2)}
 ----------------------------------------
-📌 Tagesfutterbedarf gesamt: ${result.dailyFeedTotal} ${feedRateUnitStr}
-📌 Pro ${species.unitDe || species.unitEn}: ${result.dailyFeedPerUnit} ${weightUnitStr}/Tag (~${Math.round(result.dailyFeedPerUnit * (input.weightUnit === 'lb' ? 16 : 1000))} ${input.weightUnit === 'lb' ? 'oz' : 'g'})
-📌 Fütterungsrhythmus: ${result.feedingFrequency} Mahlzeiten (${result.feedPerMealTotal} ${weightUnitStr} pro Fütterung)
+📌 Tagesfutterbedarf gesamt: ${formatNum(result.dailyFeedTotal, 3)} ${feedRateUnitStr}
+📌 Pro ${species.unitDe || species.unitEn}: ${formatNum(result.dailyFeedPerUnit, 3)} ${weightUnitStr}/Tag (~${formatNum(Math.round(result.dailyFeedPerUnit * (input.weightUnit === 'lb' ? 16 : 1000)), 0)} ${input.weightUnit === 'lb' ? 'oz' : 'g'})
+📌 Fütterungsrhythmus: ${result.feedingFrequency} Mahlzeiten (${formatNum(result.feedPerMealTotal, 3)} ${weightUnitStr} pro Fütterung)
 📌 Fütterungszeiten: ${result.feedingTimes.join(' | ')}
-📌 Tägliches Rohprotein: ${result.dailyProtein} ${weightUnitStr}
-📌 Tägliche Energie: ${result.dailyEnergy} Mcal
-📌 Futterverwertungseffizienz: ${result.feedConversionEfficiency}%
-${result.dailyCost ? `💰 Geschätzte Tageskosten: ${currencySymbol}${result.dailyCost}` : ''}
-${result.monthlyCost ? `💰 Monatliche Kosten (30 Tage): ${currencySymbol}${result.monthlyCost}` : ''}
+📌 Tägliches Rohprotein: ${formatNum(result.dailyProtein, 2)} ${weightUnitStr}
+📌 Tägliche Energie: ${formatNum(result.dailyEnergy, 2)} Mcal
+📌 Futterverwertungseffizienz: ${formatNum(result.feedConversionEfficiency, 1)}%
+${result.dailyCost ? `💰 Geschätzte Tageskosten: ${currencySymbol} ${formatNum(result.dailyCost, 2)}` : ''}
+${result.monthlyCost ? `💰 Monatliche Kosten (30 Tage): ${currencySymbol} ${formatNum(result.monthlyCost, 2)}` : ''}
 ----------------------------------------
 Entwickelt von: ${t.devName} | Tel: ${t.devPhone}`;
     } else {
       report = `📊 FeedCalc Pro Calculation Report
 ----------------------------------------
 🔹 Species: ${species.nameEn} (${species.category === 'aquatic' ? 'Aquaculture' : 'Farm'})
-🔹 Count: ${input.count} ${species.unitEn} | Avg Weight: ${input.weight} ${weightUnitStr}
-🔹 Feed: ${feedType.nameEn} (${feedType.protein}% Protein, ${feedType.energy} kcal/kg)
-🔹 FCR: ${result.fcr}
+🔹 Count: ${formatNum(input.count, 0)} ${species.unitEn} | Avg Weight: ${formatNum(input.weight, 2)} ${weightUnitStr}
+🔹 Feed: ${feedName} (${formatNum(feedType.protein, 1)}% Protein, ${formatNum(feedType.energy, 0)} kcal/kg)
+🔹 FCR: ${formatNum(result.fcr, 2)}
 ----------------------------------------
-📌 Total Daily Feed: ${result.dailyFeedTotal} ${feedRateUnitStr}
-📌 Per ${species.unitEn}: ${result.dailyFeedPerUnit} ${weightUnitStr}/day
-📌 Schedule: ${result.feedingFrequency} meals (${result.feedPerMealTotal} ${weightUnitStr} per meal)
+📌 Total Daily Feed: ${formatNum(result.dailyFeedTotal, 3)} ${feedRateUnitStr}
+📌 Per ${species.unitEn}: ${formatNum(result.dailyFeedPerUnit, 3)} ${weightUnitStr}/day
+📌 Schedule: ${result.feedingFrequency} meals (${formatNum(result.feedPerMealTotal, 3)} ${weightUnitStr} per meal)
 📌 Feeding Times: ${result.feedingTimes.join(' | ')}
-📌 Daily Protein: ${result.dailyProtein} ${weightUnitStr}
-📌 Daily Energy: ${result.dailyEnergy} Mcal
-📌 Efficiency: ${result.feedConversionEfficiency}%
-${result.dailyCost ? `💰 Estimated Daily Cost: ${currencySymbol}${result.dailyCost}` : ''}
-${result.monthlyCost ? `💰 30-Day Monthly Cost: ${currencySymbol}${result.monthlyCost}` : ''}
+📌 Daily Protein: ${formatNum(result.dailyProtein, 2)} ${weightUnitStr}
+📌 Daily Energy: ${formatNum(result.dailyEnergy, 2)} Mcal
+📌 Efficiency: ${formatNum(result.feedConversionEfficiency, 1)}%
+${result.dailyCost ? `💰 Estimated Daily Cost: ${currencySymbol} ${formatNum(result.dailyCost, 2)}` : ''}
+${result.monthlyCost ? `💰 30-Day Monthly Cost: ${currencySymbol} ${formatNum(result.monthlyCost, 2)}` : ''}
 ----------------------------------------
 ${devLine}`;
     }

@@ -170,15 +170,15 @@ export const TRANSLATIONS: Record<Language, Translations> = {
     atWeight: 'بوزن',
     totalDailyFeed: 'كمية العلف اليومية الإجمالية',
     feedPerDayUnit: 'كجم / يوم',
-    perUnitDaily: (unit, g) => `كجم / لكل ${unit} يومياً (~${g} غرام)`,
+    perUnitDaily: (unit, g) => `كجم لكل ${unit} يومياً (~${formatNum(g, 0)} غرام)`,
     dailyProtein: 'البروتين اليومي',
     dailyEnergy: 'الطاقة المستهلكة',
     energyUnit: 'ميجا كال',
     fcr: 'معامل FCR',
     conversionEff: 'كفاءة التحويل',
     economicValuation: 'التقدير المالي للأعلاف:',
-    dailyCost: 'يومي:',
-    monthlyCost: 'شهري (30 يوم):',
+    dailyCost: 'يومياً:',
+    monthlyCost: 'شهرياً (تقدير 30 يوماً):',
     nutritionalTitle: (name) => `التركيبة والتحليل الغذائي — ${name}`,
     crudeProtein: 'البروتين الخام',
     metabolizableEnergy: 'الطاقة الاستقلابية',
@@ -194,7 +194,7 @@ export const TRANSLATIONS: Record<Language, Translations> = {
     customFeedNameLabel: 'اسم أو ماركة العلف (اختياري)',
     matchFeedBag: 'تخصيص نسب المكونات حسب كيس العلف',
     scheduleTitle: 'جدول ومواعيد التغذية اليومية',
-    scheduleSubtitle: (freq, mealKg) => `${freq} وجبات يومياً — حصة الوجبة الواحدة: ${mealKg} كجم`,
+    scheduleSubtitle: (freq, mealKg) => `${freq} وجبات يومياً — حصة الوجبة الواحدة: ${formatNum(mealKg, 2)} كجم`,
     advisoryTitle: 'توصيات إدارة القطيع والحوض:',
     advisoryAquatic: 'يُنصح بنثر العلف الطافي بانتظام على سطح الماء في أماكن هادئة بالتيار لمراقبة شهية الأسماك وتجنب تراكم العلف غير المأكول في القاع حفاظاً على نسبة الأكسجين الذائب وجودة المياه.',
     advisoryLand: 'يجب توفير مياه شرب عذبة ونظيفة بشكل دائم بمعدل لا يقل عن ضعف كمية العلف المستهلكة. راقب استهلاك العلف اليومي وتأكد من التهوية الجيدة للوقاية من الإجهاد الحراري.',
@@ -208,7 +208,7 @@ export const TRANSLATIONS: Record<Language, Translations> = {
     copied: 'تم نسخ التقرير',
     print: 'طباعة',
     downloadPdfReport: 'تحميل تقرير PDF',
-    downloadingPdf: 'جاري تجهيز PDF...',
+    downloadingPdf: 'جارٍ تجهيز تقرير PDF...',
     newCalculation: 'حساب جديد',
     footerTagline: 'FeedCalc Pro — أداة علمية للمزارعين ومربي الأسماك والدواجن',
     footerDisclaimer: 'النتائج المحسوبة تعتمد على المعادلات القياسية لمعدل التحويل الغذائي (FCR) وحصص التغذية اليومية بحسب معايير تغذية الحيوان العالمية.',
@@ -900,12 +900,24 @@ export const TRANSLATIONS: Record<Language, Translations> = {
   },
 };
 
+// Converts Eastern Arabic numerals (٠-٩) and Persian numerals (۰-۹) to standard Western 123
+export function normalizeDigits(val: string | number | null | undefined): string {
+  if (val === null || val === undefined) return '';
+  return String(val)
+    .replace(/[٠-٩]/g, (d) => '٠١٢٣٤٥٦٧٨٩'.indexOf(d).toString())
+    .replace(/[۰-۹]/g, (d) => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d).toString())
+    .replace(/،/g, '.');
+}
+
 // Pure 123 number formatter that NEVER produces eastern arabic numerals (١٢٣)
-export function formatNum(val: number, decimals: number = 2): string {
-  if (isNaN(val)) return '0';
+export function formatNum(val: number | string | null | undefined, decimals: number = 2): string {
+  if (val === null || val === undefined) return '0';
+  const num = typeof val === 'number' ? val : parseFloat(normalizeDigits(String(val)).replace(/,/g, ''));
+  if (isNaN(num)) return '0';
   // Use en-US to guarantee 123 numerals and standard commas/dots
-  return val.toLocaleString('en-US', {
+  return num.toLocaleString('en-US', {
     maximumFractionDigits: decimals,
     minimumFractionDigits: 0,
   });
 }
+

@@ -140,7 +140,8 @@ export default function App() {
   };
 
   const handleSelectPreset = (preset: QuickPreset) => {
-    if (!isActivated) {
+    const isFreePreset = preset.speciesId === 'broiler' || preset.speciesId === 'tilapia';
+    if (!isActivated && !isFreePreset) {
       setIsActivationModalOpen(true);
       return;
     }
@@ -325,8 +326,8 @@ export default function App() {
     setIsActivated(false);
     showToast(
       lang === 'ar'
-        ? '🔒 تم التحويل إلى وضع الزائر (المعاينة): دجاج اللحم متاح للتجربة، وباقي السلالات الـ 10 مقفلة.'
-        : 'Switched to Visitor Trial Mode: Broiler is free, other 10 species locked.',
+        ? '🔒 تم التحويل إلى وضع الزائر (المعاينة): دجاج اللحم وسمك البلطي متاحان للتجربة مجاناً، وباقي السلالات مقفلة.'
+        : 'Switched to Visitor Trial Mode: Broiler and Tilapia are free, other species locked.',
       'info'
     );
   };
@@ -372,7 +373,7 @@ export default function App() {
         <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
           {/* Visitor trial banner when not activated */}
           {!isActivated && (
-            <div className="mb-6 rounded-2xl border border-amber-300 bg-amber-50/95 p-4 text-amber-900 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+            <div className="mb-6 rounded-2xl border border-amber-300 bg-amber-50/95 p-4 text-amber-900 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 no-print">
               <div className="flex items-center gap-3">
                 <div className="size-9 rounded-xl bg-amber-100 border border-amber-300 flex items-center justify-center text-amber-700 shrink-0">
                   <Lock className="size-4" />
@@ -381,13 +382,13 @@ export default function App() {
                   <div className="text-xs sm:text-sm font-bold flex items-center gap-2">
                     <span>{lang === 'ar' ? 'وضع الزائر (معاينة تجريبية مجانية)' : 'Visitor Trial Mode'}</span>
                     <span className="rounded-full bg-emerald-600 text-white text-[10px] px-2 py-0.5 font-bold">
-                      {lang === 'ar' ? 'دجاج اللحم متاح' : 'Broiler Unlocked'}
+                      {lang === 'ar' ? 'دجاج اللحم وسمك البلطي متاحان مجاناً' : 'Broiler & Tilapia Unlocked'}
                     </span>
                   </div>
                   <p className="text-[11px] sm:text-xs text-amber-800/85 mt-0.5">
                     {lang === 'ar'
-                      ? 'سلالة دجاج اللحم متاحة بالكامل للتجربة الحرة. باقي السلالات الـ 10 مقفلة وتتطلب كود تفعيل.'
-                      : 'Broiler feed calculation is fully available for free trial. The other 10 species require activation key.'}
+                      ? 'دجاج اللحم وتسمين سمك البلطي متاحان بالكامل للاستخدام والتجربة الحرة مجاناً. باقي السلالات تتطلب كود تفعيل.'
+                      : 'Broiler chicken and Tilapia aquaculture calculations are 100% free. The other species require activation key.'}
                   </p>
                 </div>
               </div>
@@ -402,10 +403,10 @@ export default function App() {
             </div>
           )}
 
-          {/* دجاج اللحم متاح دائماً ومجاناً للجميع للتجربة والمعاينة، وباقي الحيوانات تطلب التفعيل */}
+          {/* دجاج اللحم وسمك البلطي متاحان دائماً ومجاناً للجميع للتجربة والمعاينة، وباقي الحيوانات تطلب التفعيل */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
             {/* Left Column: Species & Inputs (5 cols on lg) */}
-            <div className="lg:col-span-5 space-y-6">
+            <div className="lg:col-span-5 space-y-6 no-print">
               <SpeciesSelector
                 selectedSpeciesId={input.speciesId}
                 onSelectSpecies={handleSelectSpecies}
@@ -426,7 +427,7 @@ export default function App() {
             </div>
 
             {/* Right Column: Calculations & Results (7 cols on lg) */}
-            <div className="lg:col-span-7 space-y-6">
+            <div className="lg:col-span-7 space-y-6 print:w-full print:col-span-12">
               <ResultsView
                 species={selectedSpecies}
                 feedType={effectiveFeedType}

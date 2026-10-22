@@ -12,10 +12,22 @@
 }
 
 @media print {
-  header, footer, button, .no-print {
+  header, footer, button, .no-print, [id^="btn-"] {
     display: none !important;
   }
   .print-only {
+    display: block !important;
+  }
+  body {
+    background: #ffffff !important;
+    color: #111827 !important;
+  }
+  main {
+    max-width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+  .grid {
     display: block !important;
   }
 }

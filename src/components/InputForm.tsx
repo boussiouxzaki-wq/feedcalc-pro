@@ -14,7 +14,7 @@ import {
 import { Species, CalculationInput, Language, FeedType } from '../types';
 import { FEEDS_BY_SPECIES } from '../data/speciesData';
 import { CURRENCIES } from '../data/currencies';
-import { TRANSLATIONS } from '../utils/translations';
+import { TRANSLATIONS, normalizeDigits } from '../utils/translations';
 
 interface InputFormProps {
   species: Species;
@@ -211,12 +211,11 @@ export const InputForm: React.FC<InputFormProps> = ({
           <div className="relative">
             <input
               id="input-weight"
-              type="number"
-              min="0.001"
-              step="any"
+              type="text"
+              inputMode="decimal"
               placeholder={species.category === 'aquatic' ? '0.35' : '2.0'}
               value={input.weight}
-              onChange={(e) => onChange('weight', e.target.value)}
+              onChange={(e) => onChange('weight', normalizeDigits(e.target.value))}
               className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 py-2.5 text-sm font-medium text-slate-900 placeholder:text-slate-400 focus:border-emerald-500 focus:bg-white focus:outline-none focus:ring-3 focus:ring-emerald-500/15 transition-all"
             />
             <span className="pointer-events-none absolute inset-y-0 ltr:right-3.5 rtl:left-3.5 flex items-center text-xs font-bold text-slate-500">
@@ -236,12 +235,11 @@ export const InputForm: React.FC<InputFormProps> = ({
           </label>
           <input
             id="input-count"
-            type="number"
-            min="1"
-            step="1"
+            type="text"
+            inputMode="numeric"
             placeholder="1"
             value={input.count}
-            onChange={(e) => onChange('count', e.target.value)}
+            onChange={(e) => onChange('count', normalizeDigits(e.target.value))}
             className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 py-2 text-sm font-medium text-slate-900 placeholder:text-slate-400 focus:border-emerald-500 focus:bg-white focus:outline-none focus:ring-3 focus:ring-emerald-500/15 transition-all"
           />
         </div>
@@ -262,12 +260,11 @@ export const InputForm: React.FC<InputFormProps> = ({
           </label>
           <input
             id="input-age"
-            type="number"
-            min="1"
-            step="1"
+            type="text"
+            inputMode="numeric"
             placeholder="30"
             value={input.age}
-            onChange={(e) => onChange('age', e.target.value)}
+            onChange={(e) => onChange('age', normalizeDigits(e.target.value))}
             className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 py-2 text-sm font-medium text-slate-900 placeholder:text-slate-400 focus:border-emerald-500 focus:bg-white focus:outline-none focus:ring-3 focus:ring-emerald-500/15 transition-all"
           />
         </div>
@@ -415,7 +412,7 @@ export const InputForm: React.FC<InputFormProps> = ({
                         min="1"
                         max="70"
                         value={input.customProtein}
-                        onChange={(e) => onChange('customProtein', e.target.value)}
+                        onChange={(e) => onChange('customProtein', normalizeDigits(e.target.value))}
                         className="w-full rounded-lg border border-slate-200 bg-slate-50/70 px-2.5 py-1.5 text-xs font-bold text-slate-900 focus:border-emerald-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/15"
                       />
                       <span className="absolute end-2 top-1.5 text-[10px] text-slate-400 font-bold">%</span>
@@ -429,13 +426,12 @@ export const InputForm: React.FC<InputFormProps> = ({
                     </label>
                     <div className="relative">
                       <input
-                        type="number"
+                        type="text"
+                        inputMode="decimal"
                         id="input-custom-energy"
-                        step="10"
-                        min="500"
-                        max="5000"
+                        placeholder="3000"
                         value={input.customEnergy}
-                        onChange={(e) => onChange('customEnergy', e.target.value)}
+                        onChange={(e) => onChange('customEnergy', normalizeDigits(e.target.value))}
                         className="w-full rounded-lg border border-slate-200 bg-slate-50/70 px-2.5 py-1.5 text-xs font-bold text-slate-900 focus:border-emerald-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/15"
                       />
                       <span className="absolute end-2 top-1.5 text-[10px] text-slate-400 font-bold">kcal</span>
@@ -449,13 +445,12 @@ export const InputForm: React.FC<InputFormProps> = ({
                     </label>
                     <div className="relative">
                       <input
-                        type="number"
+                        type="text"
+                        inputMode="decimal"
                         id="input-custom-fat"
-                        step="0.1"
-                        min="0.1"
-                        max="35"
+                        placeholder="4.5"
                         value={input.customFat}
-                        onChange={(e) => onChange('customFat', e.target.value)}
+                        onChange={(e) => onChange('customFat', normalizeDigits(e.target.value))}
                         className="w-full rounded-lg border border-slate-200 bg-slate-50/70 px-2.5 py-1.5 text-xs font-bold text-slate-900 focus:border-emerald-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/15"
                       />
                       <span className="absolute end-2 top-1.5 text-[10px] text-slate-400 font-bold">%</span>
@@ -469,13 +464,12 @@ export const InputForm: React.FC<InputFormProps> = ({
                     </label>
                     <div className="relative">
                       <input
-                        type="number"
+                        type="text"
+                        inputMode="decimal"
                         id="input-custom-fiber"
-                        step="0.1"
-                        min="0.1"
-                        max="50"
+                        placeholder="4.0"
                         value={input.customFiber}
-                        onChange={(e) => onChange('customFiber', e.target.value)}
+                        onChange={(e) => onChange('customFiber', normalizeDigits(e.target.value))}
                         className="w-full rounded-lg border border-slate-200 bg-slate-50/70 px-2.5 py-1.5 text-xs font-bold text-slate-900 focus:border-emerald-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/15"
                       />
                       <span className="absolute end-2 top-1.5 text-[10px] text-slate-400 font-bold">%</span>
@@ -489,13 +483,12 @@ export const InputForm: React.FC<InputFormProps> = ({
                     </label>
                     <div className="relative">
                       <input
-                        type="number"
+                        type="text"
+                        inputMode="decimal"
                         id="input-custom-moisture"
-                        step="0.1"
-                        min="1"
-                        max="85"
+                        placeholder="12.0"
                         value={input.customMoisture}
-                        onChange={(e) => onChange('customMoisture', e.target.value)}
+                        onChange={(e) => onChange('customMoisture', normalizeDigits(e.target.value))}
                         className="w-full rounded-lg border border-slate-200 bg-slate-50/70 px-2.5 py-1.5 text-xs font-bold text-slate-900 focus:border-emerald-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/15"
                       />
                       <span className="absolute end-2 top-1.5 text-[10px] text-slate-400 font-bold">%</span>
@@ -509,13 +502,12 @@ export const InputForm: React.FC<InputFormProps> = ({
                     </label>
                     <div className="relative">
                       <input
-                        type="number"
+                        type="text"
+                        inputMode="decimal"
                         id="input-custom-ash"
-                        step="0.1"
-                        min="0.1"
-                        max="30"
+                        placeholder="6.0"
                         value={input.customAsh}
-                        onChange={(e) => onChange('customAsh', e.target.value)}
+                        onChange={(e) => onChange('customAsh', normalizeDigits(e.target.value))}
                         className="w-full rounded-lg border border-slate-200 bg-slate-50/70 px-2.5 py-1.5 text-xs font-bold text-slate-900 focus:border-emerald-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/15"
                       />
                       <span className="absolute end-2 top-1.5 text-[10px] text-slate-400 font-bold">%</span>
@@ -556,13 +548,11 @@ export const InputForm: React.FC<InputFormProps> = ({
               {input.useCustomFcr && (
                 <input
                   id="input-custom-fcr"
-                  type="number"
-                  step="0.05"
-                  min="0.5"
-                  max="20"
+                  type="text"
+                  inputMode="decimal"
                   placeholder={String(species.defaultFcr)}
                   value={input.customFcr}
-                  onChange={(e) => onChange('customFcr', e.target.value)}
+                  onChange={(e) => onChange('customFcr', normalizeDigits(e.target.value))}
                   className="w-full rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs text-slate-900 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
                 />
               )}
@@ -601,12 +591,11 @@ export const InputForm: React.FC<InputFormProps> = ({
                 <div className="relative flex-1">
                   <input
                     id="input-cost-kg"
-                    type="number"
-                    step="any"
-                    min="0"
+                    type="text"
+                    inputMode="decimal"
                     placeholder="0.00"
                     value={input.costPerKg}
-                    onChange={(e) => onChange('costPerKg', e.target.value)}
+                    onChange={(e) => onChange('costPerKg', normalizeDigits(e.target.value))}
                     className="w-full rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs text-slate-900 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
                   />
                   <span className="pointer-events-none absolute inset-y-0 ltr:right-3 rtl:left-3 flex items-center text-[10px] font-bold text-slate-400">

@@ -1,4 +1,5 @@
 import { Species, FeedType, CalculationInput, CalculationResult, Language } from '../types';
+import { normalizeDigits } from './translations';
 
 export function getFeedingSchedule(species: Species, lang: Language = 'ar'): {
   feedingFrequency: number;
@@ -144,10 +145,11 @@ export function calculateFeed(
   input: CalculationInput,
   lang: Language = 'ar'
 ): CalculationResult | null {
-  const weight = parseFloat(input.weight);
-  const count = parseInt(input.count, 10) || 1;
-  const fcr = input.useCustomFcr && input.customFcr
-    ? parseFloat(input.customFcr)
+  const weight = parseFloat(normalizeDigits(input.weight));
+  const count = parseInt(normalizeDigits(input.count), 10) || 1;
+  const rawCustomFcr = normalizeDigits(input.customFcr);
+  const fcr = input.useCustomFcr && rawCustomFcr
+    ? parseFloat(rawCustomFcr)
     : species.defaultFcr;
 
   if (isNaN(weight) || weight <= 0 || isNaN(fcr) || fcr <= 0) {

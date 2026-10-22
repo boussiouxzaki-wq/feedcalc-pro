@@ -76,7 +76,7 @@ interface ReportDictionary {
 const REPORT_I18N: Record<Language, ReportDictionary> = {
   ar: {
     dir: 'rtl',
-    fontFamily: '"Segoe UI", Tahoma, Arial, "Noto Sans Arabic", sans-serif',
+    fontFamily: "'Cairo', 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Tahoma, Arial, sans-serif",
     brand: 'FeedCalc Pro',
     reportTitle: 'تقرير الحسابات الغذائية ومقننات العلف اليومية',
     reportSubtitle: 'وثيقة فنية حسابية رسمية معتمدة على معادلات معدل التحويل الغذائي القياسية (FCR)',
@@ -89,7 +89,7 @@ const REPORT_I18N: Record<Language, ReportDictionary> = {
     perDay: 'يومياً',
     perUnitDaily: 'حصة الرأس اليومية:',
     fcrLabel: 'معامل التحويل (FCR):',
-    efficiencyLabel: 'كفاءة التحويل:',
+    efficiencyLabel: 'كفاءة التحويل الغذائي:',
     mealsLabel: 'عدد الوجبات:',
     mealsUnit: 'وجبات/يوم',
     section1Title: '1. بيانات ومعايير القطيع / الحوض المائي',
@@ -117,7 +117,7 @@ const REPORT_I18N: Record<Language, ReportDictionary> = {
     energyUnit: 'ميجا كالوري طاقة استقلابية',
     estimatedCostLabel: 'التكلفة المالية التقديرية',
     dailyCostSuffix: 'يومياً',
-    monthlyCostSuffix: 'شهرياً (تقدير 30 يوم)',
+    monthlyCostSuffix: 'شهرياً (تقدير 30 يوماً)',
     colNutrient: 'العنصر الغذائي',
     colNutrientVal: 'النسبة / القيمة في العلف',
     colBiologicalRole: 'الوظيفة الحيوية والأهمية الإنتاجية',
@@ -133,7 +133,7 @@ const REPORT_I18N: Record<Language, ReportDictionary> = {
     moistureRole: 'حفظ واستقرار العلف وتحديد تركيز المادة الجافة الفعالة',
     mineralAsh: 'الرماد المعدني الكلي (Total Ash)',
     mineralAshRole: 'بناء الهيكل العظمي وضبط التوازن الشاردي والإلكتروليتي',
-    footerTagline: 'FeedCalc Pro  |  نظام الحسابات الغذائية الذكي  |  المطور: ZAKARYA Bessioud (+213655870392)',
+    footerTagline: 'FeedCalc Pro  |  نظام الحسابات الغذائية الذكي  |  المطور: المهندس ZAKARYA Bessioud (+213655870392)',
     pageNumber: 'صفحة 1 من 1',
   },
   en: {
@@ -489,22 +489,73 @@ export async function generatePdfReport(params: {
   const speciesUnit = getLocalizedSpeciesUnit(species, lang);
   const feedName = getLocalizedFeedName(feedType, lang);
 
-  const weightUnitStr = input.weightUnit === 'lb' ? 'lb' : 'kg';
-  const smallWeightUnit = input.weightUnit === 'lb' ? 'oz' : 'g';
-  const smallWeightVal = Math.round(result.dailyFeedPerUnit * (input.weightUnit === 'lb' ? 16 : 1000));
+  const isMetric = input.weightUnit !== 'lb';
+  const weightUnitStr = isMetric 
+    ? (lang === 'ar' ? 'كجم' : 'kg') 
+    : (lang === 'ar' ? 'رطل' : 'lb');
+  const smallWeightUnit = isMetric 
+    ? (lang === 'ar' ? 'غرام' : 'g') 
+    : (lang === 'ar' ? 'أونصة' : 'oz');
+  const smallWeightVal = Math.round(result.dailyFeedPerUnit * (isMetric ? 1000 : 16));
   const currencyCode = input.currency || 'USD';
   const totalBiomass = (Number(input.count) * Number(input.weight)).toFixed(1);
 
   const now = new Date();
-  const dateFormatted = now.toLocaleDateString(lang === 'ar' ? 'ar-EG' : 'en-GB', {
+  // Strictly enforce 123 numerals using ar-u-nu-latn for Arabic
+  const dateFormatted = now.toLocaleDateString(lang === 'ar' ? 'ar-u-nu-latn' : 'en-GB', {
     year: 'numeric',
     month: 'long',
     day: 'numeric',
   });
-  const timeFormatted = now.toLocaleTimeString(lang === 'ar' ? 'ar-EG' : 'en-GB', {
+  const timeFormatted = now.toLocaleTimeString(lang === 'ar' ? 'ar-u-nu-latn' : 'en-GB', {
     hour: '2-digit',
     minute: '2-digit',
   });
+
+  const speciesCategoryNote = lang === 'ar'
+    ? (species.category === 'aquatic' ? 'استزراع مائي وأسماك' : species.category === 'specialty' ? 'مناحل وإنتاج عسل' : 'دواجن وإنتاج حيواني')
+    : lang === 'fr'
+    ? (species.category === 'aquatic' ? 'Pisciculture & Aquaculture' : species.category === 'specialty' ? 'Apiculture' : 'Élevage & Aviculture')
+    : (species.category === 'aquatic' ? 'Aquaculture' : species.category === 'specialty' ? 'Beekeeping' : 'Livestock / Poultry');
+
+  const stockCountNote = lang === 'ar'
+    ? 'إجمالي تعداد القطيع / الحوض المائي'
+    : lang === 'fr'
+    ? 'Effectif total du cheptel / bassin'
+    : 'Total Stock Population';
+
+  const avgWeightNote = lang === 'ar'
+    ? 'متوسط الوزن الحي لكل رأس / وحدة'
+    : lang === 'fr'
+    ? 'Poids vif unitaire moyen'
+    : 'Live Unit Weight';
+
+  const biomassNote = lang === 'ar'
+    ? 'إجمالي وزن الكتلة الحية في المزرعة'
+    : lang === 'fr'
+    ? 'Biomasse vive totale du cheptel'
+    : 'Total Herd / Pond Live Biomass';
+
+  const formulaProfileNote = lang === 'ar'
+    ? `${feedType.isCustom ? dict.customFormula : dict.standardFormula} (بروتين خام: ${formatNum(feedType.protein, 1)}% | طاقة: ${formatNum(feedType.energy, 0)} ك.كال/كجم)`
+    : `${feedType.isCustom ? dict.customFormula : dict.standardFormula} (${feedType.protein}% CP / ${feedType.energy} kcal)`;
+
+  const dailyDemandNote = lang === 'ar'
+    ? 'إجمالي استهلاك المزرعة اليومي من العلف'
+    : lang === 'fr'
+    ? 'Consommation journalière totale de l\'exploitation'
+    : 'Full Farm Daily Consumption';
+
+  const singleUnitNote = lang === 'ar'
+    ? `~${formatNum(smallWeightVal, 0)} ${smallWeightUnit} / لكل رأس يومياً`
+    : `~${formatNum(smallWeightVal, 0)} ${smallWeightUnit} / unit / day`;
+
+  // Wait for fonts to be ready so that Cairo Arabic font renders smoothly without pixelation or glitch
+  if (document.fonts && document.fonts.ready) {
+    try {
+      await document.fonts.ready;
+    } catch {}
+  }
 
   // Build the pure HTML element with strict inline CSS styles
   const reportEl = document.createElement('div');
@@ -512,10 +563,8 @@ export async function generatePdfReport(params: {
   reportEl.dir = dict.dir;
   reportEl.style.position = 'fixed';
   reportEl.style.top = '0';
-  reportEl.style.left = '0';
-  reportEl.style.zIndex = '-9999';
-  reportEl.style.opacity = '1';
-  reportEl.style.pointerEvents = 'none';
+  reportEl.style.left = '-10000px'; // Off-screen to prevent visual disruption while allowing full DOM layout & canvas rasterization
+  reportEl.style.zIndex = '9999';
   reportEl.style.width = '794px'; // Standard A4 width at 96 DPI
   reportEl.style.backgroundColor = '#ffffff';
   reportEl.style.color = '#1f2937';
@@ -567,7 +616,7 @@ export async function generatePdfReport(params: {
           ${formatNum(result.dailyFeedTotal, 3)} <span style="font-size: 18px; font-weight: 700;">${weightUnitStr} / ${dict.perDay}</span>
         </div>
         <div style="font-size: 11px; color: #374151; margin-top: 3px; font-weight: 500;">
-          ${dict.perUnitDaily} <strong style="color: #111827;">${formatNum(result.dailyFeedPerUnit, 4)} ${weightUnitStr}</strong> (~<strong>${formatNum(smallWeightVal, 0)} ${smallWeightUnit}</strong>)
+          ${dict.perUnitDaily} <strong style="color: #111827;">${formatNum(result.dailyFeedPerUnit, 3)} ${weightUnitStr}</strong> (~<strong>${formatNum(smallWeightVal, 0)} ${smallWeightUnit}</strong>)
         </div>
       </div>
       <div style="display: flex; gap: 12px; text-align: center;">
@@ -603,27 +652,27 @@ export async function generatePdfReport(params: {
           <tr style="background: #ffffff;">
             <td style="padding: 6px 10px; border: 1px solid #e5e7eb; font-weight: 600;">${dict.speciesLabel}</td>
             <td style="padding: 6px 10px; border: 1px solid #e5e7eb; font-weight: 700; color: #047857;">${speciesName}</td>
-            <td style="padding: 6px 10px; border: 1px solid #e5e7eb; color: #4b5563;">${species.category === 'aquatic' ? 'Aquaculture' : 'Livestock / Poultry'}</td>
+            <td style="padding: 6px 10px; border: 1px solid #e5e7eb; color: #4b5563;">${speciesCategoryNote}</td>
           </tr>
           <tr style="background: #f9fafb;">
             <td style="padding: 6px 10px; border: 1px solid #e5e7eb; font-weight: 600;">${dict.stockCountLabel}</td>
             <td style="padding: 6px 10px; border: 1px solid #e5e7eb; font-weight: 700;">${formatNum(Number(input.count), 0)} ${speciesUnit}</td>
-            <td style="padding: 6px 10px; border: 1px solid #e5e7eb; color: #4b5563;">Total Population</td>
+            <td style="padding: 6px 10px; border: 1px solid #e5e7eb; color: #4b5563;">${stockCountNote}</td>
           </tr>
           <tr style="background: #ffffff;">
             <td style="padding: 6px 10px; border: 1px solid #e5e7eb; font-weight: 600;">${dict.avgWeightLabel}</td>
             <td style="padding: 6px 10px; border: 1px solid #e5e7eb; font-weight: 700;">${formatNum(Number(input.weight), 2)} ${weightUnitStr}</td>
-            <td style="padding: 6px 10px; border: 1px solid #e5e7eb; color: #4b5563;">Live Unit Weight</td>
+            <td style="padding: 6px 10px; border: 1px solid #e5e7eb; color: #4b5563;">${avgWeightNote}</td>
           </tr>
           <tr style="background: #f9fafb;">
             <td style="padding: 6px 10px; border: 1px solid #e5e7eb; font-weight: 600;">${dict.biomassLabel}</td>
             <td style="padding: 6px 10px; border: 1px solid #e5e7eb; font-weight: 700; color: #047857;">${formatNum(Number(totalBiomass), 1)} ${weightUnitStr}</td>
-            <td style="padding: 6px 10px; border: 1px solid #e5e7eb; color: #4b5563;">Total Herd / Pond Biomass</td>
+            <td style="padding: 6px 10px; border: 1px solid #e5e7eb; color: #4b5563;">${biomassNote}</td>
           </tr>
           <tr style="background: #ffffff;">
             <td style="padding: 6px 10px; border: 1px solid #e5e7eb; font-weight: 600;">${dict.feedFormulaLabel}</td>
             <td style="padding: 6px 10px; border: 1px solid #e5e7eb; font-weight: 700;">${feedName}</td>
-            <td style="padding: 6px 10px; border: 1px solid #e5e7eb; color: #4b5563;">${feedType.isCustom ? dict.customFormula : dict.standardFormula} (${feedType.protein}% CP / ${feedType.energy} kcal)</td>
+            <td style="padding: 6px 10px; border: 1px solid #e5e7eb; color: #4b5563;">${formulaProfileNote}</td>
           </tr>
           <tr style="background: #f9fafb;">
             <td style="padding: 6px 10px; border: 1px solid #e5e7eb; font-weight: 600;">${dict.fcrMetricLabel}</td>
@@ -651,17 +700,17 @@ export async function generatePdfReport(params: {
           <tr style="background: #ffffff;">
             <td style="padding: 6px 10px; border: 1px solid #e5e7eb; font-weight: 600;">${dict.totalDailyDemandLabel}</td>
             <td style="padding: 6px 10px; border: 1px solid #e5e7eb; font-weight: 800; color: #059669;">${formatNum(result.dailyFeedTotal, 3)} ${weightUnitStr}</td>
-            <td style="padding: 6px 10px; border: 1px solid #e5e7eb; color: #4b5563;">Full Farm Daily Consumption</td>
+            <td style="padding: 6px 10px; border: 1px solid #e5e7eb; color: #4b5563;">${dailyDemandNote}</td>
           </tr>
           <tr style="background: #f9fafb;">
             <td style="padding: 6px 10px; border: 1px solid #e5e7eb; font-weight: 600;">${dict.singleUnitRationLabel}</td>
-            <td style="padding: 6px 10px; border: 1px solid #e5e7eb; font-weight: 700;">${formatNum(result.dailyFeedPerUnit, 4)} ${weightUnitStr}</td>
-            <td style="padding: 6px 10px; border: 1px solid #e5e7eb; color: #4b5563;">~${formatNum(smallWeightVal, 0)} ${smallWeightUnit} / unit / day</td>
+            <td style="padding: 6px 10px; border: 1px solid #e5e7eb; font-weight: 700;">${formatNum(result.dailyFeedPerUnit, 3)} ${weightUnitStr}</td>
+            <td style="padding: 6px 10px; border: 1px solid #e5e7eb; color: #4b5563;">${singleUnitNote}</td>
           </tr>
           <tr style="background: #ffffff;">
             <td style="padding: 6px 10px; border: 1px solid #e5e7eb; font-weight: 600;">${dict.mealDistributionLabel}</td>
             <td style="padding: 6px 10px; border: 1px solid #e5e7eb; font-weight: 700;">${result.feedingFrequency} ${dict.mealsUnit}</td>
-            <td style="padding: 6px 10px; border: 1px solid #e5e7eb; color: #4b5563;">${dict.perMealAmountLabel}: <strong>${formatNum(result.feedPerMealTotal, 2)} ${weightUnitStr}</strong></td>
+            <td style="padding: 6px 10px; border: 1px solid #e5e7eb; color: #4b5563;">${dict.perMealAmountLabel}: <strong>${formatNum(result.feedPerMealTotal, 3)} ${weightUnitStr}</strong></td>
           </tr>
           <tr style="background: #f9fafb;">
             <td style="padding: 6px 10px; border: 1px solid #e5e7eb; font-weight: 600;">${dict.timingsLabel}</td>
