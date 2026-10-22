@@ -7,6 +7,7 @@ export interface PdfReportExportResult {
   success: boolean;
   method: 'direct_download' | 'opened_in_new_tab' | 'blob_ready';
   blobUrl: string;
+  previewImageUrl?: string;
   fileName: string;
 }
 
@@ -550,21 +551,33 @@ export async function generatePdfReport(params: {
     ? `~${formatNum(smallWeightVal, 0)} ${smallWeightUnit} / لكل رأس يومياً`
     : `~${formatNum(smallWeightVal, 0)} ${smallWeightUnit} / unit / day`;
 
-  // Wait for fonts to be ready so that Cairo Arabic font renders smoothly without pixelation or glitch
-  if (document.fonts && document.fonts.ready) {
+  // Wait for fonts to be ready (with an 800ms race safety limit so it never blocks)
+  if (typeof document !== 'undefined' && document.fonts && document.fonts.ready) {
     try {
-      await document.fonts.ready;
+      await Promise.race([
+        document.fonts.ready,
+        new Promise((resolve) => setTimeout(resolve, 800)),
+      ]);
     } catch {}
   }
+
+  // Host container positioned behind the main application UI at left: 0, top: 0 with exact dimensions
+  const hostContainer = document.createElement('div');
+  hostContainer.id = 'pdf-render-host-container';
+  hostContainer.style.position = 'fixed';
+  hostContainer.style.top = '0';
+  hostContainer.style.left = '0';
+  hostContainer.style.width = '794px';
+  hostContainer.style.height = 'auto';
+  hostContainer.style.zIndex = '-9999';
+  hostContainer.style.pointerEvents = 'none';
+  hostContainer.style.overflow = 'hidden';
+  hostContainer.style.backgroundColor = '#ffffff';
 
   // Build the pure HTML element with strict inline CSS styles
   const reportEl = document.createElement('div');
   reportEl.id = 'print-rendered-pdf-container';
   reportEl.dir = dict.dir;
-  reportEl.style.position = 'fixed';
-  reportEl.style.top = '0';
-  reportEl.style.left = '-10000px'; // Off-screen to prevent visual disruption while allowing full DOM layout & canvas rasterization
-  reportEl.style.zIndex = '9999';
   reportEl.style.width = '794px'; // Standard A4 width at 96 DPI
   reportEl.style.backgroundColor = '#ffffff';
   reportEl.style.color = '#1f2937';
@@ -804,7 +817,12 @@ export async function generatePdfReport(params: {
     </div>
   `;
 
-  document.body.appendChild(reportEl);
+  hostContainer.appendChild(reportEl);
+  document.body.appendChild(hostContainer);
+
+  const cleanSpecies = species.id.replace(/[^a-zA-Z0-9_-]/g, '_');
+  const dateStr = now.toISOString().slice(0, 10);
+  const fileName = `FeedCalc_Report_${cleanSpecies}_${lang}_${dateStr}.pdf`;
 
   try {
     // Render using html2canvas with 2x resolution for crystal-clear text
@@ -814,15 +832,24 @@ export async function generatePdfReport(params: {
       allowTaint: true,
       logging: false,
       backgroundColor: '#ffffff',
+      width: 794,
+      windowWidth: 794,
+      x: 0,
+      y: 0,
       scrollX: 0,
       scrollY: 0,
-      windowWidth: 794,
     });
 
-    // Clean up temporary DOM element
+    // Clean up temporary DOM element safely
     try {
-      document.body.removeChild(reportEl);
+      if (document.body.contains(hostContainer)) {
+        document.body.removeChild(hostContainer);
+      }
     } catch {}
+
+    if (!canvas || !canvas.width || !canvas.height) {
+      throw new Error('Canvas render produced zero dimensions');
+    }
 
     // Create jsPDF A4 document
     const doc = new jsPDF({
@@ -841,39 +868,32 @@ export async function generatePdfReport(params: {
     // Draw the high-res crisp image fitting perfectly onto the A4 page
     doc.addImage(imgData, 'JPEG', 0, 0, pageWidth, Math.min(imgHeight, pageHeight));
 
-    // Generate clean filename
-    const cleanSpecies = species.id.replace(/[^a-zA-Z0-9_-]/g, '_');
-    const dateStr = now.toISOString().slice(0, 10);
-    const fileName = `FeedCalc_Report_${cleanSpecies}_${lang}_${dateStr}.pdf`;
-
     const blob = doc.output('blob');
     const blobUrl = URL.createObjectURL(blob);
 
     let method: 'direct_download' | 'opened_in_new_tab' | 'blob_ready' = 'direct_download';
 
+    // 1. Try standard jsPDF save (handles cross-browser saving natively)
     try {
-      const link = document.createElement('a');
-      link.href = blobUrl;
-      link.download = fileName;
-      link.target = '_blank';
-      link.rel = 'noopener noreferrer';
-      document.body.appendChild(link);
-      link.click();
-      setTimeout(() => {
-        try {
-          document.body.removeChild(link);
-        } catch {}
-      }, 500);
-    } catch (err) {
-      console.warn('Direct file download link click blocked, trying tab open:', err);
+      doc.save(fileName);
+    } catch (saveErr) {
+      console.warn('doc.save failed, trying blob anchor download:', saveErr);
       try {
-        const newTab = window.open(blobUrl, '_blank');
-        if (newTab) {
-          method = 'opened_in_new_tab';
-        } else {
-          method = 'blob_ready';
-        }
-      } catch {
+        const link = document.createElement('a');
+        link.href = blobUrl;
+        link.download = fileName;
+        link.style.display = 'none';
+        document.body.appendChild(link);
+        link.click();
+        setTimeout(() => {
+          try {
+            if (document.body.contains(link)) {
+              document.body.removeChild(link);
+            }
+          } catch {}
+        }, 1000);
+      } catch (linkErr) {
+        console.warn('Blob anchor click restricted by iframe sandbox:', linkErr);
         method = 'blob_ready';
       }
     }
@@ -882,15 +902,110 @@ export async function generatePdfReport(params: {
       success: true,
       method,
       blobUrl,
+      previewImageUrl: imgData,
       fileName,
     };
   } catch (err) {
-    // If html2canvas fails, remove element and rethrow
+    console.warn('html2canvas rasterization failed, using native jsPDF fallback:', err);
     try {
-      if (document.body.contains(reportEl)) {
-        document.body.removeChild(reportEl);
+      if (document.body.contains(hostContainer)) {
+        document.body.removeChild(hostContainer);
       }
     } catch {}
-    throw err;
+
+    // Fallback: Generate a clean vector/text PDF directly using native jsPDF
+    const doc = new jsPDF({
+      orientation: 'portrait',
+      unit: 'mm',
+      format: 'a4',
+      compress: true,
+    });
+    const pageWidth = doc.internal.pageSize.getWidth();
+
+    // Top Header Banner
+    doc.setFillColor(5, 150, 105);
+    doc.rect(10, 10, pageWidth - 20, 22, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(15);
+    doc.text('FeedCalc Pro', 15, 20);
+    doc.setFontSize(9.5);
+    doc.text('Smart Feeding & Nutrition Calculation Report', 15, 26);
+
+    // Meta attribution
+    doc.setTextColor(51, 65, 85);
+    doc.setFontSize(8.5);
+    doc.text(`Lead Engineer: ZAKARYA Bessioud (+213655870392) | ${dateFormatted} - ${timeFormatted}`, 15, 38);
+
+    // Card highlight
+    doc.setFillColor(240, 253, 244);
+    doc.setDrawColor(134, 239, 172);
+    doc.roundedRect(10, 44, pageWidth - 20, 26, 2, 2, 'FD');
+    doc.setTextColor(5, 150, 105);
+    doc.setFontSize(16);
+    doc.text(`${formatNum(result.dailyFeedTotal, 3)} ${weightUnitStr} / day`, 15, 56);
+    doc.setFontSize(9);
+    doc.setTextColor(71, 85, 105);
+    doc.text(`Per Unit: ${formatNum(result.dailyFeedPerUnit, 3)} ${weightUnitStr} | FCR: ${formatNum(result.fcr, 2)} | Frequency: ${result.feedingFrequency} meals/day`, 15, 64);
+
+    // Section 1: Herd Parameters
+    doc.setTextColor(15, 118, 110);
+    doc.setFontSize(10.5);
+    doc.text('1. Herd & Aquaculture Parameters', 10, 78);
+    doc.setTextColor(30, 41, 59);
+    doc.setFontSize(8.5);
+    doc.text(`• Species: ${speciesName} (${speciesCategoryNote})`, 12, 85);
+    doc.text(`• Population Count: ${formatNum(Number(input.count), 0)} ${speciesUnit}`, 12, 91);
+    doc.text(`• Average Unit Weight: ${formatNum(Number(input.weight), 2)} ${weightUnitStr}`, 12, 97);
+    doc.text(`• Total Live Biomass: ${formatNum(Number(totalBiomass), 1)} ${weightUnitStr}`, 12, 103);
+    doc.text(`• Feed Formula: ${feedName}`, 12, 109);
+
+    // Section 2: Allocation & Feeding
+    doc.setTextColor(15, 118, 110);
+    doc.setFontSize(10.5);
+    doc.text('2. Feeding Distribution & Nutritional Intake', 10, 122);
+    doc.setTextColor(30, 41, 59);
+    doc.setFontSize(8.5);
+    doc.text(`• Total Daily Demand: ${formatNum(result.dailyFeedTotal, 3)} ${weightUnitStr}`, 12, 129);
+    doc.text(`• Individual Ration: ${formatNum(result.dailyFeedPerUnit, 3)} ${weightUnitStr}/day (~${formatNum(smallWeightVal, 0)} ${smallWeightUnit})`, 12, 135);
+    doc.text(`• Daily Feeding Schedule: ${result.feedingFrequency} meals (${formatNum(result.feedPerMealTotal, 3)} ${weightUnitStr} per meal)`, 12, 141);
+    doc.text(`• Feeding Timings: ${result.feedingTimes.join('   •   ')}`, 12, 147);
+    doc.text(`• Daily Intake: ${formatNum(result.dailyProtein, 2)} kg protein | ${formatNum(result.dailyEnergy, 2)} Mcal energy`, 12, 153);
+    if (result.dailyCost) {
+      doc.text(`• Estimated Feed Cost: ${currencyCode} ${formatNum(result.dailyCost, 2)} daily | ${currencyCode} ${formatNum(result.monthlyCost, 2)} monthly`, 12, 159);
+    }
+
+    // Section 3: Nutritional Profile
+    doc.setTextColor(15, 118, 110);
+    doc.setFontSize(10.5);
+    doc.text('3. Feed Nutritional Guaranteed Profile', 10, 172);
+    doc.setTextColor(30, 41, 59);
+    doc.setFontSize(8.5);
+    doc.text(`• Crude Protein: ${feedType.protein}%`, 12, 179);
+    doc.text(`• Metabolizable Energy: ${feedType.energy} kcal/kg`, 12, 185);
+    if (feedType.fat !== undefined) {
+      doc.text(`• Crude Fat: ${feedType.fat}%`, 12, 191);
+    }
+    doc.text(`• Crude Fiber: ${feedType.fiber}% | Moisture: ${feedType.moisture}% | Ash: ${feedType.ash}%`, 12, 197);
+
+    // Footer note
+    doc.setDrawColor(226, 232, 240);
+    doc.line(10, 278, pageWidth - 10, 278);
+    doc.setTextColor(148, 163, 184);
+    doc.setFontSize(7.5);
+    doc.text('FeedCalc Pro | Smart Feed Calculation System | Developer: Eng. ZAKARYA Bessioud (+213655870392)', 10, 283);
+
+    const fallbackBlob = doc.output('blob');
+    const fallbackBlobUrl = URL.createObjectURL(fallbackBlob);
+
+    try {
+      doc.save(fileName);
+    } catch {}
+
+    return {
+      success: true,
+      method: 'blob_ready',
+      blobUrl: fallbackBlobUrl,
+      fileName,
+    };
   }
 }

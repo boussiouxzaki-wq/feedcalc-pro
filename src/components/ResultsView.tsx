@@ -52,7 +52,11 @@ export const ResultsView: React.FC<ResultsViewProps> = ({
 }) => {
   const [copied, setCopied] = useState(false);
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
-  const [pdfReportData, setPdfReportData] = useState<{ blobUrl: string; fileName: string } | null>(null);
+  const [pdfReportData, setPdfReportData] = useState<{
+    blobUrl: string;
+    fileName: string;
+    previewImageUrl?: string;
+  } | null>(null);
   const [isPdfModalOpen, setIsPdfModalOpen] = useState(false);
   const t = TRANSLATIONS[lang];
 
@@ -314,7 +318,11 @@ ${devLine}`;
         lang,
       });
 
-      setPdfReportData({ blobUrl: res.blobUrl, fileName: res.fileName });
+      setPdfReportData({
+        blobUrl: res.blobUrl,
+        fileName: res.fileName,
+        previewImageUrl: res.previewImageUrl,
+      });
       setIsPdfModalOpen(true);
 
       if (onToast) {
@@ -817,24 +825,32 @@ ${devLine}`;
               </button>
             </div>
 
-            {/* Modal Body / Info & iframe preview */}
-            <div className="py-3.5 space-y-3 flex-1 overflow-hidden flex flex-col">
-              <div className="rounded-lg bg-emerald-50/80 border border-emerald-200/80 p-3 text-xs text-emerald-900 flex items-start gap-2">
+            {/* Modal Body / Info & preview */}
+            <div className="py-3 space-y-2.5 flex-1 overflow-hidden flex flex-col">
+              <div className="rounded-lg bg-emerald-50/90 border border-emerald-200/90 p-2.5 sm:p-3 text-xs text-emerald-950 flex items-start gap-2">
                 <Check className="size-4 text-emerald-600 shrink-0 mt-0.5" />
                 <span className="leading-relaxed">
                   {lang === 'ar'
-                    ? 'تم إنشاء ملف التقرير بنجاح! إذا منع متصفحك أو إطار المعاينة التنزيل المباشر، يمكنك النقر على زر التنزيل أدناه أو فتحه في نافذة مستقلة أو طباعته مباشرة.'
-                    : 'PDF report ready! If your browser or iframe blocks automatic downloads, use the buttons below to download, open in a new tab, or print.'}
+                    ? 'تم تجهيز التقرير بنجاح! إذا منع متصفحك التنزيل التلقائي بسبب قيود الأمان أو إطار المعاينة، يمكنك النقر على زر "تنزيل ملف PDF" أدناه أو استخدام خيار "طباعة / حفظ كـ PDF".'
+                    : 'Report generated successfully! If automatic download was blocked by browser sandbox policies, use the direct Download PDF button below or Print / Save as PDF.'}
                 </span>
               </div>
 
-              {/* Embedded PDF Viewer */}
-              <div className="flex-1 min-h-[280px] sm:min-h-[340px] rounded-xl border border-slate-200 overflow-hidden bg-slate-100 shadow-inner">
-                <iframe
-                  src={pdfReportData.blobUrl}
-                  title="PDF Preview"
-                  className="w-full h-full min-h-[280px] sm:min-h-[340px] border-0"
-                />
+              {/* Visual Report Preview Container */}
+              <div className="flex-1 min-h-[260px] max-h-[52vh] sm:max-h-[58vh] overflow-y-auto rounded-xl border border-slate-200 bg-slate-100/90 p-2 shadow-inner flex items-center justify-center">
+                {pdfReportData.previewImageUrl ? (
+                  <img
+                    src={pdfReportData.previewImageUrl}
+                    alt="FeedCalc Report Preview"
+                    className="max-w-full h-auto max-h-full rounded shadow-sm border border-slate-300 object-contain mx-auto"
+                  />
+                ) : (
+                  <iframe
+                    src={pdfReportData.blobUrl}
+                    title="PDF Preview"
+                    className="w-full h-full min-h-[260px] sm:min-h-[320px] border-0"
+                  />
+                )}
               </div>
             </div>
 
@@ -851,15 +867,16 @@ ${devLine}`;
                   <span>{lang === 'ar' ? 'تنزيل ملف PDF' : 'Download PDF'}</span>
                 </a>
 
-                <button
-                  type="button"
+                <a
+                  href={pdfReportData.blobUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   id="btn-modal-open-new-tab"
-                  onClick={() => window.open(pdfReportData.blobUrl, '_blank')}
                   className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 px-3 py-2 text-xs font-semibold transition cursor-pointer"
                 >
                   <ExternalLink className="size-3.5 text-slate-500" />
-                  <span>{lang === 'ar' ? 'فتح في نافذة جديدة' : 'Open in New Window'}</span>
-                </button>
+                  <span>{lang === 'ar' ? 'عرض في نافذة مستقلة' : 'Open in New Window'}</span>
+                </a>
 
                 <button
                   type="button"
