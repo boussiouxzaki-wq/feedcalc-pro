@@ -8,9 +8,10 @@ interface FooterProps {
   onOpenExportModal?: () => void;
   onOpenIpModal?: () => void;
   onOpenAdmin?: () => void;
+  onOpenSolarCalc?: () => void;
 }
 
-export const Footer: React.FC<FooterProps> = ({ lang, onOpenIpModal, onOpenAdmin }) => {
+export const Footer: React.FC<FooterProps> = ({ lang, onOpenIpModal, onOpenAdmin, onOpenSolarCalc }) => {
   const t = TRANSLATIONS[lang];
 
   return (
@@ -82,6 +83,21 @@ export const Footer: React.FC<FooterProps> = ({ lang, onOpenIpModal, onOpenAdmin
             >
               <span className="text-amber-400">🔑</span>
               <span>لوحة التحكم وتوليد الأكواد (للمهندس زكريا)</span>
+            </button>
+          </div>
+        )}
+
+        {/* Additional Engineering Tools */}
+        {onOpenSolarCalc && (
+          <div className="mt-4 flex items-center justify-center gap-2">
+            <button
+              type="button"
+              id="btn-footer-solar-pump"
+              onClick={onOpenSolarCalc}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-amber-200 bg-amber-50/80 hover:bg-amber-100 text-amber-900 px-3 py-1.5 text-xs font-bold transition shadow-2xs cursor-pointer"
+            >
+              <span>☀️</span>
+              <span>{lang === 'ar' ? 'حاسبة الطاقة الشمسية للآبار الفلاحية' : 'Solar Pump Calculator for Wells'}</span>
             </button>
           </div>
         )}

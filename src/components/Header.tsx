@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Wheat, Globe, Sparkles, Phone, Check, ChevronDown, Smartphone, ShieldCheck, Download, ExternalLink, KeyRound } from 'lucide-react';
+import { Wheat, Globe, Sparkles, Phone, Check, ChevronDown, Smartphone, ShieldCheck, Download, ExternalLink, KeyRound, Sun } from 'lucide-react';
 import { QUICK_PRESETS, QuickPreset } from '../data/speciesData';
 import { Language } from '../types';
 import { TRANSLATIONS } from '../utils/translations';
@@ -14,6 +14,7 @@ interface HeaderProps {
   onOpenIpModal?: () => void;
   onOpenActivationModal?: () => void;
   onOpenAdmin?: () => void;
+  onOpenSolarCalc?: () => void;
   isActivated?: boolean;
 }
 
@@ -35,6 +36,7 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenIpModal,
   onOpenActivationModal,
   onOpenAdmin,
+  onOpenSolarCalc,
   isActivated = false,
 }) => {
   const [langMenuOpen, setLangMenuOpen] = useState(false);
@@ -249,6 +251,20 @@ export const Header: React.FC<HeaderProps> = ({
             >
               <Smartphone className="size-3.5 text-emerald-600" />
               <span>{t.apkZipBtn}</span>
+            </button>
+          )}
+
+          {/* Solar Well Pumping Calculator Tool */}
+          {onOpenSolarCalc && (
+            <button
+              type="button"
+              id="btn-header-solar-pump"
+              onClick={onOpenSolarCalc}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-amber-300/80 bg-amber-50 hover:bg-amber-100 text-amber-900 px-2.5 py-1.5 text-xs font-bold shadow-2xs transition cursor-pointer"
+              title={lang === 'ar' ? 'حاسبة الطاقة الشمسية للآبار الفلاحية' : 'Solar Well Pumping Calculator'}
+            >
+              <Sun className="size-3.5 text-amber-600" />
+              <span>{lang === 'ar' ? 'طاقة شمسية للآبار ☀️' : 'Solar Well Pump ☀️'}</span>
             </button>
           )}
 

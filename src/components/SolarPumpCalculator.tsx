@@ -1,0 +1,1351 @@
+import React, { useState, useEffect } from 'react';
+import {
+  Sun,
+  Droplets,
+  Zap,
+  Gauge,
+  Copy,
+  Check,
+  RotateCcw,
+  X,
+  Info,
+  ShieldCheck,
+  ChevronRight,
+  Sparkles,
+  Layers,
+  Cpu,
+  BookOpen,
+  ArrowRightLeft,
+  Flame,
+  Award,
+  HelpCircle,
+  CheckCircle2,
+  Sliders,
+  DollarSign,
+  Power
+} from 'lucide-react';
+import { Language } from '../types';
+import { formatNum, normalizeDigits } from '../utils/translations';
+
+interface SolarPumpCalculatorProps {
+  lang: Language;
+  isModal?: boolean;
+  onClose?: () => void;
+  onToast?: (message: string, type?: 'success' | 'error' | 'info') => void;
+}
+
+export type PumpMotorType = 'ac_3phase' | 'dc_bldc' | 'ac_1phase';
+export type SolarPanelType = 'mono_black' | 'poly_blue' | 'topcon_n';
+export type InverterType = 'solar_vfd' | 'hybrid' | 'dc_mppt';
+export type GridStatus = 'yes' | 'no';
+export type QualityTier = 'economic' | 'premium';
+
+export interface SolarPumpCalculationResult {
+  waterQ: number;
+  totalHead: number;
+  peakSunHours: number;
+  pumpEfficiency: number;
+  pumpPowerKw: number;
+  pumpPowerHp: number;
+  totalPvWatts: number;
+  totalPvKw: number;
+  panelWatt: number;
+  panelCount: number;
+  inverterKw: number;
+  hourlyFlow: number;
+  dailyHydraulicEnergy: number;
+  recommendedInverterHp: number;
+  pumpType: PumpMotorType;
+  panelType: SolarPanelType;
+  inverterType: InverterType;
+  stringConfig: string;
+  backupGeneratorKva?: number;
+  tempDeratingPercent: number;
+  gridStatus: GridStatus;
+  qualityTier: QualityTier;
+}
+
+export const SolarPumpCalculator: React.FC<SolarPumpCalculatorProps> = ({
+  lang,
+  isModal = false,
+  onClose,
+  onToast,
+}) => {
+  // Three core guided questions state
+  const [gridStatus, setGridStatus] = useState<GridStatus>('no');
+  const [qualityTier, setQualityTier] = useState<QualityTier>('premium');
+  const [waterQ, setWaterQ] = useState('50');
+  const [totalHead, setTotalHead] = useState('70');
+
+  // Engineering selectors (synced with the 3 questions, but can be fine-tuned)
+  const [pumpType, setPumpType] = useState<PumpMotorType>('ac_3phase');
+  const [panelType, setPanelType] = useState<SolarPanelType>('mono_black');
+  const [inverterType, setInverterType] = useState<InverterType>('solar_vfd');
+  const [panelWatt, setPanelWatt] = useState('550');
+  const [peakSunHours, setPeakSunHours] = useState('5');
+
+  // UI state
+  const [activeTab, setActiveTab] = useState<'wizard' | 'custom'>('wizard');
+  const [showAdvanced, setShowAdvanced] = useState(false);
+  const [showGuide, setShowGuide] = useState(false);
+  const [result, setResult] = useState<SolarPumpCalculationResult | null>(null);
+  const [copied, setCopied] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
+
+  // Synchronize Question 1 (Grid connection) with Inverter Type
+  const handleGridChange = (status: GridStatus) => {
+    setGridStatus(status);
+    if (status === 'yes') {
+      setInverterType('hybrid');
+    } else {
+      setInverterType(pumpType === 'dc_bldc' ? 'dc_mppt' : 'solar_vfd');
+    }
+  };
+
+  // Synchronize Question 2 (Quality Tier) with Panel Type
+  const handleTierChange = (tier: QualityTier) => {
+    setQualityTier(tier);
+    if (tier === 'economic') {
+      setPanelType('poly_blue');
+    } else {
+      setPanelType('mono_black');
+    }
+  };
+
+  // Auto-sync inverter recommendation when pump type changes
+  useEffect(() => {
+    if (pumpType === 'dc_bldc') {
+      setInverterType('dc_mppt');
+    } else if (inverterType === 'dc_mppt') {
+      setInverterType(gridStatus === 'yes' ? 'hybrid' : 'solar_vfd');
+    }
+  }, [pumpType, gridStatus]);
+
+  const calculateSolarPump = () => {
+    setErrorMsg('');
+    const cleanQ = normalizeDigits(waterQ);
+    const cleanH = normalizeDigits(totalHead);
+    const cleanP = normalizeDigits(panelWatt);
+    const cleanHours = normalizeDigits(peakSunHours);
+
+    const Q = parseFloat(cleanQ);
+    const H = parseFloat(cleanH);
+    const pWatt = parseFloat(cleanP) || 550;
+    const psh = parseFloat(cleanHours) || 5;
+
+    if (!Q || !H || isNaN(Q) || isNaN(H) || Q <= 0 || H <= 0) {
+      const err =
+        lang === 'ar'
+          ? 'الرجاء إدخال قيم صحيحة وموجبة لكمية المياه والارتفاع الهيدروليكي (العمق).'
+          : 'Please enter valid positive values for daily water flow and total head depth.';
+      setErrorMsg(err);
+      if (onToast) onToast(err, 'error');
+      return;
+    }
+
+    // 1. Rigorous Hydraulic Energy Sizing (Cambridge University & FAO 56 standard):
+    // E_hydraulic_daily = (rho * g * Q * TDH) / 3.6e6 = (Q * TDH) / 367  [kWh/day]
+    // Hydraulic Electrical Power P_pump:
+    // P_pump_kw = (Q * TDH) / (367 * PSH * eta_wire_to_water)
+    let pumpEfficiency = 0.52; // Default AC 3-Phase induction (~52%)
+    let pvOversizeRatio = 1.35; // Oversizing for AC surge, inverter loss, power factor
+
+    if (pumpType === 'dc_bldc') {
+      pumpEfficiency = 0.78; // BLDC brushless permanent magnet motor: high ~78% efficiency
+      pvOversizeRatio = 1.15; // Low starting surge, direct DC bus MPPT
+    } else if (pumpType === 'ac_1phase') {
+      pumpEfficiency = 0.46; // AC Single Phase has lower power factor and capacitor losses
+      pvOversizeRatio = 1.45;
+    }
+
+    const P_pump_kw = (Q * H) / (367 * psh * pumpEfficiency);
+    const P_pump_hp = P_pump_kw * 1.34102;
+
+    // 2. Solar Panel Technology & Thermal Derating:
+    // Cambridge Solar Engineering: Cell temperature in summer reaches 60°C - 68°C.
+    // Monocrystalline (Black): gamma ~ -0.32%/°C -> Derating factor 1.00 (reference base)
+    // Polycrystalline (Blue): gamma ~ -0.40%/°C -> Needs +15% extra PV capacity
+    // N-Type TOPCon / Bifacial: gamma ~ -0.29%/°C + 8% albedo gain -> factor 0.94
+    let panelDeratingFactor = 1.0;
+    let tempDeratingPercent = 7.5;
+
+    if (panelType === 'poly_blue') {
+      panelDeratingFactor = 1.15; // +15% more wattage required to compensate thermal losses
+      tempDeratingPercent = 16.0;
+    } else if (panelType === 'topcon_n') {
+      panelDeratingFactor = 0.94; // -6% thanks to high efficiency and rear albedo capture
+      tempDeratingPercent = 5.0;
+    }
+
+    // Total PV array peak capacity (Wp)
+    const total_pv_watts = P_pump_kw * 1000 * pvOversizeRatio * panelDeratingFactor;
+    const total_pv_kw = total_pv_watts / 1000;
+
+    // Solar panels count
+    let panelCount = Math.ceil(total_pv_watts / pWatt);
+
+    // Ensure balanced strings configuration:
+    let stringConfig = '';
+    if (pumpType === 'ac_3phase') {
+      if (panelCount <= 18) {
+        if (panelCount % 2 !== 0) panelCount++;
+        stringConfig =
+          lang === 'ar'
+            ? `مصفوفة مفردة: ${panelCount} لوح موصولة كلها على التوالي (Series String) لتأمين جهد MPPT (~${Math.round(panelCount * 42)}V)`
+            : `Single String: ${panelCount} panels in series for optimal MPPT (~${Math.round(panelCount * 42)}V)`;
+      } else {
+        const strings = 2;
+        let perString = Math.ceil(panelCount / strings);
+        if (perString % 2 !== 0) perString++;
+        panelCount = perString * strings;
+        stringConfig =
+          lang === 'ar'
+            ? `مصفوفتان متوازيتان (2 Strings in Parallel): كل مصفوفة تضم ${perString} لوح على التوالي (إجمالي ${panelCount} لوح)`
+            : `2 Parallel Strings: ${perString} panels per string in series (Total ${panelCount} panels)`;
+      }
+    } else if (pumpType === 'ac_1phase') {
+      if (panelCount % 2 !== 0) panelCount++;
+      stringConfig =
+        lang === 'ar'
+          ? `مصفوفة ${panelCount} لوح (توصيل هجين توالي/توازي حسب جهد دخول VFD المعتمد 220V)`
+          : `Array of ${panelCount} panels matched to 220V single-phase VFD MPPT window`;
+    } else {
+      if (panelCount % 2 !== 0) panelCount++;
+      stringConfig =
+        lang === 'ar'
+          ? `توصيل منخفض الجهد (Low DC Bus): ${panelCount} لوح متوافقة مباشرة مع محكم DC MPPT`
+          : `${panelCount} panels directly configured for the DC MPPT controller voltage`;
+    }
+
+    // 3. Inverter & Controller Sizing:
+    let inverterMultiplier = 1.25;
+    if (inverterType === 'hybrid') {
+      inverterMultiplier = 1.30;
+    } else if (inverterType === 'dc_mppt') {
+      inverterMultiplier = 1.15;
+    }
+
+    const inverterKw = parseFloat((P_pump_kw * inverterMultiplier).toFixed(1));
+    const recommendedInverterHp = parseFloat((P_pump_hp * inverterMultiplier).toFixed(1));
+
+    // Hybrid Diesel Generator recommendation:
+    let backupGeneratorKva: number | undefined;
+    if (inverterType === 'hybrid') {
+      backupGeneratorKva = Math.ceil((P_pump_kw * 1.55) / 0.8);
+    }
+
+    // Approximate average hourly flow during peak sunshine
+    const hourlyFlow = Q / psh;
+
+    // Daily Hydraulic Energy in kWh
+    const dailyHydraulicEnergy = (Q * H) / (367 * pumpEfficiency);
+
+    const calculated: SolarPumpCalculationResult = {
+      waterQ: Q,
+      totalHead: H,
+      peakSunHours: psh,
+      pumpEfficiency: Math.round(pumpEfficiency * 100),
+      pumpPowerKw: parseFloat(P_pump_kw.toFixed(2)),
+      pumpPowerHp: parseFloat(P_pump_hp.toFixed(1)),
+      totalPvWatts: Math.round(total_pv_watts),
+      totalPvKw: parseFloat(total_pv_kw.toFixed(2)),
+      panelWatt: pWatt,
+      panelCount,
+      inverterKw,
+      hourlyFlow: parseFloat(hourlyFlow.toFixed(1)),
+      dailyHydraulicEnergy: parseFloat(dailyHydraulicEnergy.toFixed(2)),
+      recommendedInverterHp,
+      pumpType,
+      panelType,
+      inverterType,
+      stringConfig,
+      backupGeneratorKva,
+      tempDeratingPercent,
+      gridStatus,
+      qualityTier,
+    };
+
+    setResult(calculated);
+
+    if (onToast) {
+      onToast(
+        lang === 'ar'
+          ? 'تم احتساب منظومة الضخ الشمسي بدقة هندسية عالية!'
+          : 'Solar water pumping system sized with high engineering precision!',
+        'success'
+      );
+    }
+  };
+
+  const handleReset = () => {
+    setGridStatus('no');
+    setQualityTier('premium');
+    setWaterQ('50');
+    setTotalHead('70');
+    setPanelWatt('550');
+    setPeakSunHours('5');
+    setPumpType('ac_3phase');
+    setPanelType('mono_black');
+    setInverterType('solar_vfd');
+    setResult(null);
+    setErrorMsg('');
+  };
+
+  const getPumpLabel = (type: PumpMotorType) => {
+    if (lang === 'ar') {
+      switch (type) {
+        case 'ac_3phase':
+          return 'مضخة تيار متناوب ثلاثية الطور (AC 3-Phase 380V)';
+        case 'dc_bldc':
+          return 'مضخة تيار مستمر فائقة الكفاءة (DC BLDC عديمة الفحمات)';
+        case 'ac_1phase':
+          return 'مضخة تيار متناوب أحادية الطور (AC 1-Phase 220V)';
+      }
+    } else {
+      switch (type) {
+        case 'ac_3phase':
+          return 'AC 3-Phase 380V Submersible Pump';
+        case 'dc_bldc':
+          return 'DC BLDC Brushless High-Efficiency Pump';
+        case 'ac_1phase':
+          return 'AC 1-Phase 220V Submersible Pump';
+      }
+    }
+  };
+
+  const getPanelLabel = (type: SolarPanelType) => {
+    if (lang === 'ar') {
+      switch (type) {
+        case 'mono_black':
+          return 'أحادي البلورة أسود (Monocrystalline Black) — كفاءة 22%';
+        case 'poly_blue':
+          return 'متعدد البلورات أزرق (Polycrystalline Blue) — كفاءة 17%';
+        case 'topcon_n':
+          return 'تقنية N-Type TOPCon مزدوج الوجه — كفاءة 24%';
+      }
+    } else {
+      switch (type) {
+        case 'mono_black':
+          return 'Monocrystalline Black Panels (22% Eff)';
+        case 'poly_blue':
+          return 'Polycrystalline Blue Panels (17% Eff)';
+        case 'topcon_n':
+          return 'N-Type TOPCon Bifacial Panels (24% Eff)';
+      }
+    }
+  };
+
+  const getInverterLabel = (type: InverterType) => {
+    if (lang === 'ar') {
+      switch (type) {
+        case 'solar_vfd':
+          return 'مغير تردد شمسي VFD ذكي مستقل (Solar VFD MPPT)';
+        case 'hybrid':
+          return 'عاكس هجين ذكي مزدوج (Hybrid: شمسي + شبكة / مولد ديزل)';
+        case 'dc_mppt':
+          return 'محكم تيار مستمر ذكي (DC MPPT Controller)';
+      }
+    } else {
+      switch (type) {
+        case 'solar_vfd':
+          return 'Solar VFD MPPT Inverter (Dedicated Off-Grid)';
+        case 'hybrid':
+          return 'Hybrid Solar Pump Inverter (Solar + Grid/Gen Blending)';
+        case 'dc_mppt':
+          return 'DC MPPT Pump Controller';
+      }
+    }
+  };
+
+  const handleCopySummary = () => {
+    if (!result) return;
+    const text =
+      lang === 'ar'
+        ? `☀️ تقرير منظومة الطاقة الشمسية لضخ الآبار الفلاحية (معايير كامبردج وFAO)
+==================================================
+📋 خيارات القرار المعتمدة (الأسئلة الـ 3):
+1️⃣ الربط بالشبكة الكهربائية: ${result.gridStatus === 'yes' ? 'نعم (تم اعتماد الخيار الهجين Hybrid)' : 'لا (معزول تماماً - تم اعتماد VFD شمسي مستقل)'}
+2️⃣ فئة الجودة والميزانية: ${result.qualityTier === 'premium' ? 'نوعية رفيعة ممتازة (ألواح سوداء مونوكريستالين عالية الكفاءة ومقاومة للحرارة)' : 'خيار اقتصادي (ألواح زرقاء متعددة البلورات بتكلفة استثمارية أقل)'}
+3️⃣ عمق البئر والتدفق: ${formatNum(result.totalHead, 0)} متر TDH | ${formatNum(result.waterQ, 1)} م³ يومياً
+--------------------------------------------------
+💧 كمية المياه اليومية المطلوبة: ${formatNum(result.waterQ, 1)} م³ / يوم
+📏 الارتفاع الهيدروليكي الكلي (TDH): ${formatNum(result.totalHead, 0)} متر
+☀️ ساعات الذروة الشمسية (PSH): ${formatNum(result.peakSunHours, 1)} ساعات / يوم
+⏳ معدل الضخ الساعي التقديري: ~${formatNum(result.hourlyFlow, 1)} م³ / ساعة
+⚡ الطاقة الهيدروليكية المنجزة: ${formatNum(result.dailyHydraulicEnergy, 2)} كيلوواط ساعي/يوم
+--------------------------------------------------
+⚙️ نوع المضخة والمحرك: ${getPumpLabel(result.pumpType)}
+📊 كفاءة المنظومة الميكانيكية والكهربائية: ${result.pumpEfficiency}%
+🔹 قدرة المضخة المقترحة: ${formatNum(result.pumpPowerKw, 2)} كيلوواط (${formatNum(result.pumpPowerHp, 1)} حصان)
+--------------------------------------------------
+☀️ تقنية ونوع الألواح: ${getPanelLabel(result.panelType)}
+🔹 إجمالي قدرة حقل الألواح: ${formatNum(result.totalPvKw, 2)} كيلوواط ذروة (${formatNum(result.totalPvWatts, 0)} واط)
+🔹 عدد الألواح الشمسية: ${result.panelCount} لوح (قدرة ${result.panelWatt} واط للوح)
+🔌 التوصيل الكهربائي لسلاسل الألواح: ${result.stringConfig}
+--------------------------------------------------
+⚡ نظام العاكس والتحكم: ${getInverterLabel(result.inverterType)}
+🔹 استطاعة العاكس المقترحة: لا تقل عن ${formatNum(result.inverterKw, 1)} كيلوواط (${formatNum(result.recommendedInverterHp, 1)} حصان)${
+            result.backupGeneratorKva
+              ? `\n🛢️ قدرة المولد الاحتياطي المقترح للعاكس الهجين: ${result.backupGeneratorKva} kVA ديزل للتشغيل المستمر 24/7`
+              : ''
+          }
+==================================================
+مبني على المعايير الهندسية لجامعة كامبردج ومنظمة الأغذية والزراعة FAO
+إعداد وتصميم: المهندس زكريا بسيود ZAKARYA Bessioud | FeedCalc Pro (+213655870392)`
+        : `☀️ Solar Water Pumping System Calculation Report (Cambridge & FAO Standards)
+==================================================
+📋 Core Decision Criteria (3-Step Questions):
+1️⃣ Grid Connection: ${result.gridStatus === 'yes' ? 'Connected (Hybrid Solar Inverter Selected)' : 'Off-Grid (Dedicated Solar VFD Selected)'}
+2️⃣ Quality Tier: ${result.qualityTier === 'premium' ? 'Premium Tier (Black Monocrystalline High-Resilience)' : 'Economic Tier (Blue Polycrystalline Budget-Friendly)'}
+3️⃣ Depth & Flow: ${formatNum(result.totalHead, 0)}m TDH | ${formatNum(result.waterQ, 1)} m³/day
+--------------------------------------------------
+💧 Daily Water Flow: ${formatNum(result.waterQ, 1)} m³/day
+📏 Total Dynamic Head (TDH): ${formatNum(result.totalHead, 0)} meters
+☀️ Peak Sun Hours (PSH): ${formatNum(result.peakSunHours, 1)} hours/day
+⏳ Approx Hourly Flow: ~${formatNum(result.hourlyFlow, 1)} m³/hour
+--------------------------------------------------
+⚙️ Pump Motor Type: ${getPumpLabel(result.pumpType)} (Efficiency: ${result.pumpEfficiency}%)
+🔹 Recommended Pump Rating: ${formatNum(result.pumpPowerKw, 2)} kW (${formatNum(result.pumpPowerHp, 1)} HP)
+--------------------------------------------------
+☀️ Solar Panel Type: ${getPanelLabel(result.panelType)}
+🔹 Total PV Array: ${formatNum(result.totalPvKw, 2)} kWp (${formatNum(result.totalPvWatts, 0)} W)
+🔹 Panels Required: ${result.panelCount} panels (${result.panelWatt}W each)
+🔌 String Configuration: ${result.stringConfig}
+--------------------------------------------------
+⚡ Inverter / Controller: ${getInverterLabel(result.inverterType)}
+🔹 Inverter Minimum Rating: ${formatNum(result.inverterKw, 1)} kW (${formatNum(result.recommendedInverterHp, 1)} HP)${
+            result.backupGeneratorKva
+              ? `\n🛢️ Recommended Backup Generator: ${result.backupGeneratorKva} kVA Diesel for continuous 24/7 duty`
+              : ''
+          }
+==================================================
+Designed by: Eng. ZAKARYA Bessioud | FeedCalc Pro (+213655870392)`;
+
+    navigator.clipboard.writeText(text).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2500);
+      if (onToast) {
+        onToast(lang === 'ar' ? 'تم نسخ التقرير الفني الشامل بنجاح!' : 'Engineering report copied!', 'success');
+      }
+    });
+  };
+
+  const cardContent = (
+    <div className="bg-white p-5 sm:p-7 rounded-2xl shadow-xl max-w-2xl mx-auto my-4 border border-emerald-100 text-slate-800">
+      {/* Header */}
+      <div className="flex items-center justify-between pb-4 mb-4 border-b border-emerald-950/5">
+        <div className="flex items-center gap-3">
+          <div className="p-3 bg-gradient-to-br from-amber-500 to-emerald-600 text-white rounded-xl shadow-xs">
+            <Sun className="h-6 w-6" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <h3 className="text-lg sm:text-xl font-extrabold text-gray-900 leading-tight">
+                {lang === 'ar' ? 'حاسبة الطاقة الشمسية للآبار الفلاحية' : 'Solar Well Pumping Engineering Calculator'}
+              </h3>
+              <span className="hidden sm:inline-flex items-center gap-1 rounded-md bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700 border border-emerald-200">
+                <Award className="size-3" />
+                {lang === 'ar' ? 'معايير كامبردج و FAO' : 'Cambridge & FAO'}
+              </span>
+            </div>
+            <p className="text-[11px] sm:text-xs text-slate-500 mt-0.5">
+              {lang === 'ar'
+                ? 'تصميم منظومة الضخ بالأسئلة الذكية الثلاثة وتبيين كافة المميزات الهندسية'
+                : '3-Question Smart Pumping Design & Comprehensive Feature Comparison'}
+            </p>
+          </div>
+        </div>
+
+        {isModal && onClose && (
+          <button
+            type="button"
+            onClick={onClose}
+            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition cursor-pointer"
+          >
+            <X className="size-5" />
+          </button>
+        )}
+      </div>
+
+      {/* Mode Switcher Tabs */}
+      <div className="flex items-center gap-2 mb-4 p-1 bg-slate-100 rounded-xl text-xs font-bold">
+        <button
+          type="button"
+          onClick={() => setActiveTab('wizard')}
+          className={`flex-1 py-2 px-3 rounded-lg flex items-center justify-center gap-1.5 transition cursor-pointer ${
+            activeTab === 'wizard'
+              ? 'bg-white text-emerald-800 shadow-2xs font-extrabold'
+              : 'text-slate-600 hover:text-slate-900'
+          }`}
+        >
+          <HelpCircle className="size-4 text-emerald-600" />
+          <span>{lang === 'ar' ? 'الأسئلة الذكية الـ 3 (موصى به للمزارع)' : 'Smart 3-Questions Wizard'}</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab('custom')}
+          className={`flex-1 py-2 px-3 rounded-lg flex items-center justify-center gap-1.5 transition cursor-pointer ${
+            activeTab === 'custom'
+              ? 'bg-white text-emerald-800 shadow-2xs font-extrabold'
+              : 'text-slate-600 hover:text-slate-900'
+          }`}
+        >
+          <Sliders className="size-4 text-emerald-600" />
+          <span>{lang === 'ar' ? 'التخصيص الهندسي اليدوي' : 'Advanced Engineering Mode'}</span>
+        </button>
+      </div>
+
+      {/* Main Form Body */}
+      <div className="space-y-4">
+        {errorMsg && (
+          <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-semibold">
+            {errorMsg}
+          </div>
+        )}
+
+        {/* ---------------- WIZARD MODE: 3 GUIDING QUESTIONS ---------------- */}
+        {activeTab === 'wizard' ? (
+          <div className="space-y-4">
+            {/* Question 1: Grid Connection */}
+            <div className="p-3.5 sm:p-4 rounded-xl border border-slate-200 bg-gradient-to-br from-slate-50 to-white shadow-2xs space-y-2.5">
+              <div className="flex items-center justify-between">
+                <span className="inline-flex items-center gap-1.5 text-xs font-bold px-2 py-0.5 rounded-md bg-amber-100 text-amber-900">
+                  <Power className="size-3.5" />
+                  <span>{lang === 'ar' ? 'السؤال الأول (مصدر الطاقة):' : 'Question 1 (Power Grid):'}</span>
+                </span>
+                <span className="text-[11px] font-semibold text-emerald-700">
+                  {gridStatus === 'yes'
+                    ? lang === 'ar' ? 'تم اختيار: عاكس هجين (Hybrid)' : 'Selected: Hybrid Inverter'
+                    : lang === 'ar' ? 'تم اختيار: خيار عادي (Solar VFD)' : 'Selected: Solar VFD Inverter'}
+                </span>
+              </div>
+
+              <div className="text-sm font-bold text-slate-900">
+                {lang === 'ar'
+                  ? 'هل المزرعة مربوطة بشبكة الكهرباء العامة أو يتوفر لديك مولد ديزل؟'
+                  : 'Is your farm connected to the power grid or do you have a diesel generator?'}
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
+                {/* Yes -> Hybrid */}
+                <button
+                  type="button"
+                  onClick={() => handleGridChange('yes')}
+                  className={`p-3 rounded-xl border text-start transition cursor-pointer flex flex-col justify-between ${
+                    gridStatus === 'yes'
+                      ? 'border-amber-500 bg-amber-50/70 ring-2 ring-amber-500/20 shadow-2xs'
+                      : 'border-slate-200 bg-white hover:border-slate-300'
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-xs sm:text-sm text-slate-900 flex items-center gap-1.5">
+                      <Zap className="size-4 text-amber-600" />
+                      {lang === 'ar' ? 'نعم، مربوط بالشبكة أو يتوفر مولد' : 'Yes, Grid or Generator Available'}
+                    </span>
+                    {gridStatus === 'yes' && <CheckCircle2 className="size-4 text-amber-600 shrink-0" />}
+                  </div>
+                  <div className="text-[11px] text-amber-900/80 mt-1.5 leading-snug font-medium">
+                    {lang === 'ar' ? '👈 خيار هجين (Hybrid Inverter):' : '👈 Hybrid Inverter Selection:'}
+                  </div>
+                  <ul className="text-[10.5px] text-slate-600 mt-1 space-y-0.5 list-disc list-inside leading-relaxed">
+                    <li>{lang === 'ar' ? 'ري نهاري وليلي متواصل 24/7 دون توقف' : 'Continuous 24/7 day and night irrigation'}</li>
+                    <li>{lang === 'ar' ? 'دمج فوري للطاقة الشمسية لتوفير 80% من الفاتورة/الديزل' : 'Instant solar blending saving up to 80% fuel'}</li>
+                  </ul>
+                </button>
+
+                {/* No -> Standard Off-Grid */}
+                <button
+                  type="button"
+                  onClick={() => handleGridChange('no')}
+                  className={`p-3 rounded-xl border text-start transition cursor-pointer flex flex-col justify-between ${
+                    gridStatus === 'no'
+                      ? 'border-emerald-600 bg-emerald-50/70 ring-2 ring-emerald-500/20 shadow-2xs'
+                      : 'border-slate-200 bg-white hover:border-slate-300'
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-xs sm:text-sm text-slate-900 flex items-center gap-1.5">
+                      <Sun className="size-4 text-emerald-600" />
+                      {lang === 'ar' ? 'لا، مزرعة معزولة تماماً (Off-Grid)' : 'No, Completely Off-Grid'}
+                    </span>
+                    {gridStatus === 'no' && <CheckCircle2 className="size-4 text-emerald-600 shrink-0" />}
+                  </div>
+                  <div className="text-[11px] text-emerald-900/80 mt-1.5 leading-snug font-medium">
+                    {lang === 'ar' ? '👈 خيار عادي (Solar VFD Inverter):' : '👈 Standard Solar VFD Selection:'}
+                  </div>
+                  <ul className="text-[10.5px] text-slate-600 mt-1 space-y-0.5 list-disc list-inside leading-relaxed">
+                    <li>{lang === 'ar' ? 'استقلالية شمسية كاملة وصفر فواتير أو تكاليف وقود' : '100% solar independence with zero fuel costs'}</li>
+                    <li>{lang === 'ar' ? 'مغير تردد متغير السرعة مع إقلاع سلس وحماية ضد الجفاف' : 'Variable MPPT speed with soft start & dry-run guard'}</li>
+                  </ul>
+                </button>
+              </div>
+            </div>
+
+            {/* Question 2: Economic vs Premium Tier */}
+            <div className="p-3.5 sm:p-4 rounded-xl border border-slate-200 bg-gradient-to-br from-slate-50 to-white shadow-2xs space-y-2.5">
+              <div className="flex items-center justify-between">
+                <span className="inline-flex items-center gap-1.5 text-xs font-bold px-2 py-0.5 rounded-md bg-indigo-100 text-indigo-900">
+                  <DollarSign className="size-3.5" />
+                  <span>{lang === 'ar' ? 'السؤال الثاني (فئة الجودة والميزانية):' : 'Question 2 (Budget & Tier):'}</span>
+                </span>
+                <span className="text-[11px] font-semibold text-indigo-700">
+                  {qualityTier === 'premium'
+                    ? lang === 'ar' ? 'تم اختيار: نوعية رفيعة ممتازة' : 'Selected: Premium Tier'
+                    : lang === 'ar' ? 'تم اختيار: خيار اقتصادي' : 'Selected: Economic Tier'}
+                </span>
+              </div>
+
+              <div className="text-sm font-bold text-slate-900">
+                {lang === 'ar'
+                  ? 'ما هو خيار الميزانية والجودة المفضل لديك في الألواح والمعدات؟'
+                  : 'What is your preferred budget and quality tier for panels & equipment?'}
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
+                {/* Economic Tier */}
+                <button
+                  type="button"
+                  onClick={() => handleTierChange('economic')}
+                  className={`p-3 rounded-xl border text-start transition cursor-pointer flex flex-col justify-between ${
+                    qualityTier === 'economic'
+                      ? 'border-blue-600 bg-blue-50/70 ring-2 ring-blue-500/20 shadow-2xs'
+                      : 'border-slate-200 bg-white hover:border-slate-300'
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-xs sm:text-sm text-slate-900 flex items-center gap-1.5">
+                      <span className="size-3 rounded-full bg-blue-600" />
+                      {lang === 'ar' ? 'خيار اقتصادي (Economic Tier)' : 'Economic / Budget Tier'}
+                    </span>
+                    {qualityTier === 'economic' && <CheckCircle2 className="size-4 text-blue-600 shrink-0" />}
+                  </div>
+                  <div className="text-[11px] text-blue-900/80 mt-1.5 leading-snug font-medium">
+                    {lang === 'ar' ? 'ألواح زرقاء (بولي كريستالين 550W):' : 'Blue Poly-Crystalline Panels (550W):'}
+                  </div>
+                  <ul className="text-[10.5px] text-slate-600 mt-1 space-y-0.5 list-disc list-inside leading-relaxed">
+                    <li>{lang === 'ar' ? 'أقل تكلفة استثمارية أولية (وفر مالي فوري في رأس المال)' : 'Lowest upfront capital investment'}</li>
+                    <li>{lang === 'ar' ? 'قطع غيار شائعة ومجربة للميزانيات الاقتصادية' : 'Widely available proven components'}</li>
+                    <li className="text-amber-800 font-semibold">{lang === 'ar' ? '⚠️ تنبيه: يتطلب +15% ألواح إضافية لمقاومة حرارة الصيف' : '⚠️ Note: Requires +15% more panels for heat loss'}</li>
+                  </ul>
+                </button>
+
+                {/* Premium Tier */}
+                <button
+                  type="button"
+                  onClick={() => handleTierChange('premium')}
+                  className={`p-3 rounded-xl border text-start transition cursor-pointer flex flex-col justify-between ${
+                    qualityTier === 'premium'
+                      ? 'border-slate-900 bg-slate-900 text-white ring-2 ring-slate-900/20 shadow-2xs'
+                      : 'border-slate-200 bg-white hover:border-slate-300'
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-xs sm:text-sm flex items-center gap-1.5">
+                      <Sparkles className="size-4 text-amber-400" />
+                      {lang === 'ar' ? 'نوعية رفيعة ممتازة (Premium Tier)' : 'Premium Quality Tier'}
+                    </span>
+                    {qualityTier === 'premium' && <CheckCircle2 className="size-4 text-amber-400 shrink-0" />}
+                  </div>
+                  <div className={`text-[11px] mt-1.5 leading-snug font-medium ${qualityTier === 'premium' ? 'text-amber-300' : 'text-slate-800'}`}>
+                    {lang === 'ar' ? 'ألواح سوداء مونوكريستالين فائقة الكفاءة (22-24%):' : 'Black Mono-Crystalline High Efficiency (22-24%):'}
+                  </div>
+                  <ul className={`text-[10.5px] mt-1 space-y-0.5 list-disc list-inside leading-relaxed ${qualityTier === 'premium' ? 'text-slate-300' : 'text-slate-600'}`}>
+                    <li>{lang === 'ar' ? 'مقاومة قصوى لحرارة الصيف الصحراوي (معامل فقد حراري منخفض)' : 'Superior heat tolerance (-0.30%/°C) in hot summer'}</li>
+                    <li>{lang === 'ar' ? 'إنتاجية ماء أعلى بـ 15-20% مع توفير بمساحة الهياكل' : '15-20% higher water yield & smaller mounting area'}</li>
+                    <li>{lang === 'ar' ? 'عمر افتراضي أطول (25-30 سنة) وأداء ميكانيكي راقٍ' : 'Longest 25-30 year lifespan & premium durability'}</li>
+                  </ul>
+                </button>
+              </div>
+            </div>
+
+            {/* Question 3: Well Depth & Water Requirements */}
+            <div className="p-3.5 sm:p-4 rounded-xl border border-slate-200 bg-gradient-to-br from-slate-50 to-white shadow-2xs space-y-2.5">
+              <div className="flex items-center justify-between">
+                <span className="inline-flex items-center gap-1.5 text-xs font-bold px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-900">
+                  <Droplets className="size-3.5" />
+                  <span>{lang === 'ar' ? 'السؤال الثالث (احتياجات البئر والماء):' : 'Question 3 (Depth & Water Flow):'}</span>
+                </span>
+                <span className="text-[11px] font-semibold text-emerald-700">
+                  {parseFloat(totalHead) > 80
+                    ? lang === 'ar' ? 'بئر عميق: محرك AC 380V متناوب' : 'Deep Well: AC 3-Phase 380V'
+                    : lang === 'ar' ? 'بئر متوسط/سطحي: خيار DC BLDC فائق الكفاءة متاح' : 'Shallow/Medium: DC BLDC available'}
+                </span>
+              </div>
+
+              <div className="text-sm font-bold text-slate-900">
+                {lang === 'ar'
+                  ? 'ما هي كمية المياه اليومية المطلوبة والعمق الكلي للبئر؟'
+                  : 'What is your required daily water volume and well total head?'}
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 mb-1 flex items-center justify-between">
+                    <span className="flex items-center gap-1.5">
+                      <Droplets className="size-3.5 text-emerald-600" />
+                      <span>{lang === 'ar' ? 'كمية المياه المطلوبة يومياً (m³):' : 'Daily Water Flow (m³):'}</span>
+                    </span>
+                    <span className="text-[11px] text-slate-400 font-normal">
+                      {lang === 'ar' ? 'متر مكعب / يوم' : 'm³/day'}
+                    </span>
+                  </label>
+                  <input
+                    type="text"
+                    inputMode="decimal"
+                    id="waterQ"
+                    value={waterQ}
+                    onChange={(e) => setWaterQ(normalizeDigits(e.target.value))}
+                    className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none text-slate-900 font-bold tabular-nums text-base bg-white shadow-2xs"
+                    placeholder={lang === 'ar' ? 'مثال: 50' : 'e.g. 50'}
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 mb-1 flex items-center justify-between">
+                    <span className="flex items-center gap-1.5">
+                      <Gauge className="size-3.5 text-emerald-600" />
+                      <span>{lang === 'ar' ? 'الارتفاع الهيدروليكي الكلي (TDH متر):' : 'Total Dynamic Head (TDH m):'}</span>
+                    </span>
+                    <span className="text-[11px] text-slate-400 font-normal">
+                      {lang === 'ar' ? 'العمق + فواقد الاحتكاك' : 'Depth + Friction'}
+                    </span>
+                  </label>
+                  <input
+                    type="text"
+                    inputMode="decimal"
+                    id="totalHead"
+                    value={totalHead}
+                    onChange={(e) => setTotalHead(normalizeDigits(e.target.value))}
+                    className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none text-slate-900 font-bold tabular-nums text-base bg-white shadow-2xs"
+                    placeholder={lang === 'ar' ? 'مثال: 70' : 'e.g. 70'}
+                  />
+                </div>
+              </div>
+
+              {/* Dynamic recommendation for motor type based on depth */}
+              <div className="pt-1 flex flex-wrap items-center gap-2 text-xs">
+                <span className="text-slate-500 font-medium">{lang === 'ar' ? 'نوع المضخة المعتمد:' : 'Pump Type Applied:'}</span>
+                <button
+                  type="button"
+                  onClick={() => setPumpType('ac_3phase')}
+                  className={`px-2.5 py-1 rounded-lg border font-bold transition cursor-pointer ${
+                    pumpType === 'ac_3phase'
+                      ? 'bg-emerald-600 text-white border-emerald-600'
+                      : 'bg-white text-slate-700 border-slate-200 hover:border-slate-300'
+                  }`}
+                >
+                  {lang === 'ar' ? 'AC 380V ثلاثي الطور (القياسي)' : 'AC 380V (Standard)'}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setPumpType('dc_bldc')}
+                  className={`px-2.5 py-1 rounded-lg border font-bold transition cursor-pointer ${
+                    pumpType === 'dc_bldc'
+                      ? 'bg-emerald-600 text-white border-emerald-600'
+                      : 'bg-white text-slate-700 border-slate-200 hover:border-slate-300'
+                  }`}
+                >
+                  {lang === 'ar' ? 'DC BLDC فائق الكفاءة (للآبار ≤100م)' : 'DC BLDC (High Eff ≤100m)'}
+                </button>
+              </div>
+            </div>
+          </div>
+        ) : (
+          /* ---------------- CUSTOM / ADVANCED ENGINEERING MODE ---------------- */
+          <div className="space-y-4">
+            {/* Hydraulic Inputs */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+              <div>
+                <label className="block text-xs sm:text-sm font-bold text-gray-700 mb-1 flex items-center justify-between">
+                  <span className="flex items-center gap-1.5">
+                    <Droplets className="size-4 text-emerald-600" />
+                    <span>{lang === 'ar' ? 'كمية المياه اليومية (m³):' : 'Daily Water Flow (m³):'}</span>
+                  </span>
+                  <span className="text-[11px] text-slate-400 font-normal">
+                    {lang === 'ar' ? 'متر مكعب / يوم' : 'm³/day'}
+                  </span>
+                </label>
+                <input
+                  type="text"
+                  inputMode="decimal"
+                  value={waterQ}
+                  onChange={(e) => setWaterQ(normalizeDigits(e.target.value))}
+                  className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none text-slate-900 font-bold tabular-nums text-base bg-white shadow-2xs"
+                  placeholder={lang === 'ar' ? 'مثال: 50' : 'e.g. 50'}
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs sm:text-sm font-bold text-gray-700 mb-1 flex items-center justify-between">
+                  <span className="flex items-center gap-1.5">
+                    <Gauge className="size-4 text-emerald-600" />
+                    <span>{lang === 'ar' ? 'الارتفاع الهيدروليكي الكلي (TDH متر):' : 'Total Dynamic Head (TDH m):'}</span>
+                  </span>
+                  <span className="text-[11px] text-slate-400 font-normal">
+                    {lang === 'ar' ? 'العمق + فواقد الاحتكاك' : 'Depth + Friction'}
+                  </span>
+                </label>
+                <input
+                  type="text"
+                  inputMode="decimal"
+                  value={totalHead}
+                  onChange={(e) => setTotalHead(normalizeDigits(e.target.value))}
+                  className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none text-slate-900 font-bold tabular-nums text-base bg-white shadow-2xs"
+                  placeholder={lang === 'ar' ? 'مثال: 70' : 'e.g. 70'}
+                />
+              </div>
+            </div>
+
+            {/* Pump Selector */}
+            <div>
+              <label className="block text-xs font-bold text-gray-800 mb-1.5">
+                {lang === 'ar' ? 'محرك المضخة (AC 380V / DC BLDC / AC 220V):' : 'Pump Motor Topology:'}
+              </label>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setPumpType('ac_3phase')}
+                  className={`p-2.5 rounded-xl border text-start transition cursor-pointer ${
+                    pumpType === 'ac_3phase'
+                      ? 'border-emerald-600 bg-emerald-50/80 ring-2 ring-emerald-500/20'
+                      : 'border-slate-200 bg-white hover:border-slate-300'
+                  }`}
+                >
+                  <div className="font-bold text-xs text-slate-900">{lang === 'ar' ? 'AC 380V ثلاثي الطور' : 'AC 3-Phase 380V'}</div>
+                  <div className="text-[10.5px] text-slate-500 mt-0.5">{lang === 'ar' ? 'للآبار العميقة والتدفقات الكبيرة' : 'Deep wells'}</div>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setPumpType('dc_bldc')}
+                  className={`p-2.5 rounded-xl border text-start transition cursor-pointer ${
+                    pumpType === 'dc_bldc'
+                      ? 'border-emerald-600 bg-emerald-50/80 ring-2 ring-emerald-500/20'
+                      : 'border-slate-200 bg-white hover:border-slate-300'
+                  }`}
+                >
+                  <div className="font-bold text-xs text-slate-900">{lang === 'ar' ? 'DC BLDC عديم الفحمات' : 'DC BLDC'}</div>
+                  <div className="text-[10.5px] text-slate-500 mt-0.5">{lang === 'ar' ? 'كفاءة 78% للآبار حتى 100م' : '78% Eff'}</div>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setPumpType('ac_1phase')}
+                  className={`p-2.5 rounded-xl border text-start transition cursor-pointer ${
+                    pumpType === 'ac_1phase'
+                      ? 'border-emerald-600 bg-emerald-50/80 ring-2 ring-emerald-500/20'
+                      : 'border-slate-200 bg-white hover:border-slate-300'
+                  }`}
+                >
+                  <div className="font-bold text-xs text-slate-900">{lang === 'ar' ? 'AC 220V أحادي الطور' : 'AC 1-Phase 220V'}</div>
+                  <div className="text-[10.5px] text-slate-500 mt-0.5">{lang === 'ar' ? 'للتطبيقات المنزلية' : 'Single Phase'}</div>
+                </button>
+              </div>
+            </div>
+
+            {/* Panels Selector */}
+            <div>
+              <label className="block text-xs font-bold text-gray-800 mb-1.5">
+                {lang === 'ar' ? 'تقنية الألواح ولونها:' : 'Solar Panel Technology:'}
+              </label>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setPanelType('mono_black')}
+                  className={`p-2.5 rounded-xl border text-start transition cursor-pointer ${
+                    panelType === 'mono_black'
+                      ? 'border-slate-900 bg-slate-900 text-white ring-2 ring-slate-900/20 shadow-xs'
+                      : 'border-slate-200 bg-white hover:border-slate-300 text-slate-800'
+                  }`}
+                >
+                  <div className="font-bold text-xs">{lang === 'ar' ? 'أسود (مونو)' : 'Black Mono'}</div>
+                  <div className={`text-[10.5px] mt-0.5 ${panelType === 'mono_black' ? 'text-slate-300' : 'text-slate-500'}`}>
+                    {lang === 'ar' ? 'كفاءة 22% ومقاومة حرارة' : '22% Eff • Heat Proof'}
+                  </div>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setPanelType('poly_blue')}
+                  className={`p-2.5 rounded-xl border text-start transition cursor-pointer ${
+                    panelType === 'poly_blue'
+                      ? 'border-blue-600 bg-blue-600 text-white ring-2 ring-blue-500/20 shadow-xs'
+                      : 'border-slate-200 bg-white hover:border-slate-300 text-slate-800'
+                  }`}
+                >
+                  <div className="font-bold text-xs">{lang === 'ar' ? 'أزرق (بولي)' : 'Blue Poly'}</div>
+                  <div className={`text-[10.5px] mt-0.5 ${panelType === 'poly_blue' ? 'text-blue-100' : 'text-slate-500'}`}>
+                    {lang === 'ar' ? 'اقتصادي (+15% ألواح)' : 'Economic (+15% panels)'}
+                  </div>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setPanelType('topcon_n')}
+                  className={`p-2.5 rounded-xl border text-start transition cursor-pointer ${
+                    panelType === 'topcon_n'
+                      ? 'border-emerald-600 bg-emerald-700 text-white ring-2 ring-emerald-500/20 shadow-xs'
+                      : 'border-slate-200 bg-white hover:border-slate-300 text-slate-800'
+                  }`}
+                >
+                  <div className="font-bold text-xs">{lang === 'ar' ? 'TOPCon مزدوج' : 'TOPCon Bifacial'}</div>
+                  <div className={`text-[10.5px] mt-0.5 ${panelType === 'topcon_n' ? 'text-emerald-100' : 'text-slate-500'}`}>
+                    {lang === 'ar' ? 'كفاءة 24% استغلال الأرض' : '24% Eff Bifacial'}
+                  </div>
+                </button>
+              </div>
+            </div>
+
+            {/* Inverter Selector */}
+            <div>
+              <label className="block text-xs font-bold text-gray-800 mb-1.5">
+                {lang === 'ar' ? 'نوع العاكس ومحول التردد:' : 'Inverter System:'}
+              </label>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                <button
+                  type="button"
+                  disabled={pumpType === 'dc_bldc'}
+                  onClick={() => setInverterType('solar_vfd')}
+                  className={`p-2.5 rounded-xl border text-start transition cursor-pointer ${
+                    pumpType === 'dc_bldc'
+                      ? 'opacity-40 cursor-not-allowed bg-slate-50'
+                      : inverterType === 'solar_vfd'
+                      ? 'border-emerald-600 bg-emerald-50/80 ring-2 ring-emerald-500/20'
+                      : 'border-slate-200 bg-white hover:border-slate-300'
+                  }`}
+                >
+                  <div className="font-bold text-xs text-slate-900">{lang === 'ar' ? 'VFD شمسي مستقل' : 'Solar VFD MPPT'}</div>
+                  <div className="text-[10.5px] text-slate-500 mt-0.5">{lang === 'ar' ? 'مباشر بدون شبكة نهاراً' : 'Off-grid'}</div>
+                </button>
+
+                <button
+                  type="button"
+                  disabled={pumpType === 'dc_bldc'}
+                  onClick={() => setInverterType('hybrid')}
+                  className={`p-2.5 rounded-xl border text-start transition cursor-pointer ${
+                    pumpType === 'dc_bldc'
+                      ? 'opacity-40 cursor-not-allowed bg-slate-50'
+                      : inverterType === 'hybrid'
+                      ? 'border-amber-600 bg-amber-50/80 ring-2 ring-amber-500/20'
+                      : 'border-slate-200 bg-white hover:border-slate-300'
+                  }`}
+                >
+                  <div className="font-bold text-xs text-slate-900">{lang === 'ar' ? 'انفرتر هجين (Hybrid)' : 'Hybrid Inverter'}</div>
+                  <div className="text-[10.5px] text-slate-500 mt-0.5">{lang === 'ar' ? 'شمسي + شبكة / مولد 24/7' : 'Solar + Grid/Gen'}</div>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setInverterType('dc_mppt')}
+                  className={`p-2.5 rounded-xl border text-start transition cursor-pointer ${
+                    inverterType === 'dc_mppt'
+                      ? 'border-emerald-600 bg-emerald-50/80 ring-2 ring-emerald-500/20'
+                      : 'border-slate-200 bg-white hover:border-slate-300'
+                  }`}
+                >
+                  <div className="font-bold text-xs text-slate-900">{lang === 'ar' ? 'محكم DC MPPT' : 'DC MPPT'}</div>
+                  <div className="text-[10.5px] text-slate-500 mt-0.5">{lang === 'ar' ? 'خاص بمضخات DC' : 'DC pumps only'}</div>
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Advanced Options Accordion */}
+        <div>
+          <div className="flex items-center justify-between">
+            <button
+              type="button"
+              onClick={() => setShowAdvanced(!showAdvanced)}
+              className="text-xs font-bold text-emerald-700 hover:text-emerald-800 flex items-center gap-1 cursor-pointer transition py-1"
+            >
+              <ChevronRight className={`size-3.5 transition-transform ${showAdvanced ? 'rotate-90' : 'rtl:rotate-180'}`} />
+              <span>
+                {lang === 'ar'
+                  ? 'إعدادات هندسية دقيقة (واط اللوح وساعات الذروة PSH)'
+                  : 'Advanced Fine-Tuning (Panel Watt & PSH Hours)'}
+              </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setShowGuide(!showGuide)}
+              className="text-xs font-semibold text-indigo-600 hover:text-indigo-700 flex items-center gap-1 cursor-pointer transition py-1"
+            >
+              <BookOpen className="size-3.5" />
+              <span>{lang === 'ar' ? 'مقارنة المميزات الفنية' : 'Feature Comparison'}</span>
+            </button>
+          </div>
+
+          {showAdvanced && (
+            <div className="mt-2.5 p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+              <div>
+                <label className="block font-medium text-slate-700 mb-1">
+                  {lang === 'ar' ? 'قدرة اللوح الشمسي الواحد (واط W):' : 'Individual Panel Rating (Watts):'}
+                </label>
+                <select
+                  value={panelWatt}
+                  onChange={(e) => setPanelWatt(e.target.value)}
+                  className="w-full px-3 py-1.5 rounded-lg border border-slate-200 bg-white font-bold text-slate-800 outline-none focus:ring-2 focus:ring-emerald-500"
+                >
+                  <option value="450">450 W</option>
+                  <option value="550">550 W (القياسي الزراعي المعتمد)</option>
+                  <option value="600">600 W</option>
+                  <option value="650">650 W</option>
+                  <option value="700">700 W</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block font-medium text-slate-700 mb-1">
+                  {lang === 'ar' ? 'ساعات الذروة الشمسية (PSH ساعات/يوم):' : 'Peak Sun Hours (PSH):'}
+                </label>
+                <select
+                  value={peakSunHours}
+                  onChange={(e) => setPeakSunHours(e.target.value)}
+                  className="w-full px-3 py-1.5 rounded-lg border border-slate-200 bg-white font-bold text-slate-800 outline-none focus:ring-2 focus:ring-emerald-500"
+                >
+                  <option value="4.0">4.0 ساعات (فصل الشتاء وأقسى ظروف)</option>
+                  <option value="4.5">4.5 ساعات (شتاء معتدل)</option>
+                  <option value="5.0">5.0 ساعات (متوسط قياسي معتمد هندسياً)</option>
+                  <option value="5.5">5.5 ساعات (المناطق الصحراوية / الصيف)</option>
+                  <option value="6.0">6.0 ساعات (أقصى سطوع صيفي)</option>
+                </select>
+              </div>
+            </div>
+          )}
+
+          {/* Academic & Engineering Reference Guide */}
+          {showGuide && (
+            <div className="mt-3 p-4 rounded-xl bg-gradient-to-br from-slate-50 to-indigo-50/40 border border-indigo-100 text-xs text-slate-700 space-y-3">
+              <div className="flex items-center gap-2 font-bold text-indigo-900 border-b border-indigo-100 pb-1.5">
+                <BookOpen className="size-4 text-indigo-600" />
+                <span>
+                  {lang === 'ar'
+                    ? 'جدول مقارنة المميزات والأسس الهندسية (جامعة كامبردج و FAO)'
+                    : 'Engineering Features Comparison (Cambridge & FAO Standards)'}
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                <div className="p-2.5 bg-white rounded-lg border border-slate-200">
+                  <div className="font-bold text-slate-900 mb-1 flex items-center gap-1.5">
+                    <span className="size-2 rounded-full bg-slate-900" />
+                    <span>{lang === 'ar' ? 'مميزات النوعية الرفيعة (الألواح السوداء):' : 'Premium Tier (Black Mono):'}</span>
+                  </div>
+                  <p className="text-slate-600 leading-relaxed text-[11px]">
+                    {lang === 'ar'
+                      ? 'خلايا أحادية البلورة نقية، معامل فقد حراري ضئيل (-0.32%/°C)، إنتاجية مستقرة تماماً حتى تحت حرارة 65°C، توفر 15% من مساحة الهيكل الحديدي وعمر افتراضي 25-30 سنة.'
+                      : 'Ultra-pure single crystal, minimal heat degradation (-0.32%/°C), stable output in extreme heat, saves 15% mounting footprint.'}
+                  </p>
+                </div>
+
+                <div className="p-2.5 bg-white rounded-lg border border-slate-200">
+                  <div className="font-bold text-slate-900 mb-1 flex items-center gap-1.5">
+                    <span className="size-2 rounded-full bg-blue-600" />
+                    <span>{lang === 'ar' ? 'مميزات الخيار الاقتصادي (الألواح الزرقاء):' : 'Economic Tier (Blue Poly):'}</span>
+                  </div>
+                  <p className="text-slate-600 leading-relaxed text-[11px]">
+                    {lang === 'ar'
+                      ? 'وفر أولي بنسبة 20-25% في تكلفة الشراء، سرعة في استرداد رأس المال، لكنها تتطلب عدداً أكبر من الألواح (+15%) لتعويض الفقد الحراري أثناء ذروة الصيف.'
+                      : 'Lower initial capital cost, faster payback for budget projects, but requires +15% more panels to compensate higher heat derating.'}
+                  </p>
+                </div>
+
+                <div className="p-2.5 bg-white rounded-lg border border-slate-200">
+                  <div className="font-bold text-slate-900 mb-1 flex items-center gap-1.5">
+                    <span className="size-2 rounded-full bg-amber-500" />
+                    <span>{lang === 'ar' ? 'مميزات العاكس الهجين (Hybrid):' : 'Hybrid Inverter Advantages:'}</span>
+                  </div>
+                  <p className="text-slate-600 leading-relaxed text-[11px]">
+                    {lang === 'ar'
+                      ? 'دمج تلقائي فوري بين الشمس والشبكة أو المولد، لا توقف عند الغيوم، تشغيل ليلي 24/7 مع حماية المولد من صدمات الإقلاع الحثية.'
+                      : 'Automatic real-time blending of solar + grid/generator, zero interruptions on cloudy days, allows 24/7 night irrigation.'}
+                  </p>
+                </div>
+
+                <div className="p-2.5 bg-white rounded-lg border border-slate-200">
+                  <div className="font-bold text-slate-900 mb-1 flex items-center gap-1.5">
+                    <span className="size-2 rounded-full bg-emerald-600" />
+                    <span>{lang === 'ar' ? 'مميزات العاكس العادي (Solar VFD):' : 'Solar VFD Advantages:'}</span>
+                  </div>
+                  <p className="text-slate-600 leading-relaxed text-[11px]">
+                    {lang === 'ar'
+                      ? 'استقلالية كاملة عن الشبكات، صفر تكاليف وقود، حماية مدمجة ضد التشغيل الجاف وإقلاع سلس ناعم لحماية مواسير البئر من المطرقة المائية.'
+                      : 'Zero fuel or electricity bills, built-in dry-run protection, soft-start algorithm protecting well pipes from water hammer.'}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Submit button */}
+        <button
+          type="button"
+          id="btn-calculate-solar"
+          onClick={calculateSolarPump}
+          className="w-full bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white font-extrabold py-3.5 rounded-xl transition duration-200 shadow-md hover:shadow-lg cursor-pointer flex items-center justify-center gap-2"
+        >
+          <Sun className="size-5 text-amber-300" />
+          <span>{lang === 'ar' ? 'احسب المنظومة المتكاملة واعرض المميزات' : 'Calculate Sizing & Display Features'}</span>
+        </button>
+      </div>
+
+      {/* Result Card Box */}
+      {result && (
+        <div id="solarResult" className="mt-6 p-4 sm:p-6 bg-gradient-to-br from-slate-50 via-emerald-50/20 to-white rounded-2xl border border-emerald-200 shadow-sm space-y-4">
+          <div className="flex items-center justify-between pb-3 border-b border-emerald-100">
+            <div className="flex items-center gap-2">
+              <span className="size-2.5 rounded-full bg-emerald-500 animate-ping" />
+              <h4 className="font-extrabold text-emerald-900 text-base sm:text-lg">
+                {lang === 'ar' ? 'المواصفات والنتائج الهندسية المعتمدة:' : 'Certified Engineering Specifications:'}
+              </h4>
+            </div>
+            <span className="text-[11px] bg-emerald-100 text-emerald-900 px-2.5 py-1 rounded-lg font-bold border border-emerald-300">
+              {lang === 'ar' ? 'حسابات مطابقة لمعايير كامبردج' : 'Cambridge Verified'}
+            </span>
+          </div>
+
+          {/* Decision Summary Badges */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+            <div className="p-2.5 rounded-xl bg-white border border-emerald-100 shadow-2xs flex items-center justify-between">
+              <span className="text-slate-600 font-medium">{lang === 'ar' ? 'نظام العاكس المعتمد:' : 'Inverter System:'}</span>
+              <span className="font-bold text-emerald-800">
+                {result.gridStatus === 'yes'
+                  ? lang === 'ar' ? '⚡ عاكس هجين (Hybrid: شمسي + شبكة/مولد)' : '⚡ Hybrid Dual Source Inverter'
+                  : lang === 'ar' ? '☀️ عاكس عادي (Solar VFD مستقل)' : '☀️ Off-Grid Solar VFD'}
+              </span>
+            </div>
+
+            <div className="p-2.5 rounded-xl bg-white border border-emerald-100 shadow-2xs flex items-center justify-between">
+              <span className="text-slate-600 font-medium">{lang === 'ar' ? 'فئة الألواح المعتمدة:' : 'Panel Tier:'}</span>
+              <span className="font-bold text-slate-900">
+                {result.qualityTier === 'premium'
+                  ? lang === 'ar' ? '✨ نوعية رفيعة (ألواح سوداء مونو)' : '✨ Premium Black Monocrystalline'
+                  : lang === 'ar' ? '🔹 خيار اقتصادي (ألواح زرقاء بولي)' : '🔹 Economic Blue Polycrystalline'}
+              </span>
+            </div>
+          </div>
+
+          <div className="space-y-3 text-sm text-gray-800">
+            {/* 1. Pump Power & Motor Type */}
+            <div className="p-3.5 rounded-xl bg-white border border-emerald-100 shadow-2xs space-y-1">
+              <div className="flex items-start justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-emerald-600 font-bold shrink-0">🔹</span>
+                  <p id="resPump" className="text-sm font-bold text-slate-900">
+                    {lang === 'ar' ? 'قدرة المضخة المقترحة:' : 'Recommended Submersible Pump:'}
+                  </p>
+                </div>
+                <span className="text-xs bg-slate-100 text-slate-700 px-2 py-0.5 rounded font-semibold">
+                  {lang === 'ar' ? `كفاءة ${result.pumpEfficiency}%` : `${result.pumpEfficiency}% Efficiency`}
+                </span>
+              </div>
+              <div className="ps-6 flex flex-wrap items-baseline gap-2">
+                <span className="text-emerald-700 font-extrabold text-lg tabular-nums">
+                  {formatNum(result.pumpPowerKw, 2)} {lang === 'ar' ? 'كيلوواط (kW)' : 'kW'}
+                </span>
+                <span className="text-slate-700 font-bold text-base">
+                  ({formatNum(result.pumpPowerHp, 1)} {lang === 'ar' ? 'حصان HP' : 'HP'})
+                </span>
+                <span className="text-xs text-slate-500">
+                  — {getPumpLabel(result.pumpType)}
+                </span>
+              </div>
+            </div>
+
+            {/* 2. Solar Panels Count & Technology Difference */}
+            <div className="p-3.5 rounded-xl bg-white border border-emerald-100 shadow-2xs space-y-1.5">
+              <div className="flex items-start justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-emerald-600 font-bold shrink-0">🔹</span>
+                  <p id="resPanels" className="text-sm font-bold text-slate-900">
+                    {lang === 'ar' ? 'عدد ومواصفات الألواح الشمسية:' : 'PV Array & Solar Panels Required:'}
+                  </p>
+                </div>
+                <span className={`text-xs px-2 py-0.5 rounded font-bold ${
+                  result.panelType === 'mono_black'
+                    ? 'bg-slate-900 text-white'
+                    : result.panelType === 'poly_blue'
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-emerald-700 text-white'
+                }`}>
+                  {result.panelType === 'mono_black'
+                    ? lang === 'ar' ? 'أحادي البلورة أسود' : 'Black Mono'
+                    : result.panelType === 'poly_blue'
+                    ? lang === 'ar' ? 'متعدد البلورات أزرق' : 'Blue Poly'
+                    : lang === 'ar' ? 'TOPCon مزدوج' : 'TOPCon Bifacial'}
+                </span>
+              </div>
+
+              <div className="ps-6 space-y-1">
+                <div className="flex flex-wrap items-baseline gap-2">
+                  <span className="text-emerald-700 font-black text-xl tabular-nums">
+                    {result.panelCount} {lang === 'ar' ? 'لوح' : 'panels'}
+                  </span>
+                  <span className="text-slate-700 font-semibold text-sm">
+                    ({lang === 'ar'
+                      ? `بقدرة ${result.panelWatt} واط للوح — إجمالي ${formatNum(result.totalPvKw, 2)} kWp ذروة`
+                      : `@ ${result.panelWatt}W each — Total ${formatNum(result.totalPvKw, 2)} kWp`})
+                  </span>
+                </div>
+
+                {/* Explanation of panel color impact */}
+                <p className="text-xs text-slate-500 leading-relaxed">
+                  {result.panelType === 'poly_blue' ? (
+                    <span className="text-amber-700 font-medium">
+                      {lang === 'ar'
+                        ? `⚠️ الخيار الاقتصادي: تم احتساب +15% ألواح إضافية (${result.panelCount} لوح) لتعويض معامل الفقد الحراري العالي للألواح الزرقاء أثناء قيظ الصيف.`
+                        : `⚠️ Economic Tier: +15% extra panels added to mitigate high thermal derating in blue polycrystalline cells.`}
+                    </span>
+                  ) : result.panelType === 'mono_black' ? (
+                    <span className="text-slate-600">
+                      {lang === 'ar'
+                        ? '✨ النوعية الرفيعة: الألواح السوداء Monocrystalline تضمن إنتاجية ثابتة ومقاومة عالية لدرجات الحرارة الصحراوية المرتفعة.'
+                        : '✨ Premium Tier: Black Monocrystalline panels maintain steady power under elevated ambient temperatures.'}
+                    </span>
+                  ) : (
+                    <span className="text-emerald-700">
+                      {lang === 'ar'
+                        ? '✨ تقنية TOPCon مزدوجة الوجه تحقق أقصى استغلال للطاقة مع استثمار انعكاس الأرضية (Albedo).'
+                        : '✨ TOPCon Bifacial delivers maximum harvest via rear-side ground reflection.'}
+                    </span>
+                  )}
+                </p>
+
+                {/* String configuration */}
+                <div className="text-[11.5px] bg-slate-50 border border-slate-200 p-2 rounded-lg text-slate-700 font-medium flex items-start gap-1.5 mt-1.5">
+                  <span className="font-bold text-emerald-700">🔌</span>
+                  <span>{result.stringConfig}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* 3. Inverter / Controller Rating & Hybrid Generator */}
+            <div className="p-3.5 rounded-xl bg-white border border-emerald-100 shadow-2xs space-y-1.5">
+              <div className="flex items-start justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-emerald-600 font-bold shrink-0">🔹</span>
+                  <p id="resInverter" className="text-sm font-bold text-slate-900">
+                    {lang === 'ar' ? 'العاكس ونظام التحكم (Inverter / Controller):' : 'Inverter & Controller System:'}
+                  </p>
+                </div>
+                <span className="text-xs bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded font-bold">
+                  {inverterType === 'hybrid'
+                    ? lang === 'ar' ? 'عاكس هجين مزدوج (Hybrid)' : 'Hybrid Dual Source'
+                    : inverterType === 'solar_vfd'
+                    ? lang === 'ar' ? 'VFD شمسي MPPT عادي' : 'Solar VFD'
+                    : lang === 'ar' ? 'محكم DC MPPT' : 'DC Controller'}
+                </span>
+              </div>
+
+              <div className="ps-6 space-y-1">
+                <p className="text-sm leading-relaxed">
+                  {lang === 'ar' ? 'قدرة العاكس المقترحة لا تقل عن:' : 'Minimum Inverter Rating:'}{' '}
+                  <span className="text-emerald-700 font-black text-lg tabular-nums">
+                    {formatNum(result.inverterKw, 1)} {lang === 'ar' ? 'كيلوواط (kW)' : 'kW'}
+                  </span>{' '}
+                  <span className="text-slate-600 font-bold text-sm">
+                    ({formatNum(result.recommendedInverterHp, 1)} {lang === 'ar' ? 'حصان HP' : 'HP'})
+                  </span>
+                </p>
+
+                {result.backupGeneratorKva && (
+                  <div className="p-2.5 rounded-lg bg-amber-50 border border-amber-200 text-xs text-amber-950 font-medium space-y-0.5 mt-1">
+                    <div className="flex items-center gap-1.5 font-bold text-amber-900">
+                      <Flame className="size-3.5 text-amber-600" />
+                      <span>{lang === 'ar' ? 'توصية المولد الاحتياطي للعاكس الهجين:' : 'Hybrid Generator Sizing:'}</span>
+                    </div>
+                    <p>
+                      {lang === 'ar'
+                        ? `مولد ديزل باستطاعة لا تقل عن ${result.backupGeneratorKva} kVA لتأمين تيار بدء المحرك Inductive Surge والسماح بالري المتواصل ليلاً أو أثناء تقلبات الطقس.`
+                        : `Diesel generator of at least ${result.backupGeneratorKva} kVA to handle pump inrush current and allow continuous 24/7 irrigation.`}
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* 4. Hydraulic flow & Energy summary */}
+            <div className="flex items-start gap-2.5 p-3 rounded-xl bg-emerald-50/70 border border-emerald-200/80 text-xs text-emerald-950 font-medium">
+              <Info className="size-4.5 text-emerald-600 shrink-0 mt-0.5" />
+              <div className="space-y-0.5 leading-relaxed">
+                <div>
+                  <strong>{lang === 'ar' ? 'معدل الضخ الساعي التقديري:' : 'Estimated Hourly Flow:'}</strong>{' '}
+                  ~{formatNum(result.hourlyFlow, 1)} م³/ساعة خلال ساعات السطوع الشمسي ({formatNum(result.peakSunHours, 1)} ساعات PSH).
+                </div>
+                <div className="text-[11.5px] text-emerald-900/85">
+                  {lang === 'ar'
+                    ? `إجمالي الطاقة الهيدروليكية المنجزة: ${formatNum(result.dailyHydraulicEnergy, 2)} كيلوواط ساعي/يوم لرفع ${formatNum(result.waterQ, 1)} م³ على ارتفاع ${formatNum(result.totalHead, 0)} متر.`
+                    : `Daily hydraulic energy: ${formatNum(result.dailyHydraulicEnergy, 2)} kWh/day delivering ${formatNum(result.waterQ, 1)} m³ at ${formatNum(result.totalHead, 0)}m TDH.`}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Action Toolbar */}
+          <div className="pt-2 flex flex-wrap items-center gap-2 border-t border-slate-200/70">
+            <button
+              type="button"
+              id="btn-copy-solar"
+              onClick={handleCopySummary}
+              className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-xs font-bold text-slate-800 hover:bg-slate-50 transition cursor-pointer shadow-2xs"
+            >
+              {copied ? (
+                <>
+                  <Check className="size-4 text-emerald-600" />
+                  <span className="text-emerald-700 font-bold">{lang === 'ar' ? 'تم نسخ المواصفات' : 'Copied'}</span>
+                </>
+              ) : (
+                <>
+                  <Copy className="size-4 text-slate-500" />
+                  <span>{lang === 'ar' ? 'نسخ التقرير الفني والمواصفات' : 'Copy Engineering Specs'}</span>
+                </>
+              )}
+            </button>
+
+            <button
+              type="button"
+              id="btn-reset-solar"
+              onClick={handleReset}
+              className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-rose-200 bg-rose-50/70 px-3.5 py-2.5 text-xs font-bold text-rose-700 hover:bg-rose-100 transition cursor-pointer"
+            >
+              <RotateCcw className="size-3.5 text-rose-600" />
+              <span>{lang === 'ar' ? 'إعادة ضبط' : 'Reset'}</span>
+            </button>
+          </div>
+
+          {/* Engineer Attribution & Cambridge citation */}
+          <div className="pt-2 border-t border-slate-100 text-[11px] text-slate-500 flex flex-col sm:flex-row items-center justify-between gap-1 text-center sm:text-start">
+            <div>
+              {lang === 'ar'
+                ? 'إعداد وتصميم: المهندس زكريا بسيود ZAKARYA Bessioud | FeedCalc Pro'
+                : 'Engineered by: ZAKARYA Bessioud | FeedCalc Pro'}
+            </div>
+            <div className="font-semibold text-emerald-700">
+              {lang === 'ar' ? 'هاتف: +213655870392' : 'Tel: +213655870392'}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+
+  if (isModal) {
+    return (
+      <div
+        id="solar-pump-modal"
+        className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/75 backdrop-blur-xs overflow-y-auto"
+      >
+        <div className="relative w-full max-w-2xl max-h-[95vh] overflow-y-auto my-auto">
+          {cardContent}
+        </div>
+      </div>
+    );
+  }
+
+  return cardContent;
+};

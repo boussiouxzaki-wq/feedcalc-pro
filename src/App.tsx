@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
-import { Lock, KeyRound } from 'lucide-react';
+import { Lock, KeyRound, Sun } from 'lucide-react';
 import { CalculationInput, Language, FeedType } from './types';
 import { SPECIES_LIST, FEEDS_BY_SPECIES, QuickPreset } from './data/speciesData';
 import { calculateFeed } from './utils/calculator';
@@ -16,6 +16,7 @@ import { ActivationModal } from './components/ActivationModal';
 import { PaywallScreen } from './components/PaywallScreen';
 import { AdminDashboard } from './components/AdminDashboard';
 import { AdminModal } from './components/AdminModal';
+import { SolarPumpCalculator } from './components/SolarPumpCalculator';
 import { getLicenseStatus, resetToVisitorMode } from './utils/license';
 import { isMasterAdminUrl } from './utils/adminSecret';
 
@@ -34,6 +35,7 @@ export default function App() {
   const [isIpModalOpen, setIsIpModalOpen] = useState(false);
   const [isActivationModalOpen, setIsActivationModalOpen] = useState(false);
   const [isAdminModalOpen, setIsAdminModalOpen] = useState(false);
+  const [isSolarModalOpen, setIsSolarModalOpen] = useState(false);
   const [isAdminDirectMode, setIsAdminDirectMode] = useState(false);
   const [isAdminView, setIsAdminView] = useState(() => isMasterAdminUrl());
   const [isActivated, setIsActivated] = useState(() => getLicenseStatus().isActivated);
@@ -367,6 +369,7 @@ export default function App() {
             setIsActivationModalOpen(true);
           }}
           onOpenAdmin={() => setIsAdminModalOpen(true)}
+          onOpenSolarCalc={() => setIsSolarModalOpen(true)}
           isActivated={isActivated}
         />
 
@@ -402,6 +405,37 @@ export default function App() {
               </button>
             </div>
           )}
+
+          {/* بطاقة حاسبة الطاقة الشمسية للآبار الفلاحية - إعداد وتطوير م. زكريا بسيود */}
+          <div className="mb-8 rounded-2xl border border-amber-200/90 bg-gradient-to-r from-amber-50/90 via-white to-emerald-50/70 p-4 sm:p-5 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 no-print">
+            <div className="flex items-start sm:items-center gap-3.5">
+              <div className="size-11 rounded-xl bg-gradient-to-br from-amber-400 to-amber-500 text-white flex items-center justify-center shadow-xs shrink-0">
+                <Sun className="size-6 text-white" />
+              </div>
+              <div>
+                <div className="text-sm sm:text-base font-extrabold text-slate-900 flex flex-wrap items-center gap-2">
+                  <span>{lang === 'ar' ? 'حاسبة الطاقة الشمسية للآبار الفلاحية' : 'Solar Pump Calculator for Wells'}</span>
+                  <span className="rounded-full bg-emerald-600 text-white text-[10px] px-2.5 py-0.5 font-bold shadow-2xs">
+                    {lang === 'ar' ? 'معايير كامبردج و FAO ☀️' : 'Cambridge & FAO Standards ☀️'}
+                  </span>
+                </div>
+                <p className="text-xs text-slate-600 mt-1 leading-relaxed max-w-2xl">
+                  {lang === 'ar'
+                    ? 'تصميم دقيق لمنظومات الضخ: مضخات متناوبة AC / مستمرة DC، ألواح مونو سوداء وبولي زرقاء، انفرترات هجينة VFD مع مولد احتياطي، وتوزيع سلاسل الألواح.'
+                    : 'Precision solar pump sizing: AC vs DC motors, Black Mono vs Blue Poly panels, Hybrid VFD inverters with generator backup, and string configuration.'}
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              id="btn-open-solar-banner"
+              onClick={() => setIsSolarModalOpen(true)}
+              className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-4 py-2.5 text-xs shadow-xs transition cursor-pointer shrink-0"
+            >
+              <Sun className="size-4 text-amber-300" />
+              <span>{lang === 'ar' ? 'احسب المنظومة المطلوبة' : 'Open Solar Calculator'}</span>
+            </button>
+          </div>
 
           {/* دجاج اللحم وسمك البلطي متاحان دائماً ومجاناً للجميع للتجربة والمعاينة، وباقي الحيوانات تطلب التفعيل */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
@@ -447,6 +481,7 @@ export default function App() {
         onOpenExportModal={() => setIsExportModalOpen(true)}
         onOpenIpModal={() => setIsIpModalOpen(true)}
         onOpenAdmin={() => setIsAdminModalOpen(true)}
+        onOpenSolarCalc={() => setIsSolarModalOpen(true)}
       />
       <AppExportModal
         isOpen={isExportModalOpen}
@@ -494,6 +529,14 @@ export default function App() {
           );
         }}
       />
+      {isSolarModalOpen && (
+        <SolarPumpCalculator
+          lang={lang}
+          isModal={true}
+          onClose={() => setIsSolarModalOpen(false)}
+          onToast={showToast}
+        />
+      )}
       <ToastContainer toasts={toasts} onDismiss={dismissToast} />
     </div>
   );
