@@ -22,7 +22,11 @@ import {
   CheckCircle2,
   Sliders,
   DollarSign,
-  Power
+  Power,
+  Download,
+  ExternalLink,
+  Printer,
+  FileText
 } from 'lucide-react';
 import { Language } from '../types';
 import { formatNum, normalizeDigits } from '../utils/translations';
@@ -357,75 +361,120 @@ export const SolarPumpCalculator: React.FC<SolarPumpCalculatorProps> = ({
     }
   };
 
+  const handlePrint = () => {
+    if (!result) return;
+    window.print();
+    if (onToast) {
+      onToast(
+        lang === 'ar'
+          ? 'تم فتح نافذة الطباعة / الحفظ كـ PDF مباشرة. اختر "Save as PDF" للحفظ الفوري!'
+          : 'Print dialog opened! Choose "Save as PDF" to save directly.',
+        'success'
+      );
+    }
+  };
+
+  const handleOpenInNewTab = () => {
+    window.open(getReportUrl(false), '_blank');
+  };
+
+  const getReportUrl = (autoDownload = true) => {
+    if (!result) return '#';
+    const origin = typeof window !== 'undefined' ? window.location.origin : '';
+    const pathname = typeof window !== 'undefined' ? window.location.pathname : '';
+    const query = new URLSearchParams({
+      solar_report: '1',
+      q: String(result.waterQ),
+      h: String(result.totalHead),
+      pump: result.pumpType,
+      panel: result.panelType,
+      inv: result.inverterType,
+      pKw: String(result.pumpPowerKw),
+      pHp: String(result.pumpPowerHp),
+      pCnt: String(result.panelCount),
+      pWatt: String(result.panelWatt),
+      invKw: String(result.inverterKw),
+      grid: result.gridStatus,
+      tier: result.qualityTier,
+      psh: String(result.peakSunHours),
+      auto: autoDownload ? '1' : '0'
+    });
+    return `${origin}${pathname}?${query.toString()}`;
+  };
+
   const handleCopySummary = () => {
     if (!result) return;
-    const text =
-      lang === 'ar'
-        ? `☀️ تقرير منظومة الطاقة الشمسية لضخ الآبار الفلاحية (معايير كامبردج وFAO)
-==================================================
-📋 خيارات القرار المعتمدة (الأسئلة الـ 3):
-1️⃣ الربط بالشبكة الكهربائية: ${result.gridStatus === 'yes' ? 'نعم (تم اعتماد الخيار الهجين Hybrid)' : 'لا (معزول تماماً - تم اعتماد VFD شمسي مستقل)'}
-2️⃣ فئة الجودة والميزانية: ${result.qualityTier === 'premium' ? 'نوعية رفيعة ممتازة (ألواح سوداء مونوكريستالين عالية الكفاءة ومقاومة للحرارة)' : 'خيار اقتصادي (ألواح زرقاء متعددة البلورات بتكلفة استثمارية أقل)'}
-3️⃣ عمق البئر والتدفق: ${formatNum(result.totalHead, 0)} متر TDH | ${formatNum(result.waterQ, 1)} م³ يومياً
+    const isAr = lang === 'ar';
+    const text = isAr
+      ? `تقرير منظومة الطاقة الشمسية لضخ الآبار الفلاحية
+المعايير الهندسية: جامعة كامبردج ومنظمة الأغذية والزراعة (FAO)
 --------------------------------------------------
-💧 كمية المياه اليومية المطلوبة: ${formatNum(result.waterQ, 1)} م³ / يوم
-📏 الارتفاع الهيدروليكي الكلي (TDH): ${formatNum(result.totalHead, 0)} متر
-☀️ ساعات الذروة الشمسية (PSH): ${formatNum(result.peakSunHours, 1)} ساعات / يوم
-⏳ معدل الضخ الساعي التقديري: ~${formatNum(result.hourlyFlow, 1)} م³ / ساعة
-⚡ الطاقة الهيدروليكية المنجزة: ${formatNum(result.dailyHydraulicEnergy, 2)} كيلوواط ساعي/يوم
+* خيارات القرار ومعطيات البئر:
+  1. الربط بالكهرباء: ${result.gridStatus === 'yes' ? 'نعم (نظام هجين Hybrid يدمج الطاقة الشمسية مع الشبكة أو المولد 24/7)' : 'لا (نظام شمسي عادي مستقل Off-Grid)'}
+  2. فئة الجودة والميزانية: ${result.qualityTier === 'premium' ? 'نوعية رفيعة ممتازة (ألواح سوداء مونوكريستالين عالية الكفاءة ومقاومة للحرارة)' : 'خيار اقتصادي (ألواح زرقاء متعددة البلورات بتكلفة أولية أقل)'}
+  3. كمية المياه المطلوبة: ${formatNum(result.waterQ, 1)} متر مكعب في اليوم
+  4. عمق البئر الكلي (TDH): ${formatNum(result.totalHead, 0)} متر
+  5. ساعات الذروة الشمسية: ${formatNum(result.peakSunHours, 1)} ساعات في اليوم
+  6. معدل التدفق الساعي التقديري: قرابة ${formatNum(result.hourlyFlow, 1)} متر مكعب في الساعة
 --------------------------------------------------
-⚙️ نوع المضخة والمحرك: ${getPumpLabel(result.pumpType)}
-📊 كفاءة المنظومة الميكانيكية والكهربائية: ${result.pumpEfficiency}%
-🔹 قدرة المضخة المقترحة: ${formatNum(result.pumpPowerKw, 2)} كيلوواط (${formatNum(result.pumpPowerHp, 1)} حصان)
+* نتائج الحسابات والمواصفات المقترحة:
+  - قدرة المضخة المقترحة: ${formatNum(result.pumpPowerKw, 2)} كيلوواط (${formatNum(result.pumpPowerHp, 1)} حصان)
+  - نوع المحرك: ${getPumpLabel(result.pumpType)}
+  - كفاءة المنظومة الإجمالية: ${result.pumpEfficiency}%
+  - عدد الألواح الشمسية: ${result.panelCount} لوح (قدرة ${result.panelWatt} واط للوح)
+  - إجمالي قدرة حقل الألواح: ${formatNum(result.totalPvKw, 2)} كيلوواط ذروة (${formatNum(result.totalPvWatts, 0)} واط)
+  - نوع الألواح المعتمدة: ${getPanelLabel(result.panelType)}
+  - التوصيل الكهربائي: ${result.stringConfig}
+  - نوع العاكس ومحول التردد: ${getInverterLabel(result.inverterType)}
+  - استطاعة العاكس الصغرى: ${formatNum(result.inverterKw, 1)} كيلوواط (${formatNum(result.recommendedInverterHp, 1)} حصان)${
+    result.backupGeneratorKva
+      ? `\n  - استطاعة المولد الاحتياطي المقترح: ${result.backupGeneratorKva} kVA ديزل للتشغيل الليلي 24/7`
+      : ''
+  }
 --------------------------------------------------
-☀️ تقنية ونوع الألواح: ${getPanelLabel(result.panelType)}
-🔹 إجمالي قدرة حقل الألواح: ${formatNum(result.totalPvKw, 2)} كيلوواط ذروة (${formatNum(result.totalPvWatts, 0)} واط)
-🔹 عدد الألواح الشمسية: ${result.panelCount} لوح (قدرة ${result.panelWatt} واط للوح)
-🔌 التوصيل الكهربائي لسلاسل الألواح: ${result.stringConfig}
+إعداد وتصميم: المهندس زكريا بسيود ZAKARYA Bessioud
+هاتف / واتساب: 0655870392 (+213655870392)
+البريد الإلكتروني: boussiouxzaki@gmail.com
+FeedCalc Pro Solar — المنظومة الهندسية المعتمدة`
+      : `Solar Water Pumping System Calculation Report
+Engineering Standards: Cambridge University & FAO 56
 --------------------------------------------------
-⚡ نظام العاكس والتحكم: ${getInverterLabel(result.inverterType)}
-🔹 استطاعة العاكس المقترحة: لا تقل عن ${formatNum(result.inverterKw, 1)} كيلوواط (${formatNum(result.recommendedInverterHp, 1)} حصان)${
-            result.backupGeneratorKva
-              ? `\n🛢️ قدرة المولد الاحتياطي المقترح للعاكس الهجين: ${result.backupGeneratorKva} kVA ديزل للتشغيل المستمر 24/7`
-              : ''
-          }
-==================================================
-مبني على المعايير الهندسية لجامعة كامبردج ومنظمة الأغذية والزراعة FAO
-إعداد وتصميم: المهندس زكريا بسيود ZAKARYA Bessioud | FeedCalc Pro (+213655870392)`
-        : `☀️ Solar Water Pumping System Calculation Report (Cambridge & FAO Standards)
-==================================================
-📋 Core Decision Criteria (3-Step Questions):
-1️⃣ Grid Connection: ${result.gridStatus === 'yes' ? 'Connected (Hybrid Solar Inverter Selected)' : 'Off-Grid (Dedicated Solar VFD Selected)'}
-2️⃣ Quality Tier: ${result.qualityTier === 'premium' ? 'Premium Tier (Black Monocrystalline High-Resilience)' : 'Economic Tier (Blue Polycrystalline Budget-Friendly)'}
-3️⃣ Depth & Flow: ${formatNum(result.totalHead, 0)}m TDH | ${formatNum(result.waterQ, 1)} m³/day
+* Decision & Field Inputs:
+  1. Grid Connection: ${result.gridStatus === 'yes' ? 'Connected (Hybrid Solar Inverter 24/7)' : 'Off-Grid (Dedicated Solar VFD)'}
+  2. Quality Tier: ${result.qualityTier === 'premium' ? 'Premium Tier (Black Monocrystalline)' : 'Economic Tier (Blue Polycrystalline)'}
+  3. Total Dynamic Head (TDH): ${formatNum(result.totalHead, 0)} meters
+  4. Daily Water Required: ${formatNum(result.waterQ, 1)} m3/day
+  5. Peak Sun Hours: ${formatNum(result.peakSunHours, 1)} hours/day
+  6. Estimated Hourly Flow: ~${formatNum(result.hourlyFlow, 1)} m3/hour
 --------------------------------------------------
-💧 Daily Water Flow: ${formatNum(result.waterQ, 1)} m³/day
-📏 Total Dynamic Head (TDH): ${formatNum(result.totalHead, 0)} meters
-☀️ Peak Sun Hours (PSH): ${formatNum(result.peakSunHours, 1)} hours/day
-⏳ Approx Hourly Flow: ~${formatNum(result.hourlyFlow, 1)} m³/hour
+* Recommended System Sizing:
+  - Submersible Pump: ${formatNum(result.pumpPowerKw, 2)} kW (${formatNum(result.pumpPowerHp, 1)} HP)
+  - Motor Type: ${getPumpLabel(result.pumpType)}
+  - System Efficiency: ${result.pumpEfficiency}%
+  - Solar Panels Required: ${result.panelCount} panels (${result.panelWatt}W each)
+  - Total PV Capacity: ${formatNum(result.totalPvKw, 2)} kWp (${formatNum(result.totalPvWatts, 0)} W)
+  - Panel Type: ${getPanelLabel(result.panelType)}
+  - String Configuration: ${result.stringConfig}
+  - Inverter Rating: Minimum ${formatNum(result.inverterKw, 1)} kW (${formatNum(result.recommendedInverterHp, 1)} HP) - ${getInverterLabel(result.inverterType)}${
+    result.backupGeneratorKva
+      ? `\n  - Recommended Generator Backup: ${result.backupGeneratorKva} kVA Diesel for 24/7 duty`
+      : ''
+  }
 --------------------------------------------------
-⚙️ Pump Motor Type: ${getPumpLabel(result.pumpType)} (Efficiency: ${result.pumpEfficiency}%)
-🔹 Recommended Pump Rating: ${formatNum(result.pumpPowerKw, 2)} kW (${formatNum(result.pumpPowerHp, 1)} HP)
---------------------------------------------------
-☀️ Solar Panel Type: ${getPanelLabel(result.panelType)}
-🔹 Total PV Array: ${formatNum(result.totalPvKw, 2)} kWp (${formatNum(result.totalPvWatts, 0)} W)
-🔹 Panels Required: ${result.panelCount} panels (${result.panelWatt}W each)
-🔌 String Configuration: ${result.stringConfig}
---------------------------------------------------
-⚡ Inverter / Controller: ${getInverterLabel(result.inverterType)}
-🔹 Inverter Minimum Rating: ${formatNum(result.inverterKw, 1)} kW (${formatNum(result.recommendedInverterHp, 1)} HP)${
-            result.backupGeneratorKva
-              ? `\n🛢️ Recommended Backup Generator: ${result.backupGeneratorKva} kVA Diesel for continuous 24/7 duty`
-              : ''
-          }
-==================================================
-Designed by: Eng. ZAKARYA Bessioud | FeedCalc Pro (+213655870392)`;
+Engineered by: ZAKARYA Bessioud | FeedCalc Pro Solar
+Phone / WhatsApp: +213655870392
+Email: boussiouxzaki@gmail.com`;
 
     navigator.clipboard.writeText(text).then(() => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2500);
       if (onToast) {
-        onToast(lang === 'ar' ? 'تم نسخ التقرير الفني الشامل بنجاح!' : 'Engineering report copied!', 'success');
+        onToast(
+          lang === 'ar'
+            ? 'تم نسخ التقرير كنص عربي واضح ومفهوم للحافظة!'
+            : 'Specifications copied cleanly to clipboard!',
+          'success'
+        );
       }
     });
   };
@@ -1288,42 +1337,82 @@ Designed by: Eng. ZAKARYA Bessioud | FeedCalc Pro (+213655870392)`;
 
           {/* Action Toolbar */}
           <div className="pt-2 flex flex-wrap items-center gap-2 border-t border-slate-200/70">
+            {/* Primary Action: Direct 1-Click Download PDF */}
+            <a
+              href={getReportUrl(true)}
+              target="_blank"
+              rel="noopener noreferrer"
+              id="btn-direct-download-solar-pdf"
+              className="flex-1 min-w-[220px] inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-emerald-600 via-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white px-5 py-3.5 text-xs sm:text-sm font-black shadow-md hover:shadow-lg transition cursor-pointer text-center"
+            >
+              <Download className="size-5 text-amber-300" />
+              <span>{lang === 'ar' ? '💾 تحميل وحفظ ملف PDF فوراً' : '💾 Download & Save PDF File'}</span>
+            </a>
+
+            {/* Print / Save via Browser */}
+            <button
+              type="button"
+              id="btn-print-solar"
+              onClick={handlePrint}
+              className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 text-slate-800 px-3.5 py-3 text-xs sm:text-sm font-bold transition cursor-pointer shadow-2xs"
+            >
+              <Printer className="size-4 text-emerald-600" />
+              <span>{lang === 'ar' ? 'طباعة' : 'Print'}</span>
+            </button>
+
+            {/* Secondary Action: Copy Clean Plain Text */}
             <button
               type="button"
               id="btn-copy-solar"
               onClick={handleCopySummary}
-              className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-xs font-bold text-slate-800 hover:bg-slate-50 transition cursor-pointer shadow-2xs"
+              className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 text-slate-800 px-3.5 py-3 text-xs sm:text-sm font-bold transition cursor-pointer shadow-2xs"
             >
               {copied ? (
                 <>
                   <Check className="size-4 text-emerald-600" />
-                  <span className="text-emerald-700 font-bold">{lang === 'ar' ? 'تم نسخ المواصفات' : 'Copied'}</span>
+                  <span className="text-emerald-700 font-bold">{lang === 'ar' ? 'تم النسخ' : 'Copied'}</span>
                 </>
               ) : (
                 <>
                   <Copy className="size-4 text-slate-500" />
-                  <span>{lang === 'ar' ? 'نسخ التقرير الفني والمواصفات' : 'Copy Engineering Specs'}</span>
+                  <span>{lang === 'ar' ? 'نسخ نصي' : 'Copy'}</span>
                 </>
               )}
             </button>
 
+            {/* Reset */}
             <button
               type="button"
               id="btn-reset-solar"
               onClick={handleReset}
-              className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-rose-200 bg-rose-50/70 px-3.5 py-2.5 text-xs font-bold text-rose-700 hover:bg-rose-100 transition cursor-pointer"
+              className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-rose-200 bg-rose-50/70 hover:bg-rose-100 text-rose-700 px-3.5 py-3 text-xs sm:text-sm font-bold transition cursor-pointer"
             >
-              <RotateCcw className="size-3.5 text-rose-600" />
+              <RotateCcw className="size-4 text-rose-600" />
               <span>{lang === 'ar' ? 'إعادة ضبط' : 'Reset'}</span>
             </button>
+          </div>
+
+          {/* Direct & Easy Guidance Tip */}
+          <div className="p-3.5 bg-emerald-50/95 border border-emerald-200 rounded-xl text-xs text-emerald-950 flex items-start gap-2.5 shadow-2xs">
+            <CheckCircle2 className="size-4.5 text-emerald-600 shrink-0 mt-0.5" />
+            <div className="space-y-1 leading-relaxed">
+              <strong className="block text-emerald-900 font-extrabold text-xs sm:text-sm">
+                {lang === 'ar' ? '✅ تنزيل ملف PDF مباشر بنقرة واحدة إلى جهازك:' : '✅ Direct 1-Click PDF Download to Your Device:'}
+              </strong>
+              <p className="text-[12px] text-emerald-900/90">
+                {lang === 'ar'
+                  ? 'انقر على زر "تحميل وحفظ ملف PDF فوراً" الأخضر أعلاه؛ حيث تفتح صفحة التقرير المستقلة وتبدأ فوراً تنزيل ملف PDF المعتمد لمجلد التنزيلات (Downloads) بجهازك بدون أي قيود أو حظر أمان من المتصفح.'
+                  : 'Click "Download & Save PDF File" above to open the dedicated standalone page and instantly download the certified PDF into your device\'s Downloads folder.'}
+              </p>
+            </div>
           </div>
 
           {/* Engineer Attribution & Cambridge citation */}
           <div className="pt-2 border-t border-slate-100 text-[11px] text-slate-500 flex flex-col sm:flex-row items-center justify-between gap-1 text-center sm:text-start">
             <div>
               {lang === 'ar'
-                ? 'إعداد وتصميم: المهندس زكريا بسيود ZAKARYA Bessioud | FeedCalc Pro'
-                : 'Engineered by: ZAKARYA Bessioud | FeedCalc Pro'}
+                ? 'إعداد وتصميم: المهندس زكريا بسيود ZAKARYA Bessioud | FeedCalc Pro Solar'
+                : 'Engineered by: ZAKARYA Bessioud | FeedCalc Pro Solar'}
             </div>
             <div className="font-semibold text-emerald-700">
               {lang === 'ar' ? 'هاتف: +213655870392' : 'Tel: +213655870392'}
@@ -1334,18 +1423,221 @@ Designed by: Eng. ZAKARYA Bessioud | FeedCalc Pro (+213655870392)`;
     </div>
   );
 
+  const printableSheet = result && (
+    <div id="solar-printable-report" className="print-only bg-white text-slate-900 p-6 font-sans text-xs">
+      {/* Printable Sheet Header */}
+      <div className="border-b-2 border-emerald-800 pb-3 mb-4 flex items-center justify-between">
+        <div>
+          <div className="flex items-center gap-2">
+            <h1 className="text-xl font-black text-emerald-900">
+              {lang === 'ar' ? 'تقرير دراسة منظومة الضخ الشمسي للآبار الفلاحية' : 'Agricultural Solar Well Pumping System Engineering Report'}
+            </h1>
+            <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded border border-emerald-300">
+              {lang === 'ar' ? 'معتمد هندسياً' : 'Certified'}
+            </span>
+          </div>
+          <p className="text-xs text-slate-600 font-medium mt-1">
+            {lang === 'ar'
+              ? 'الأسس الحسابية المعتمدة: قسم الهندسة الميكانيكية والحرارية بجامعة كامبردج (Cambridge University) ودليل FAO 56'
+              : 'Design Criteria: Cambridge University Engineering Dept & FAO Irrigation Guidelines 56'}
+          </p>
+        </div>
+        <div className="text-end">
+          <div className="text-xs font-bold text-slate-800">FeedCalc Pro Solar</div>
+          <div className="text-[10px] text-slate-500 font-mono">
+            {new Date().toLocaleDateString(lang === 'ar' ? 'ar-EG' : 'en-US', {
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric'
+            })}
+          </div>
+        </div>
+      </div>
+
+      {/* Project Key Figures Grid */}
+      <div className="grid grid-cols-4 gap-2 mb-4 p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-center">
+        <div>
+          <span className="block text-[10px] text-slate-500 font-semibold">{lang === 'ar' ? 'الاستهلاك اليومي' : 'Daily Water'}</span>
+          <strong className="text-sm font-bold text-slate-900">{formatNum(result.waterQ, 1)} m³/day</strong>
+        </div>
+        <div>
+          <span className="block text-[10px] text-slate-500 font-semibold">{lang === 'ar' ? 'الارتفاع الكلي TDH' : 'Total Dynamic Head'}</span>
+          <strong className="text-sm font-bold text-slate-900">{formatNum(result.totalHead, 0)} m</strong>
+        </div>
+        <div>
+          <span className="block text-[10px] text-slate-500 font-semibold">{lang === 'ar' ? 'قدرة المضخة' : 'Pump Power'}</span>
+          <strong className="text-sm font-bold text-emerald-800">{formatNum(result.pumpPowerKw, 2)} kW ({formatNum(result.pumpPowerHp, 1)} HP)</strong>
+        </div>
+        <div>
+          <span className="block text-[10px] text-slate-500 font-semibold">{lang === 'ar' ? 'مصفوفة الألواح' : 'Solar PV Array'}</span>
+          <strong className="text-sm font-bold text-emerald-800">{result.panelCount} × {result.panelWatt}W ({formatNum(result.totalPvKw, 2)} kWp)</strong>
+        </div>
+      </div>
+
+      {/* Table 1: Hydraulic & Solar Requirements */}
+      <div className="mb-4">
+        <h2 className="text-xs font-bold text-emerald-900 bg-emerald-50 px-2 py-1 rounded border-s-4 border-emerald-600 mb-1.5">
+          {lang === 'ar' ? '1. المعطيات الهيدروليكية والمناخية للبئر (Hydraulic & Site Data)' : '1. Hydraulic & Site Data'}
+        </h2>
+        <table className="w-full text-start border-collapse border border-slate-200 text-xs">
+          <tbody>
+            <tr className="border-b border-slate-200">
+              <td className="p-2 font-semibold bg-slate-50 w-1/3">{lang === 'ar' ? 'كمية المياه المطلوبة يومياً (Q):' : 'Daily Water Flow (Q):'}</td>
+              <td className="p-2">{formatNum(result.waterQ, 1)} m³/day (~{formatNum(result.hourlyFlow, 1)} m³/h)</td>
+            </tr>
+            <tr className="border-b border-slate-200">
+              <td className="p-2 font-semibold bg-slate-50">{lang === 'ar' ? 'الارتفاع الهيدروليكي الكلي (TDH):' : 'Total Dynamic Head (TDH):'}</td>
+              <td className="p-2">{formatNum(result.totalHead, 0)} {lang === 'ar' ? 'متر (عمق التنزيل الديناميكي وفواقد الاحتكاك بالأنابيب)' : 'meters (well depth + friction)'}</td>
+            </tr>
+            <tr className="border-b border-slate-200">
+              <td className="p-2 font-semibold bg-slate-50">{lang === 'ar' ? 'ساعات الذروة الشمسية (PSH):' : 'Peak Sun Hours (PSH):'}</td>
+              <td className="p-2">{formatNum(result.peakSunHours, 1)} {lang === 'ar' ? 'ساعات ذروة يومية قياسية' : 'hours/day'}</td>
+            </tr>
+            <tr className="border-b border-slate-200">
+              <td className="p-2 font-semibold bg-slate-50">{lang === 'ar' ? 'الطاقة الهيدروليكية اليومية الصافية:' : 'Net Daily Hydraulic Energy:'}</td>
+              <td className="p-2">{formatNum(result.dailyHydraulicEnergy, 2)} kWh/day</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      {/* Table 2: Submersible Pump & Motor */}
+      <div className="mb-4">
+        <h2 className="text-xs font-bold text-emerald-900 bg-emerald-50 px-2 py-1 rounded border-s-4 border-emerald-600 mb-1.5">
+          {lang === 'ar' ? '2. مواصفات المضخة ومحرك الرفع (Submersible Pump & Motor)' : '2. Submersible Pump & Motor'}
+        </h2>
+        <table className="w-full text-start border-collapse border border-slate-200 text-xs">
+          <tbody>
+            <tr className="border-b border-slate-200">
+              <td className="p-2 font-semibold bg-slate-50 w-1/3">{lang === 'ar' ? 'قدرة المضخة المقترحة:' : 'Pump Power:'}</td>
+              <td className="p-2 font-bold text-emerald-800">
+                {formatNum(result.pumpPowerKw, 2)} kW ({formatNum(result.pumpPowerHp, 1)} HP)
+              </td>
+            </tr>
+            <tr className="border-b border-slate-200">
+              <td className="p-2 font-semibold bg-slate-50">{lang === 'ar' ? 'طوبولوجيا ونوع المحرك:' : 'Motor Topology:'}</td>
+              <td className="p-2">{getPumpLabel(result.pumpType)}</td>
+            </tr>
+            <tr className="border-b border-slate-200">
+              <td className="p-2 font-semibold bg-slate-50">{lang === 'ar' ? 'كفاءة المنظومة المعتمدة (Wire-to-Water):' : 'Overall System Efficiency:'}</td>
+              <td className="p-2">{result.pumpEfficiency}%</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      {/* Table 3: Solar PV Array */}
+      <div className="mb-4">
+        <h2 className="text-xs font-bold text-emerald-900 bg-emerald-50 px-2 py-1 rounded border-s-4 border-emerald-600 mb-1.5">
+          {lang === 'ar' ? '3. مواصفات مصفوفة وحقل الألواح الشمسية (Solar PV Array Sizing)' : '3. Solar PV Array Sizing'}
+        </h2>
+        <table className="w-full text-start border-collapse border border-slate-200 text-xs">
+          <tbody>
+            <tr className="border-b border-slate-200">
+              <td className="p-2 font-semibold bg-slate-50 w-1/3">{lang === 'ar' ? 'إجمالي قدرة حقل الألواح:' : 'Total PV Array Capacity:'}</td>
+              <td className="p-2 font-bold text-emerald-800">
+                {formatNum(result.totalPvKw, 2)} kWp ({formatNum(result.totalPvWatts, 0)} W)
+              </td>
+            </tr>
+            <tr className="border-b border-slate-200">
+              <td className="p-2 font-semibold bg-slate-50">{lang === 'ar' ? 'عدد الألواح وقدرة اللوح الواحد:' : 'Panels Count & Rating:'}</td>
+              <td className="p-2 font-bold">
+                {result.panelCount} {lang === 'ar' ? 'لوح' : 'panels'} × {result.panelWatt}W
+              </td>
+            </tr>
+            <tr className="border-b border-slate-200">
+              <td className="p-2 font-semibold bg-slate-50">{lang === 'ar' ? 'فئة ونوعية الألواح المعتمدة:' : 'Panel Type & Quality Tier:'}</td>
+              <td className="p-2">
+                {getPanelLabel(result.panelType)}
+                {result.panelType === 'poly_blue'
+                  ? (lang === 'ar' ? ' — (تم تضمين +15% ألواح إضافية لمقاومة الفقد الحراري صيفاً)' : ' — (+15% thermal derating margin included)')
+                  : (lang === 'ar' ? ' — (معامل حراري منخفض ومقاومة عالية لحرارة الصيف)' : ' — (Low thermal loss coefficient)')}
+              </td>
+            </tr>
+            <tr className="border-b border-slate-200">
+              <td className="p-2 font-semibold bg-slate-50">{lang === 'ar' ? 'طريقة التوصيل والربط (Strings):' : 'String Configuration:'}</td>
+              <td className="p-2">{result.stringConfig}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      {/* Table 4: Inverter & Hybrid Integration */}
+      <div className="mb-4">
+        <h2 className="text-xs font-bold text-emerald-900 bg-emerald-50 px-2 py-1 rounded border-s-4 border-emerald-600 mb-1.5">
+          {lang === 'ar' ? '4. نظام العاكس ومحول التردد الذكي (Inverter & VFD Control)' : '4. Inverter & VFD Control'}
+        </h2>
+        <table className="w-full text-start border-collapse border border-slate-200 text-xs">
+          <tbody>
+            <tr className="border-b border-slate-200">
+              <td className="p-2 font-semibold bg-slate-50 w-1/3">{lang === 'ar' ? 'نوع العاكس ومحول السرعة:' : 'Inverter System:'}</td>
+              <td className="p-2 font-bold">{getInverterLabel(result.inverterType)}</td>
+            </tr>
+            <tr className="border-b border-slate-200">
+              <td className="p-2 font-semibold bg-slate-50">{lang === 'ar' ? 'استطاعة العاكس الصغرى المقترحة:' : 'Minimum Inverter Rating:'}</td>
+              <td className="p-2 font-bold text-emerald-800">
+                {lang === 'ar' ? 'لا تقل عن' : 'Min'} {formatNum(result.inverterKw, 1)} kW ({formatNum(result.recommendedInverterHp, 1)} HP)
+              </td>
+            </tr>
+            {result.backupGeneratorKva && (
+              <tr className="border-b border-slate-200">
+                <td className="p-2 font-semibold bg-slate-50">{lang === 'ar' ? 'توصية المولد الاحتياطي (ديزل):' : 'Backup Generator:'}</td>
+                <td className="p-2 text-amber-900 font-semibold">
+                  {result.backupGeneratorKva} kVA Diesel ({lang === 'ar' ? 'للتشغيل الليلي 24/7 وتأمين تيار البدء الحثي' : 'For continuous 24/7 irrigation'})
+                </td>
+              </tr>
+            )}
+            <tr className="border-b border-slate-200">
+              <td className="p-2 font-semibold bg-slate-50">{lang === 'ar' ? 'حماية التشغيل ومميزات الأمان:' : 'Protection & Safety:'}</td>
+              <td className="p-2">
+                {lang === 'ar'
+                  ? 'إقلاع ناعم تدريجي (Soft Start) لمنع المطرقة المائية، وحساس إلكتروني للتشغيل الجاف (Dry-Run Guard) وحماية من زيادة الجهد والحرارة.'
+                  : 'Soft start to prevent water hammer, dry-run sensor protection, overvoltage and thermal guard.'}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      {/* Engineering Contact & Stamp Footer */}
+      <div className="mt-4 pt-3 border-t-2 border-slate-300 flex items-end justify-between">
+        <div className="text-[11px] text-slate-600 space-y-0.5">
+          <div><strong>{lang === 'ar' ? 'إعداد وتصميم:' : 'Engineered by:'}</strong> المهندس زكريا بسيود ZAKARYA Bessioud</div>
+          <div><strong>{lang === 'ar' ? 'هاتف / واتساب:' : 'Phone / WhatsApp:'}</strong> 0655870392 (+213655870392)</div>
+          <div><strong>{lang === 'ar' ? 'البريد الإلكتروني:' : 'Email:'}</strong> boussiouxzaki@gmail.com</div>
+          <div><strong>{lang === 'ar' ? 'المنصة:' : 'Platform:'}</strong> FeedCalc Pro Solar — {lang === 'ar' ? 'المنظومة الهندسية المعتمدة' : 'Certified Engineering Platform'}</div>
+        </div>
+        <div className="text-center p-3 border-2 border-dashed border-emerald-700 rounded-lg min-w-[170px]">
+          <div className="text-[11px] font-bold text-emerald-800">المهندس زكريا بسيود</div>
+          <div className="text-[9px] text-slate-500 font-mono">ZAKARYA Bessioud</div>
+          <div className="text-[10px] text-emerald-700 font-semibold mt-0.5">★ معتمد فلاحياً وهندسياً ★</div>
+        </div>
+      </div>
+    </div>
+  );
+
   if (isModal) {
     return (
       <div
         id="solar-pump-modal"
-        className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/75 backdrop-blur-xs overflow-y-auto"
+        className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/75 backdrop-blur-xs overflow-y-auto print:static print:p-0 print:m-0 print:bg-transparent print:overflow-visible"
       >
-        <div className="relative w-full max-w-2xl max-h-[95vh] overflow-y-auto my-auto">
-          {cardContent}
+        <div className="relative w-full max-w-2xl max-h-[95vh] overflow-y-auto my-auto print:max-h-none print:overflow-visible print:max-w-none print:w-full print:m-0">
+          <div className="print:hidden">
+            {cardContent}
+          </div>
+          {printableSheet}
         </div>
       </div>
     );
   }
 
-  return cardContent;
+  return (
+    <>
+      <div className="print:hidden">
+        {cardContent}
+      </div>
+      {printableSheet}
+    </>
+  );
 };

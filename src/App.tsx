@@ -17,10 +17,13 @@ import { PaywallScreen } from './components/PaywallScreen';
 import { AdminDashboard } from './components/AdminDashboard';
 import { AdminModal } from './components/AdminModal';
 import { SolarPumpCalculator } from './components/SolarPumpCalculator';
+import { SolarReportPage } from './components/SolarReportPage';
 import { getLicenseStatus, resetToVisitorMode } from './utils/license';
 import { isMasterAdminUrl } from './utils/adminSecret';
 
 export default function App() {
+  const isSolarReportMode = typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('solar_report') === '1';
+
   const [lang, setLang] = useState<Language>(() => {
     try {
       const saved = localStorage.getItem('feedcalc_lang') as Language;
@@ -333,6 +336,11 @@ export default function App() {
       'info'
     );
   };
+
+  // عرض صفحة تقرير الضخ الشمسي المستقلة للتحميل المباشر بدون قيود المتصفح
+  if (isSolarReportMode) {
+    return <SolarReportPage lang={lang} />;
+  }
 
   // إذا كان المهندس زكريا في وضع لوحة التحكم المستقلة
   if (isAdminView) {

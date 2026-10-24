@@ -11,8 +11,16 @@
   }
 }
 
+.print-only {
+  display: none;
+}
+
 @media print {
-  header, footer, button, .no-print, [id^="btn-"] {
+  @page {
+    size: A4 portrait;
+    margin: 12mm 15mm;
+  }
+  header, footer, button, .no-print, [id^="btn-"], #header, #footer {
     display: none !important;
   }
   .print-only {
@@ -30,4 +38,19 @@
   .grid {
     display: block !important;
   }
+  #solar-pump-modal {
+    position: static !important;
+    background: transparent !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    overflow: visible !important;
+    display: block !important;
+  }
+  #solar-pump-modal > div {
+    max-height: none !important;
+    overflow: visible !important;
+    margin: 0 !important;
+    max-width: 100% !important;
+  }
 }
+
