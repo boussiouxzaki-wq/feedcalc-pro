@@ -12,6 +12,8 @@ export interface PdfReportExportResult {
   previewImageUrl?: string;
   fileName: string;
   actionMessage?: string;
+  file?: File;
+  dataUrl?: string;
 }
 
 interface ReportDictionary {
@@ -897,6 +899,8 @@ export async function generatePdfReport(params: {
       previewImageUrl: imgData,
       fileName,
       actionMessage: exportRes.message,
+      file: exportRes.file,
+      dataUrl: exportRes.dataUrl,
     };
   } catch (err) {
     console.warn('html2canvas rasterization failed, using native jsPDF fallback:', err);
@@ -1004,6 +1008,8 @@ export async function generatePdfReport(params: {
       blobUrl: fallbackBlobUrl,
       fileName,
       actionMessage: exportRes.message,
+      file: exportRes.file,
+      dataUrl: exportRes.dataUrl,
     };
   }
 }

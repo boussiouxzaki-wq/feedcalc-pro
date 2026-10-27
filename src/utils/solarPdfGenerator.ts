@@ -13,6 +13,8 @@ export interface SolarPdfExportResult {
   fileName: string;
   method: 'direct_download' | 'blob_ready' | 'shared' | 'downloaded' | 'opened_in_new_tab' | 'blob_url_created' | 'cancelled';
   actionMessage?: string;
+  file?: File;
+  dataUrl?: string;
 }
 
 export async function exportSolarPumpPdfReport(
@@ -419,6 +421,8 @@ export async function exportSolarPumpPdfReport(
       fileName,
       method: exportRes.actionTaken,
       actionMessage: exportRes.message,
+      file: exportRes.file,
+      dataUrl: exportRes.dataUrl,
     };
   } catch (err) {
     console.warn('html2canvas unavailable or timed out, generating instant vector PDF report:', err);
@@ -530,6 +534,8 @@ export async function exportSolarPumpPdfReport(
       fileName,
       method: exportRes.actionTaken,
       actionMessage: exportRes.message,
+      file: exportRes.file,
+      dataUrl: exportRes.dataUrl,
     };
   }
 }

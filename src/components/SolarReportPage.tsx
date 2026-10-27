@@ -37,6 +37,7 @@ export const SolarReportPage: React.FC<SolarReportPageProps> = ({ lang }) => {
   const [copied, setCopied] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
   const [statusMessage, setStatusMessage] = useState('');
+  const [preparedPdf, setPreparedPdf] = useState<{ blob?: Blob; blobUrl: string; file?: File; fileName: string } | null>(null);
 
   // Parse URL parameters
   const params = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : new URLSearchParams();
@@ -182,13 +183,19 @@ export const SolarReportPage: React.FC<SolarReportPageProps> = ({ lang }) => {
     }
   };
 
-  // Trigger PDF download on standalone page (since this tab is top-level and NOT in an iframe)
+  // Trigger PDF download on standalone page
   const handleDownloadPdfFile = async () => {
     setIsDownloading(true);
     setStatusMessage(isAr ? 'جارٍ تنزيل ملف الـ PDF مباشرة إلى جهازك...' : 'Downloading PDF directly to your device...');
     try {
       const res = await exportSolarPumpPdfReport(result, lang);
       if (res && res.success) {
+        setPreparedPdf({
+          blob: res.blob,
+          blobUrl: res.blobUrl,
+          file: res.file,
+          fileName: res.fileName,
+        });
         setStatusMessage(res.actionMessage || (isAr ? 'تم حفظ / مشاركة ملف الـ PDF بنجاح!' : 'PDF saved / shared successfully!'));
       } else {
         setStatusMessage(isAr ? 'يمكنك تنزيل تقرير HTML المستقل أو استخدام الطباعة للحفظ كـ PDF.' : 'You can use the HTML report or Print to Save as PDF.');
@@ -199,6 +206,44 @@ export const SolarReportPage: React.FC<SolarReportPageProps> = ({ lang }) => {
     } finally {
       setIsDownloading(false);
     }
+  };
+
+  const handleSynchronousShare = async () => {
+    if (!preparedPdf) return;
+    if (preparedPdf.file && typeof navigator.share === 'function') {
+      try {
+        await navigator.share({
+          files: [preparedPdf.file],
+          title: isAr ? 'تقرير منظومة الضخ الشمسي' : 'Solar Pump System Report',
+          text: isAr ? 'تقرير التصميم الفني لمنظومة الضخ الشمسي - المهندس زكريا بسيود' : 'Solar Pump System Report - Eng. ZAKARYA Bessioud',
+        });
+        setStatusMessage(isAr ? 'تم فتح الحفظ والمشاركة بنجاح!' : 'Shared successfully!');
+        return;
+      } catch (e: unknown) {
+        const err = e as { name?: string };
+        if (err?.name === 'AbortError' || err?.name === 'CancelError') return;
+      }
+    }
+    if (preparedPdf.blobUrl) {
+      window.open(preparedPdf.blobUrl, '_blank');
+    }
+  };
+
+  const handleDownloadDirectAnchor = () => {
+    if (!preparedPdf) return;
+    const a = document.createElement('a');
+    a.href = preparedPdf.blobUrl;
+    a.download = preparedPdf.fileName;
+    a.target = '_blank';
+    a.rel = 'noopener noreferrer';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => {
+      try {
+        if (document.body.contains(a)) document.body.removeChild(a);
+      } catch {}
+    }, 500);
+    setStatusMessage(isAr ? 'تم بدء التنزيل المباشر!' : 'Direct download triggered!');
   };
 
   const handleDownloadOfflineHtml = async () => {
@@ -362,6 +407,44 @@ Engineered by: ZAKARYA Bessioud (+213655870392) | boussiouxzaki@gmail.com`;
             )}
           </button>
         </div>
+
+        {/* Prepared PDF Immediate Save Hub (Direct 1-tap user actions) */}
+        {preparedPdf && (
+          <div className="mt-3.5 p-3.5 rounded-xl bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-400 shadow-xs space-y-2">
+            <div className="flex items-center justify-between text-xs">
+              <span className="font-extrabold text-emerald-950">
+                {isAr ? '🎉 ملف الـ PDF جاهز! اختر طريقة الحفظ المباشرة لجهازك:' : '🎉 PDF is ready! Choose direct save method:'}
+              </span>
+              <span className="text-[10px] bg-emerald-600 text-white font-bold px-2 py-0.5 rounded-full">
+                {preparedPdf.fileName}
+              </span>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+              <button
+                type="button"
+                onClick={handleSynchronousShare}
+                className="inline-flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold shadow-xs cursor-pointer"
+              >
+                <span>📱 {isAr ? 'حفظ في الملفات / مشاركة' : 'Save to Files / Share'}</span>
+              </button>
+              <button
+                type="button"
+                onClick={handleDownloadDirectAnchor}
+                className="inline-flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-xs cursor-pointer"
+              >
+                <span>💾 {isAr ? 'تنزيل ملف PDF الآن' : 'Download PDF Now'}</span>
+              </button>
+              <a
+                href={preparedPdf.blobUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg border border-emerald-600 bg-white hover:bg-emerald-50 text-emerald-800 text-xs font-bold shadow-2xs cursor-pointer"
+              >
+                <span>👁️ {isAr ? 'عرض في نافذة كاملة' : 'View in Full Tab'}</span>
+              </a>
+            </div>
+          </div>
+        )}
 
         {statusMessage && (
           <div className="mt-3 p-2.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-950 text-xs font-semibold flex items-center gap-2">

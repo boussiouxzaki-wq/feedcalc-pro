@@ -104,6 +104,8 @@ export const SolarPumpCalculator: React.FC<SolarPumpCalculatorProps> = ({
   const [errorMsg, setErrorMsg] = useState('');
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
   const [downloadFeedback, setDownloadFeedback] = useState('');
+  const [preparedPdf, setPreparedPdf] = useState<{ blob?: Blob; blobUrl: string; file?: File; fileName: string; dataUrl?: string } | null>(null);
+  const device = detectDevice();
 
   // Synchronize Question 1 (Grid connection) with Inverter Type
   const handleGridChange = (status: GridStatus) => {
@@ -301,7 +303,9 @@ export const SolarPumpCalculator: React.FC<SolarPumpCalculatorProps> = ({
     setPanelType('mono_black');
     setInverterType('solar_vfd');
     setResult(null);
+    setPreparedPdf(null);
     setErrorMsg('');
+    setDownloadFeedback('');
   };
 
   const getPumpLabel = (type: PumpMotorType) => {
@@ -499,11 +503,19 @@ Email: boussiouxzaki@gmail.com`;
     try {
       const res = await exportSolarPumpPdfReport(result, lang);
       if (res && res.success) {
+        setPreparedPdf({
+          blob: res.blob,
+          blobUrl: res.blobUrl,
+          file: res.file,
+          fileName: res.fileName,
+          dataUrl: res.dataUrl,
+        });
+
         const msg =
           res.actionMessage ||
           (lang === 'ar'
-            ? '✅ تم حفظ / مشاركة ملف الـ PDF بنجاح!'
-            : '✅ PDF saved / shared successfully!');
+            ? '✅ تم تجهيز ملف الـ PDF بنجاح وحفظه! يمكنك أيضاً استخدام خيارات الحفظ أدناه.'
+            : '✅ PDF prepared and saved successfully! Additional save options are available below.');
         setDownloadFeedback(msg);
         if (onToast) onToast(msg, 'success');
       } else {
@@ -518,12 +530,58 @@ Email: boussiouxzaki@gmail.com`;
       console.error('Direct PDF export error:', err);
       const errMsg =
         lang === 'ar'
-          ? 'تعذر إنشاء الـ PDF في هذا المتصفح. يمكنك استخدام زر "تقرير HTML مستقل للمزرعة" المضمون 100%!'
-          : 'Failed to generate PDF. Please use the 100% guaranteed Standalone HTML Report!';
+          ? 'تعذر حفظ الـ PDF مباشرة بسبب قيود المتصفح. استخدم زر "تقرير HTML مستقل" المضمون 100% أو زر فتح في نافذة مستقلة!'
+          : 'Direct PDF save blocked by browser sandbox. Use 100% guaranteed Standalone HTML report!';
       setDownloadFeedback(errMsg);
       if (onToast) onToast(errMsg, 'error');
     } finally {
       setIsGeneratingPdf(false);
+    }
+  };
+
+  const handleSynchronousShare = async () => {
+    if (!preparedPdf) return;
+    if (preparedPdf.file && typeof navigator.share === 'function') {
+      try {
+        await navigator.share({
+          files: [preparedPdf.file],
+          title: lang === 'ar' ? 'تقرير منظومة الضخ الشمسي' : 'Solar Pump System Report',
+          text: lang === 'ar' ? 'تقرير التصميم الفني لمنظومة الضخ الشمسي - المهندس زكريا بسيود' : 'Solar Pump System Report - Eng. ZAKARYA Bessioud',
+        });
+        if (onToast) onToast(lang === 'ar' ? 'تم فتح الحفظ والمشاركة بنجاح!' : 'Shared successfully!', 'success');
+        return;
+      } catch (e: unknown) {
+        const err = e as { name?: string };
+        if (err?.name === 'AbortError' || err?.name === 'CancelError') return;
+        console.warn('Sync share error:', e);
+      }
+    }
+    // Fallback: Open in new tab or navigate
+    if (preparedPdf.blobUrl) {
+      window.open(preparedPdf.blobUrl, '_blank');
+    }
+  };
+
+  const handleDownloadDirectAnchor = () => {
+    if (!preparedPdf) return;
+    const a = document.createElement('a');
+    a.href = preparedPdf.blobUrl;
+    a.download = preparedPdf.fileName;
+    a.target = '_blank';
+    a.rel = 'noopener noreferrer';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => {
+      try {
+        if (document.body.contains(a)) document.body.removeChild(a);
+      } catch {}
+    }, 500);
+    if (onToast) onToast(lang === 'ar' ? 'تم إرسال أمر التنزيل المباشر!' : 'Direct download triggered!', 'success');
+  };
+
+  const handleEscapeIframe = () => {
+    if (typeof window !== 'undefined') {
+      window.open(window.location.href, '_blank');
     }
   };
 
@@ -1402,11 +1460,88 @@ Email: boussiouxzaki@gmail.com`;
           </div>
 
           {/* Action Toolbar */}
-          <div className="pt-2 space-y-2.5 border-t border-slate-200/70">
+          <div className="pt-2 space-y-3 border-t border-slate-200/70">
             {downloadFeedback && (
               <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-300 text-emerald-950 text-xs font-semibold flex items-center gap-2 animate-fade-in shadow-2xs">
                 <CheckCircle2 className="size-4.5 text-emerald-600 shrink-0" />
                 <span>{downloadFeedback}</span>
+              </div>
+            )}
+
+            {/* Iframe Warning / Escape Button for Embedded Mode */}
+            {device.isInIframe && (
+              <div className="p-3 rounded-xl bg-amber-50 border border-amber-300 text-amber-950 text-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 shadow-2xs">
+                <div className="flex items-center gap-2">
+                  <span className="text-base">🚀</span>
+                  <span className="font-semibold">
+                    {lang === 'ar'
+                      ? 'أنت تعمل داخل إطار معاينة قد يقيد تنزيل الملفات التلقائي. افتح التطبيق مباشرة في نافذة مستقلة:'
+                      : 'You are running inside a preview frame which may restrict downloads. Open in standalone tab:'}
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleEscapeIframe}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-lg font-bold text-xs shadow-xs transition cursor-pointer shrink-0"
+                >
+                  <ExternalLink className="size-3.5" />
+                  <span>{lang === 'ar' ? 'فتح في متصفح خارجي كامل' : 'Open Full Browser Window'}</span>
+                </button>
+              </div>
+            )}
+
+            {/* Prepared PDF Immediate Save Hub (Direct User-Click Avenue) */}
+            {preparedPdf && (
+              <div className="p-4 rounded-2xl bg-gradient-to-br from-emerald-50 via-teal-50/50 to-white border-2 border-emerald-500 shadow-sm space-y-2.5 animate-fade-in">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="flex size-7 items-center justify-center rounded-lg bg-emerald-600 text-white font-bold text-xs">
+                      PDF
+                    </span>
+                    <div>
+                      <h4 className="text-xs sm:text-sm font-extrabold text-emerald-950">
+                        {lang === 'ar' ? '🎉 ملف الـ PDF جاهز الآن! اضغط لحفظه فوراً في جهازك:' : '🎉 PDF is Ready! Click to Save Directly:'}
+                      </h4>
+                      <p className="text-[11px] text-emerald-800/80 font-medium">{preparedPdf.fileName}</p>
+                    </div>
+                  </div>
+                  <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full">
+                    {lang === 'ar' ? 'جاهز 100%' : '100% Ready'}
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-1">
+                  {/* Option 1: Mobile Share / Save to Files */}
+                  <button
+                    type="button"
+                    onClick={handleSynchronousShare}
+                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white px-3.5 py-2.5 text-xs font-black shadow-xs transition cursor-pointer"
+                  >
+                    <Share2 className="size-4" />
+                    <span>{lang === 'ar' ? '📱 حفظ في الملفات / مشاركة' : '📱 Save to Files / Share'}</span>
+                  </button>
+
+                  {/* Option 2: Direct Anchor Download */}
+                  <button
+                    type="button"
+                    onClick={handleDownloadDirectAnchor}
+                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-2.5 text-xs font-black shadow-xs transition cursor-pointer"
+                  >
+                    <Download className="size-4" />
+                    <span>{lang === 'ar' ? '💾 تنزيل ملف الـ PDF' : '💾 Direct PDF Download'}</span>
+                  </button>
+
+                  {/* Option 3: Open in New Window */}
+                  <a
+                    href={preparedPdf.blobUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center justify-center gap-2 rounded-xl border border-emerald-600 bg-white hover:bg-emerald-50 text-emerald-800 px-3.5 py-2.5 text-xs font-bold shadow-2xs transition cursor-pointer"
+                  >
+                    <ExternalLink className="size-4 text-emerald-600" />
+                    <span>{lang === 'ar' ? '👁️ فتح ومعاينة في نافذة جديدة' : '👁️ View in New Tab'}</span>
+                  </a>
+                </div>
               </div>
             )}
 

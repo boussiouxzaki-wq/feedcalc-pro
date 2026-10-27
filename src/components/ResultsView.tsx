@@ -22,9 +22,9 @@ import {
   ShieldAlert,
   Download,
   ExternalLink,
-  Eye,
   X,
   Globe,
+  Share2,
 } from 'lucide-react';
 import { Species, FeedType, CalculationInput, CalculationResult, Language } from '../types';
 import { TRANSLATIONS, formatNum } from '../utils/translations';
@@ -60,6 +60,7 @@ export const ResultsView: React.FC<ResultsViewProps> = ({
     blob?: Blob;
     fileName: string;
     previewImageUrl?: string;
+    file?: File;
   } | null>(null);
   const [isPdfModalOpen, setIsPdfModalOpen] = useState(false);
   const t = TRANSLATIONS[lang];
@@ -327,6 +328,7 @@ ${devLine}`;
         blob: res.blob,
         fileName: res.fileName,
         previewImageUrl: res.previewImageUrl,
+        file: res.file,
       });
       setIsPdfModalOpen(true);
 
@@ -365,6 +367,43 @@ ${devLine}`;
     } catch (err) {
       console.error('HTML feed report error:', err);
     }
+  };
+
+  const handleModalShare = async () => {
+    if (!pdfReportData) return;
+    if (pdfReportData.file && typeof navigator.share === 'function') {
+      try {
+        await navigator.share({
+          files: [pdfReportData.file],
+          title: 'FeedCalc Pro Report',
+          text: 'FeedCalc Pro Technical Nutritional Report - Eng. ZAKARYA Bessioud',
+        });
+        if (onToast) onToast(lang === 'ar' ? 'تم الحفظ والمشاركة بنجاح!' : 'Shared successfully!', 'success');
+        return;
+      } catch (e: unknown) {
+        const err = e as { name?: string };
+        if (err?.name === 'AbortError' || err?.name === 'CancelError') return;
+        console.warn('Modal share error:', e);
+      }
+    }
+    handleModalDownloadAgain();
+  };
+
+  const handleDirectAnchorDownload = () => {
+    if (!pdfReportData) return;
+    const a = document.createElement('a');
+    a.href = pdfReportData.blobUrl;
+    a.download = pdfReportData.fileName;
+    a.target = '_blank';
+    a.rel = 'noopener noreferrer';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => {
+      try {
+        if (document.body.contains(a)) document.body.removeChild(a);
+      } catch {}
+    }, 500);
+    if (onToast) onToast(lang === 'ar' ? 'تم بدء التنزيل المباشر!' : 'Download started!', 'success');
   };
 
   const handleModalDownloadAgain = async () => {
@@ -889,12 +928,22 @@ ${devLine}`;
               <div className="flex flex-wrap items-center gap-2">
                 <button
                   type="button"
+                  id="btn-modal-share-pdf"
+                  onClick={handleModalShare}
+                  className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white px-3.5 py-2 text-xs font-bold shadow-xs transition cursor-pointer"
+                >
+                  <Share2 className="size-3.5" />
+                  <span>{lang === 'ar' ? '📱 حفظ في الملفات / مشاركة' : 'Save to Files / Share'}</span>
+                </button>
+
+                <button
+                  type="button"
                   id="btn-modal-direct-download"
-                  onClick={handleModalDownloadAgain}
+                  onClick={handleDirectAnchorDownload}
                   className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-2 text-xs font-bold shadow-xs transition cursor-pointer"
                 >
-                  <Download className="size-4" />
-                  <span>{lang === 'ar' ? '💾 حفظ / مشاركة ملف PDF' : 'Save / Share PDF'}</span>
+                  <Download className="size-3.5" />
+                  <span>{lang === 'ar' ? '💾 تنزيل PDF' : 'Download PDF'}</span>
                 </button>
 
                 <button
