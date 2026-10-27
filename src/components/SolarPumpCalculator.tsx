@@ -26,10 +26,17 @@ import {
   Download,
   ExternalLink,
   Printer,
-  FileText
+  FileText,
+  Globe,
+  Share2,
+  Loader2,
+  FileCheck
 } from 'lucide-react';
 import { Language } from '../types';
 import { formatNum, normalizeDigits } from '../utils/translations';
+import { exportSolarPumpPdfReport } from '../utils/solarPdfGenerator';
+import { generateSolarOfflineHtmlReport } from '../utils/offlineReportGenerator';
+import { universalDownloadText, detectDevice } from '../utils/universalDownloader';
 
 interface SolarPumpCalculatorProps {
   lang: Language;
@@ -95,6 +102,8 @@ export const SolarPumpCalculator: React.FC<SolarPumpCalculatorProps> = ({
   const [result, setResult] = useState<SolarPumpCalculationResult | null>(null);
   const [copied, setCopied] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
+  const [downloadFeedback, setDownloadFeedback] = useState('');
 
   // Synchronize Question 1 (Grid connection) with Inverter Type
   const handleGridChange = (status: GridStatus) => {
@@ -477,6 +486,63 @@ Email: boussiouxzaki@gmail.com`;
         );
       }
     });
+  };
+
+  const handleDirectDownloadPdf = async () => {
+    if (!result || isGeneratingPdf) return;
+    setIsGeneratingPdf(true);
+    setDownloadFeedback(
+      lang === 'ar'
+        ? '⏳ جارٍ تجهيز ملف الـ PDF وحفظه بجهازك فوراً...'
+        : '⏳ Preparing PDF report for your device...'
+    );
+    try {
+      const res = await exportSolarPumpPdfReport(result, lang);
+      if (res && res.success) {
+        const msg =
+          res.actionMessage ||
+          (lang === 'ar'
+            ? '✅ تم حفظ / مشاركة ملف الـ PDF بنجاح!'
+            : '✅ PDF saved / shared successfully!');
+        setDownloadFeedback(msg);
+        if (onToast) onToast(msg, 'success');
+      } else {
+        const fallbackMsg =
+          lang === 'ar'
+            ? '⚠️ يمكنك أيضاً تنزيل تقرير HTML المستقل أو استخدام الطباعة للحفظ كـ PDF.'
+            : '⚠️ You can also download the standalone HTML report or use Print to save as PDF.';
+        setDownloadFeedback(fallbackMsg);
+        if (onToast) onToast(fallbackMsg, 'info');
+      }
+    } catch (err) {
+      console.error('Direct PDF export error:', err);
+      const errMsg =
+        lang === 'ar'
+          ? 'تعذر إنشاء الـ PDF في هذا المتصفح. يمكنك استخدام زر "تقرير HTML مستقل للمزرعة" المضمون 100%!'
+          : 'Failed to generate PDF. Please use the 100% guaranteed Standalone HTML Report!';
+      setDownloadFeedback(errMsg);
+      if (onToast) onToast(errMsg, 'error');
+    } finally {
+      setIsGeneratingPdf(false);
+    }
+  };
+
+  const handleDownloadOfflineHtml = async () => {
+    if (!result) return;
+    try {
+      const htmlContent = generateSolarOfflineHtmlReport(result, lang);
+      const filename = `Solar_Well_Report_FeedCalc_${Math.round(result.totalHead)}m_${Math.round(result.waterQ)}m3.html`;
+      const res = await universalDownloadText(filename, htmlContent);
+      const msg =
+        res.message ||
+        (lang === 'ar'
+          ? '✅ تم تنزيل تقرير HTML المستقل للمزرعة! يفتح على أي جهاز وهاتف بدون إنترنت وبنقرة واحدة.'
+          : '✅ Standalone offline HTML report downloaded! Opens on any device without internet.');
+      setDownloadFeedback(msg);
+      if (onToast) onToast(msg, 'success');
+    } catch (err) {
+      console.error('HTML report download error:', err);
+    }
   };
 
   const cardContent = (
@@ -1336,73 +1402,119 @@ Email: boussiouxzaki@gmail.com`;
           </div>
 
           {/* Action Toolbar */}
-          <div className="pt-2 flex flex-wrap items-center gap-2 border-t border-slate-200/70">
-            {/* Primary Action: Direct 1-Click Download PDF */}
-            <a
-              href={getReportUrl(true)}
-              target="_blank"
-              rel="noopener noreferrer"
-              id="btn-direct-download-solar-pdf"
-              className="flex-1 min-w-[220px] inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-emerald-600 via-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white px-5 py-3.5 text-xs sm:text-sm font-black shadow-md hover:shadow-lg transition cursor-pointer text-center"
-            >
-              <Download className="size-5 text-amber-300" />
-              <span>{lang === 'ar' ? '💾 تحميل وحفظ ملف PDF فوراً' : '💾 Download & Save PDF File'}</span>
-            </a>
+          <div className="pt-2 space-y-2.5 border-t border-slate-200/70">
+            {downloadFeedback && (
+              <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-300 text-emerald-950 text-xs font-semibold flex items-center gap-2 animate-fade-in shadow-2xs">
+                <CheckCircle2 className="size-4.5 text-emerald-600 shrink-0" />
+                <span>{downloadFeedback}</span>
+              </div>
+            )}
 
-            {/* Print / Save via Browser */}
-            <button
-              type="button"
-              id="btn-print-solar"
-              onClick={handlePrint}
-              className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 text-slate-800 px-3.5 py-3 text-xs sm:text-sm font-bold transition cursor-pointer shadow-2xs"
-            >
-              <Printer className="size-4 text-emerald-600" />
-              <span>{lang === 'ar' ? 'طباعة' : 'Print'}</span>
-            </button>
+            <div className="flex flex-wrap items-center gap-2">
+              {/* Primary Action: Direct 1-Click Universal PDF Download / Mobile Share */}
+              <button
+                type="button"
+                id="btn-direct-download-solar-pdf"
+                onClick={handleDirectDownloadPdf}
+                disabled={isGeneratingPdf}
+                className="flex-1 min-w-[220px] inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-emerald-600 via-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white px-5 py-3.5 text-xs sm:text-sm font-black shadow-md hover:shadow-lg transition cursor-pointer text-center disabled:opacity-60"
+              >
+                {isGeneratingPdf ? (
+                  <>
+                    <Loader2 className="size-5 animate-spin text-amber-300" />
+                    <span>{lang === 'ar' ? 'جارٍ تحضير ملف الـ PDF وحفظه...' : 'Preparing PDF Report...'}</span>
+                  </>
+                ) : (
+                  <>
+                    <Download className="size-5 text-amber-300" />
+                    <span>{lang === 'ar' ? '💾 حفظ / تنزيل PDF (مباشرة لجهازك)' : '💾 Save / Download PDF (Direct)'}</span>
+                  </>
+                )}
+              </button>
 
-            {/* Secondary Action: Copy Clean Plain Text */}
-            <button
-              type="button"
-              id="btn-copy-solar"
-              onClick={handleCopySummary}
-              className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 text-slate-800 px-3.5 py-3 text-xs sm:text-sm font-bold transition cursor-pointer shadow-2xs"
-            >
-              {copied ? (
-                <>
-                  <Check className="size-4 text-emerald-600" />
-                  <span className="text-emerald-700 font-bold">{lang === 'ar' ? 'تم النسخ' : 'Copied'}</span>
-                </>
-              ) : (
-                <>
-                  <Copy className="size-4 text-slate-500" />
-                  <span>{lang === 'ar' ? 'نسخ نصي' : 'Copy'}</span>
-                </>
-              )}
-            </button>
+              {/* Offline Standalone HTML Report (100% Guaranteed on any device without internet) */}
+              <button
+                type="button"
+                id="btn-offline-html-solar"
+                onClick={handleDownloadOfflineHtml}
+                className="inline-flex items-center justify-center gap-2 rounded-xl border-2 border-emerald-600 bg-white hover:bg-emerald-50 text-emerald-800 px-4 py-3.5 text-xs sm:text-sm font-extrabold transition cursor-pointer shadow-2xs"
+                title={lang === 'ar' ? 'تقرير مستقل يفتح في أي هاتف بدون إنترنت' : 'Standalone offline report'}
+              >
+                <Globe className="size-4.5 text-emerald-600" />
+                <span>{lang === 'ar' ? '🌐 تقرير HTML مستقل للمزرعة (مضمون 100%)' : '🌐 Offline HTML Report (100% Works)'}</span>
+              </button>
+            </div>
 
-            {/* Reset */}
-            <button
-              type="button"
-              id="btn-reset-solar"
-              onClick={handleReset}
-              className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-rose-200 bg-rose-50/70 hover:bg-rose-100 text-rose-700 px-3.5 py-3 text-xs sm:text-sm font-bold transition cursor-pointer"
-            >
-              <RotateCcw className="size-4 text-rose-600" />
-              <span>{lang === 'ar' ? 'إعادة ضبط' : 'Reset'}</span>
-            </button>
+            <div className="flex flex-wrap items-center gap-2">
+              {/* Print / Save via Browser */}
+              <button
+                type="button"
+                id="btn-print-solar"
+                onClick={handlePrint}
+                className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 text-slate-800 px-3.5 py-2.5 text-xs font-bold transition cursor-pointer shadow-2xs"
+              >
+                <Printer className="size-4 text-emerald-600" />
+                <span>{lang === 'ar' ? 'طباعة' : 'Print'}</span>
+              </button>
+
+              {/* Copy Clean Plain Text */}
+              <button
+                type="button"
+                id="btn-copy-solar"
+                onClick={handleCopySummary}
+                className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 text-slate-800 px-3.5 py-2.5 text-xs font-bold transition cursor-pointer shadow-2xs"
+              >
+                {copied ? (
+                  <>
+                    <Check className="size-4 text-emerald-600" />
+                    <span className="text-emerald-700 font-bold">{lang === 'ar' ? 'تم النسخ' : 'Copied'}</span>
+                  </>
+                ) : (
+                  <>
+                    <Copy className="size-4 text-slate-500" />
+                    <span>{lang === 'ar' ? 'نسخ نصي' : 'Copy Text'}</span>
+                  </>
+                )}
+              </button>
+
+              {/* Fullpage View in Standalone Tab */}
+              <a
+                href={getReportUrl(false)}
+                target="_blank"
+                rel="noopener noreferrer"
+                id="btn-fullpage-solar"
+                className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 px-3.5 py-2.5 text-xs font-bold transition cursor-pointer shadow-2xs"
+              >
+                <ExternalLink className="size-4 text-slate-500" />
+                <span>{lang === 'ar' ? 'صفحة كاملة' : 'Full Page'}</span>
+              </a>
+
+              {/* Reset */}
+              <button
+                type="button"
+                id="btn-reset-solar"
+                onClick={handleReset}
+                className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-rose-200 bg-rose-50/70 hover:bg-rose-100 text-rose-700 px-3.5 py-2.5 text-xs font-bold transition cursor-pointer ms-auto"
+              >
+                <RotateCcw className="size-4 text-rose-600" />
+                <span>{lang === 'ar' ? 'إعادة ضبط' : 'Reset'}</span>
+              </button>
+            </div>
           </div>
 
-          {/* Direct & Easy Guidance Tip */}
-          <div className="p-3.5 bg-emerald-50/95 border border-emerald-200 rounded-xl text-xs text-emerald-950 flex items-start gap-2.5 shadow-2xs">
+          {/* Universal Multi-Device Compatibility Guidance */}
+          <div className="p-3.5 bg-gradient-to-r from-emerald-50 via-teal-50/50 to-white border border-emerald-200 rounded-xl text-xs text-emerald-950 flex items-start gap-2.5 shadow-2xs">
             <CheckCircle2 className="size-4.5 text-emerald-600 shrink-0 mt-0.5" />
             <div className="space-y-1 leading-relaxed">
               <strong className="block text-emerald-900 font-extrabold text-xs sm:text-sm">
-                {lang === 'ar' ? '✅ تنزيل ملف PDF مباشر بنقرة واحدة إلى جهازك:' : '✅ Direct 1-Click PDF Download to Your Device:'}
-              </strong>
-              <p className="text-[12px] text-emerald-900/90">
                 {lang === 'ar'
-                  ? 'انقر على زر "تحميل وحفظ ملف PDF فوراً" الأخضر أعلاه؛ حيث تفتح صفحة التقرير المستقلة وتبدأ فوراً تنزيل ملف PDF المعتمد لمجلد التنزيلات (Downloads) بجهازك بدون أي قيود أو حظر أمان من المتصفح.'
-                  : 'Click "Download & Save PDF File" above to open the dedicated standalone page and instantly download the certified PDF into your device\'s Downloads folder.'}
+                  ? '📱 متوافق 100% مع كافة الأجهزة (Android, iOS Safari, PC, WhatsApp):'
+                  : '📱 100% Compatible with All Devices (Android, iOS Safari, PC, WebViews):'}
+              </strong>
+              <p className="text-[11.5px] text-emerald-900/90 leading-normal">
+                {lang === 'ar'
+                  ? 'على هواتف آيفون (iOS) وأندرويد يفتح زر "حفظ / تنزيل PDF" قائمة المشاركة والحفظ في ملفات جهازك أو الإرسال لواتساب مباشرة. كما يمكنك تنزيل "تقرير HTML مستقل للمزرعة" الذي يعمل دون إنترنت ويفتح بسلاسة على أي هاتف.'
+                  : 'On iOS & Android, "Save / Download PDF" natively opens your device\'s Files / Share sheet. You can also download the Standalone HTML Report which works 100% offline on any phone.'}
               </p>
             </div>
           </div>

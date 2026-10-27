@@ -1,6 +1,8 @@
+import { universalSaveOrShare, universalDownloadText } from './universalDownloader';
+
 /**
  * Universal file downloader utility that safely handles iframe restrictions,
- * Blob generation, and direct browser download fallbacks.
+ * Web Share API for mobile devices, and direct browser download fallbacks.
  */
 export async function downloadFile(url: string, filename: string): Promise<boolean> {
   try {
@@ -9,17 +11,12 @@ export async function downloadFile(url: string, filename: string): Promise<boole
       throw new Error(`Failed to fetch file: ${response.statusText}`);
     }
     const blob = await response.blob();
-    const objectUrl = window.URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = objectUrl;
-    link.download = filename;
-    document.body.appendChild(link);
-    link.click();
-    setTimeout(() => {
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(objectUrl);
-    }, 200);
-    return true;
+    const result = await universalSaveOrShare({
+      blob,
+      filename,
+      title: filename,
+    });
+    return result.success;
   } catch (err) {
     console.warn('Blob download failed or blocked by iframe, falling back to direct window.open', err);
     try {
@@ -37,21 +34,10 @@ export function downloadTextAsFile(
   mimeType: string = 'text/plain;charset=utf-8'
 ): boolean {
   try {
-    const blob = new Blob([content], { type: mimeType });
-    const objectUrl = window.URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = objectUrl;
-    link.download = filename;
-    document.body.appendChild(link);
-    link.click();
-    setTimeout(() => {
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(objectUrl);
-    }, 200);
+    universalDownloadText(filename, content, mimeType);
     return true;
   } catch (err) {
     console.error('Failed to download text as file', err);
     return false;
   }
 }
-

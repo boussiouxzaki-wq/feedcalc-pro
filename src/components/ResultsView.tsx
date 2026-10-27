@@ -24,10 +24,13 @@ import {
   ExternalLink,
   Eye,
   X,
+  Globe,
 } from 'lucide-react';
 import { Species, FeedType, CalculationInput, CalculationResult, Language } from '../types';
 import { TRANSLATIONS, formatNum } from '../utils/translations';
 import { generatePdfReport } from '../utils/pdfGenerator';
+import { generateFeedOfflineHtmlReport } from '../utils/offlineReportGenerator';
+import { universalSaveOrShare, universalDownloadText } from '../utils/universalDownloader';
 import { getCurrencySymbol } from '../data/currencies';
 import { getBreedingSchedule } from '../data/breedingData';
 
@@ -54,6 +57,7 @@ export const ResultsView: React.FC<ResultsViewProps> = ({
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
   const [pdfReportData, setPdfReportData] = useState<{
     blobUrl: string;
+    blob?: Blob;
     fileName: string;
     previewImageUrl?: string;
   } | null>(null);
@@ -320,47 +324,62 @@ ${devLine}`;
 
       setPdfReportData({
         blobUrl: res.blobUrl,
+        blob: res.blob,
         fileName: res.fileName,
         previewImageUrl: res.previewImageUrl,
       });
       setIsPdfModalOpen(true);
 
       if (onToast) {
-        if (res.method === 'direct_download') {
-          onToast(
-            lang === 'ar'
-              ? 'تم تجهيز وتنزيل ملف التقرير بنجاح!'
-              : 'PDF report generated and downloaded successfully!',
-            'success'
-          );
-        } else if (res.method === 'opened_in_new_tab') {
-          onToast(
-            lang === 'ar'
-              ? 'تم فتح التقرير في نافذة جديدة للمعاينة والتحميل.'
-              : 'PDF opened in a new tab for preview and download.',
-            'info'
-          );
-        } else {
-          onToast(
-            lang === 'ar'
-              ? 'تم تجهيز ملف التقرير بنجاح! يمكنك الآن تنزيله أو معاينته.'
-              : 'Report ready! You can now download or preview it.',
-            'info'
-          );
-        }
+        const msg = res.actionMessage || (lang === 'ar' ? 'تم تجهيز وحفظ / مشاركة ملف التقرير بنجاح!' : 'Report generated and saved / shared successfully!');
+        onToast(msg, res.success ? 'success' : 'info');
       }
     } catch (err) {
       console.error('Failed to generate PDF report:', err);
       if (onToast) {
         onToast(
           lang === 'ar'
-            ? 'تعذر التنزيل المباشر داخل المتصفح. يمكنك استخدام زر الطباعة لحفظه كـ PDF.'
-            : 'Download blocked by sandbox. Use the Print button to Save as PDF.',
+            ? 'تعذر إنشاء الـ PDF. يمكنك استخدام زر "تقرير HTML مستقل" المضمون 100%!'
+            : 'Download blocked. You can use the Standalone HTML Report or Print.',
           'error'
         );
       }
     } finally {
       setIsGeneratingPdf(false);
+    }
+  };
+
+  const handleDownloadOfflineFeedHtml = async () => {
+    if (!species || !feedType || !result) return;
+    try {
+      const htmlContent = generateFeedOfflineHtmlReport(species, feedType, input, result, lang);
+      const cleanSpecies = species.id.replace(/[^a-zA-Z0-9_-]/g, '_');
+      const filename = `FeedCalc_Report_${cleanSpecies}_${Date.now()}.html`;
+      const res = await universalDownloadText(filename, htmlContent);
+      if (onToast) {
+        onToast(
+          res.message || (lang === 'ar' ? 'تم تنزيل تقرير HTML المستقل بنجاح! يفتح على أي هاتف بدون نت.' : 'Standalone HTML report downloaded!'),
+          'success'
+        );
+      }
+    } catch (err) {
+      console.error('HTML feed report error:', err);
+    }
+  };
+
+  const handleModalDownloadAgain = async () => {
+    if (!pdfReportData) return;
+    if (pdfReportData.blob) {
+      const res = await universalSaveOrShare({
+        blob: pdfReportData.blob,
+        filename: pdfReportData.fileName,
+        title: 'FeedCalc Pro Report',
+      });
+      if (onToast && res.message) {
+        onToast(res.message, res.success ? 'success' : 'info');
+      }
+    } else {
+      handleDownloadPdf();
     }
   };
 
@@ -456,6 +475,17 @@ ${devLine}`;
                   <span className="sm:hidden">PDF</span>
                 </>
               )}
+            </button>
+
+            <button
+              type="button"
+              id="btn-download-feed-offline-html"
+              onClick={handleDownloadOfflineFeedHtml}
+              className="inline-flex items-center gap-1 rounded-lg border border-emerald-200 bg-white hover:bg-emerald-50 px-2.5 py-1.5 text-xs font-bold text-emerald-800 shadow-2xs transition-colors cursor-pointer"
+              title={lang === 'ar' ? 'تقرير مستقل يفتح على أي هاتف بدون نت' : 'Offline HTML Report'}
+            >
+              <Globe className="size-3.5 text-emerald-600" />
+              <span className="hidden md:inline">{lang === 'ar' ? 'تقرير HTML للمزرعة' : 'Offline HTML'}</span>
             </button>
 
             <span className="inline-flex items-center rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold text-emerald-800">
@@ -857,15 +887,25 @@ ${devLine}`;
             {/* Modal Actions Footer */}
             <div className="pt-3 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2">
               <div className="flex flex-wrap items-center gap-2">
-                <a
-                  href={pdfReportData.blobUrl}
-                  download={pdfReportData.fileName}
+                <button
+                  type="button"
                   id="btn-modal-direct-download"
+                  onClick={handleModalDownloadAgain}
                   className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-2 text-xs font-bold shadow-xs transition cursor-pointer"
                 >
                   <Download className="size-4" />
-                  <span>{lang === 'ar' ? 'تنزيل ملف PDF' : 'Download PDF'}</span>
-                </a>
+                  <span>{lang === 'ar' ? '💾 حفظ / مشاركة ملف PDF' : 'Save / Share PDF'}</span>
+                </button>
+
+                <button
+                  type="button"
+                  id="btn-modal-offline-html"
+                  onClick={handleDownloadOfflineFeedHtml}
+                  className="inline-flex items-center gap-1.5 rounded-xl border border-emerald-600 bg-emerald-50 text-emerald-800 hover:bg-emerald-100 px-3 py-2 text-xs font-bold transition cursor-pointer"
+                >
+                  <Globe className="size-3.5 text-emerald-600" />
+                  <span>{lang === 'ar' ? '🌐 تقرير HTML للمزرعة' : 'Offline HTML'}</span>
+                </button>
 
                 <a
                   href={pdfReportData.blobUrl}

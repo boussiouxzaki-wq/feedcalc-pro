@@ -11,7 +11,8 @@ import {
   ShieldCheck,
   CheckCircle2,
   Loader2,
-  ExternalLink
+  ExternalLink,
+  Globe
 } from 'lucide-react';
 import { Language } from '../types';
 import { formatNum } from '../utils/translations';
@@ -24,6 +25,8 @@ import {
   QualityTier
 } from './SolarPumpCalculator';
 import { exportSolarPumpPdfReport } from '../utils/solarPdfGenerator';
+import { generateSolarOfflineHtmlReport } from '../utils/offlineReportGenerator';
+import { universalDownloadText } from '../utils/universalDownloader';
 
 interface SolarReportPageProps {
   lang: Language;
@@ -186,15 +189,26 @@ export const SolarReportPage: React.FC<SolarReportPageProps> = ({ lang }) => {
     try {
       const res = await exportSolarPumpPdfReport(result, lang);
       if (res && res.success) {
-        setStatusMessage(isAr ? 'تم تنزيل ملف الـ PDF بنجاح في مجلد التنزيلات!' : 'PDF downloaded successfully to Downloads folder!');
+        setStatusMessage(res.actionMessage || (isAr ? 'تم حفظ / مشاركة ملف الـ PDF بنجاح!' : 'PDF saved / shared successfully!'));
       } else {
-        setStatusMessage(isAr ? 'يمكنك الضغط على زر "طباعة / حفظ كـ PDF" لحفظه فوراً.' : 'You can use Print to Save as PDF directly.');
+        setStatusMessage(isAr ? 'يمكنك تنزيل تقرير HTML المستقل أو استخدام الطباعة للحفظ كـ PDF.' : 'You can use the HTML report or Print to Save as PDF.');
       }
     } catch (err) {
       console.error('PDF error:', err);
-      setStatusMessage(isAr ? 'يمكنك حفظ التقرير بالضغط على زر "طباعة / حفظ كـ PDF".' : 'You can save the report via Print / Save as PDF.');
+      setStatusMessage(isAr ? 'تعذر إنشاء الـ PDF. يمكنك تنزيل تقرير HTML المستقل المضمون 100%!' : 'Use the guaranteed Standalone HTML report or Print.');
     } finally {
       setIsDownloading(false);
+    }
+  };
+
+  const handleDownloadOfflineHtml = async () => {
+    try {
+      const htmlContent = generateSolarOfflineHtmlReport(result, lang);
+      const filename = `Solar_Well_Report_FeedCalc_${Math.round(result.totalHead)}m_${Math.round(result.waterQ)}m3.html`;
+      const res = await universalDownloadText(filename, htmlContent);
+      setStatusMessage(res.message || (isAr ? 'تم تنزيل تقرير HTML المستقل للمزرعة بنجاح! يعمل دون إنترنت.' : 'Standalone HTML report downloaded!'));
+    } catch (err) {
+      console.error(err);
     }
   };
 
@@ -307,6 +321,16 @@ Engineered by: ZAKARYA Bessioud (+213655870392) | boussiouxzaki@gmail.com`;
                 <span>{isAr ? '📥 تحميل ملف PDF إلى جهازك' : 'Download PDF File'}</span>
               </>
             )}
+          </button>
+
+          <button
+            type="button"
+            id="btn-standalone-offline-html"
+            onClick={handleDownloadOfflineHtml}
+            className="inline-flex items-center justify-center gap-1.5 rounded-xl border-2 border-emerald-600 bg-white hover:bg-emerald-50 text-emerald-800 px-4 py-3 text-xs sm:text-sm font-extrabold transition cursor-pointer shadow-2xs"
+          >
+            <Globe className="size-4 text-emerald-600" />
+            <span>{isAr ? '🌐 تقرير HTML مستقل للمزرعة (مضمون 100%)' : '🌐 Offline HTML Report'}</span>
           </button>
 
           <button

@@ -2,13 +2,16 @@ import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { Species, FeedType, CalculationInput, CalculationResult, Language } from '../types';
 import { formatNum } from './translations';
+import { universalSaveOrShare } from './universalDownloader';
 
 export interface PdfReportExportResult {
   success: boolean;
-  method: 'direct_download' | 'opened_in_new_tab' | 'blob_ready';
+  method: 'direct_download' | 'opened_in_new_tab' | 'blob_ready' | 'shared' | 'downloaded' | 'blob_url_created' | 'cancelled';
   blobUrl: string;
+  blob?: Blob;
   previewImageUrl?: string;
   fileName: string;
+  actionMessage?: string;
 }
 
 interface ReportDictionary {
@@ -825,9 +828,9 @@ export async function generatePdfReport(params: {
   const fileName = `FeedCalc_Report_${cleanSpecies}_${lang}_${dateStr}.pdf`;
 
   try {
-    // Render using html2canvas with 2x resolution for crystal-clear text
-    const canvas = await html2canvas(reportEl, {
-      scale: 2,
+    // Timeout race: 3200ms for mobile devices
+    const renderCanvas = html2canvas(reportEl, {
+      scale: 1.8,
       useCORS: true,
       allowTaint: true,
       logging: false,
@@ -839,6 +842,12 @@ export async function generatePdfReport(params: {
       scrollX: 0,
       scrollY: 0,
     });
+
+    const timeoutPromise = new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error('Canvas render timeout')), 3200)
+    );
+
+    const canvas = await Promise.race([renderCanvas, timeoutPromise]);
 
     // Clean up temporary DOM element safely
     try {
@@ -862,7 +871,7 @@ export async function generatePdfReport(params: {
     const pageWidth = doc.internal.pageSize.getWidth();
     const pageHeight = doc.internal.pageSize.getHeight();
 
-    const imgData = canvas.toDataURL('image/jpeg', 0.96);
+    const imgData = canvas.toDataURL('image/jpeg', 0.95);
     const imgHeight = (canvas.height * pageWidth) / canvas.width;
 
     // Draw the high-res crisp image fitting perfectly onto the A4 page
@@ -871,39 +880,23 @@ export async function generatePdfReport(params: {
     const blob = doc.output('blob');
     const blobUrl = URL.createObjectURL(blob);
 
-    let method: 'direct_download' | 'opened_in_new_tab' | 'blob_ready' = 'direct_download';
-
-    // 1. Try standard jsPDF save (handles cross-browser saving natively)
-    try {
-      doc.save(fileName);
-    } catch (saveErr) {
-      console.warn('doc.save failed, trying blob anchor download:', saveErr);
-      try {
-        const link = document.createElement('a');
-        link.href = blobUrl;
-        link.download = fileName;
-        link.style.display = 'none';
-        document.body.appendChild(link);
-        link.click();
-        setTimeout(() => {
-          try {
-            if (document.body.contains(link)) {
-              document.body.removeChild(link);
-            }
-          } catch {}
-        }, 1000);
-      } catch (linkErr) {
-        console.warn('Blob anchor click restricted by iframe sandbox:', linkErr);
-        method = 'blob_ready';
-      }
-    }
+    // Call universal cross-device downloader (Web Share API on mobile, direct download on PC)
+    const exportRes = await universalSaveOrShare({
+      blob,
+      filename: fileName,
+      title: dict.reportTitle,
+      text: `${dict.reportTitle} - FeedCalc Pro`,
+      mimeType: 'application/pdf',
+    });
 
     return {
       success: true,
-      method,
+      method: exportRes.actionTaken,
+      blob,
       blobUrl,
       previewImageUrl: imgData,
       fileName,
+      actionMessage: exportRes.message,
     };
   } catch (err) {
     console.warn('html2canvas rasterization failed, using native jsPDF fallback:', err);
@@ -997,15 +990,20 @@ export async function generatePdfReport(params: {
     const fallbackBlob = doc.output('blob');
     const fallbackBlobUrl = URL.createObjectURL(fallbackBlob);
 
-    try {
-      doc.save(fileName);
-    } catch {}
+    const exportRes = await universalSaveOrShare({
+      blob: fallbackBlob,
+      filename: fileName,
+      title: dict.reportTitle,
+      mimeType: 'application/pdf',
+    });
 
     return {
       success: true,
-      method: 'blob_ready',
+      method: exportRes.actionTaken,
+      blob: fallbackBlob,
       blobUrl: fallbackBlobUrl,
       fileName,
+      actionMessage: exportRes.message,
     };
   }
 }
