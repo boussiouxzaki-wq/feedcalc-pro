@@ -14,7 +14,8 @@ import {
   Award,
   Calendar,
   Clock,
-  RefreshCw
+  RefreshCw,
+  Zap
 } from 'lucide-react';
 import { Language } from '../types';
 import { getLicenseStatus, activateApp, deactivateApp, resetToVisitorMode, generateClientKey } from '../utils/license';
@@ -27,6 +28,7 @@ interface ActivationModalProps {
   onActivationSuccess?: () => void;
   onDeactivate?: () => void;
   initialAdminMode?: boolean;
+  onOpenAutoCheckout?: (speciesId?: string) => void;
 }
 
 export const ActivationModal: React.FC<ActivationModalProps> = ({
@@ -35,7 +37,8 @@ export const ActivationModal: React.FC<ActivationModalProps> = ({
   lang,
   onActivationSuccess,
   onDeactivate,
-  initialAdminMode = false
+  initialAdminMode = false,
+  onOpenAutoCheckout
 }) => {
   const [licenseStatus, setLicenseStatus] = useState(getLicenseStatus());
   const [inputKey, setInputKey] = useState('');
@@ -260,6 +263,34 @@ ${generatedInfo.key}
               </p>
             </div>
           </div>
+
+          {/* Fast Automated Purchase & Key Generation Callout ($3 USD) */}
+          {onOpenAutoCheckout && (
+            <div className="rounded-xl border-2 border-emerald-500 bg-gradient-to-r from-emerald-50 via-teal-50 to-white p-4 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-3">
+              <div className="space-y-0.5 text-center sm:text-start">
+                <div className="flex items-center justify-center sm:justify-start gap-1.5 font-extrabold text-xs text-emerald-950">
+                  <Sparkles className="size-4 text-emerald-600" />
+                  <span>{lang === 'ar' ? 'شراء وتفعيل فوري آلياً بـ 3$ فقط ($3 USD)' : 'Instant 1-Click Auto-Unlock for $3'}</span>
+                </div>
+                <p className="text-[11px] text-slate-600 leading-relaxed">
+                  {lang === 'ar' 
+                    ? 'يتم توليد الكود آلياً وتنشيط الخدمة فوراً بمجرد الدفع دون انتظار أو تواصل يدوي.' 
+                    : 'Key is generated automatically and applied to your device instantly upon payment.'}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  onClose();
+                  onOpenAutoCheckout();
+                }}
+                className="shrink-0 flex items-center gap-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-black px-3.5 py-2 text-xs shadow-xs transition cursor-pointer"
+              >
+                <Zap className="size-3.5 text-amber-300 fill-amber-300" />
+                <span>{lang === 'ar' ? 'دفع وتفعيل فوري 3$ ⚡' : 'Pay $3 & Activate ⚡'}</span>
+              </button>
+            </div>
+          )}
 
           {/* Activation Form */}
           {(!licenseStatus.isActivated || showAdminGenerator) && (

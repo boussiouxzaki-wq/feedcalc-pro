@@ -17,10 +17,12 @@ export interface ServiceItem {
 }
 
 /**
- * List of lockable species/services.
- * Note: 'broiler' (دجاج التسمين) and 'tilapia' (سمك البلطي) are ALWAYS free for everyone and never locked!
+ * List of lockable species/services ($3 per species).
+ * Note: 'broiler' (دجاج اللحم) is now included in the lockable $3 services as requested.
+ * 'tilapia' (سمك البلطي) remains available for free visitor trial.
  */
 export const LOCKABLE_SERVICES: ServiceItem[] = [
+  { id: 'broiler', code: 'BRL', nameAr: 'دجاج اللحم وتسمين الفروج', nameEn: 'Broiler Chickens', emoji: '🍗' },
   { id: 'layer', code: 'LAY', nameAr: 'دجاج البيض / البياض', nameEn: 'Layer Hens', emoji: '🥚' },
   { id: 'sheep', code: 'SHP', nameAr: 'الأغنام وتسمين الحملان', nameEn: 'Sheep & Lambs', emoji: '🐑' },
   { id: 'dairy_cow', code: 'DCW', nameAr: 'أبقار حلوب', nameEn: 'Dairy Cattle', emoji: '🐄' },
@@ -292,8 +294,8 @@ export function isMasterAdminActive(): boolean {
  * Check if a specific animal/species icon is unlocked and active
  */
 export function isSpeciesUnlocked(speciesId: string): boolean {
-  // 1. Broiler (دجاج اللحم) and Tilapia (سمك البلطي) are free for all visitors/clients
-  if (speciesId === 'broiler' || speciesId === 'tilapia') return true;
+  // 1. Tilapia (سمك البلطي) is free for visitors/clients to test the app
+  if (speciesId === 'tilapia') return true;
 
   // 2. Master Admin Developer VIP mode
   if (isMasterAdminActive()) return true;
@@ -304,7 +306,7 @@ export function isSpeciesUnlocked(speciesId: string): boolean {
   // If client purchased 'all' VIP package
   if (activeMap['all']) return true;
 
-  // If client purchased this specific icon
+  // If client purchased this specific icon (including broiler)
   if (activeMap[speciesId]) return true;
 
   return false;
@@ -314,16 +316,16 @@ export function isSpeciesUnlocked(speciesId: string): boolean {
  * Returns a list of all unlocked species IDs for the current user
  */
 export function getUnlockedSpeciesIds(): string[] {
-  // Broiler & Tilapia are always free and unlocked
-  const unlocked = ['broiler', 'tilapia'];
+  // Tilapia is free for visitor preview
+  const unlocked = ['tilapia'];
 
   if (isMasterAdminActive()) {
-    return LOCKABLE_SERVICES.map(s => s.id).concat(['broiler', 'tilapia']);
+    return LOCKABLE_SERVICES.map(s => s.id).concat(['tilapia']);
   }
 
   const activeMap = getActivatedServicesMap();
   if (activeMap['all']) {
-    return LOCKABLE_SERVICES.map(s => s.id).concat(['broiler', 'tilapia']);
+    return LOCKABLE_SERVICES.map(s => s.id).concat(['tilapia']);
   }
 
   for (const serviceId of Object.keys(activeMap)) {
@@ -524,3 +526,127 @@ export function generateClientKey(
   };
 }
 
+export const SINGLE_SERVICE_PRICE_USD = 3; // $3 per animal species / service
+export const SINGLE_SERVICE_PRICE_DZD = 650; // ~650 DZD (approx. 3 USD equivalent)
+export const ALL_SERVICES_BUNDLE_PRICE_USD = 15; // VIP all 11 lockable species
+export const ALL_SERVICES_BUNDLE_PRICE_DZD = 3200;
+
+export const AUTO_ORDERS_STORAGE_KEY = 'fc_auto_orders_history_v4';
+
+export interface AutoOrderRecord {
+  id: string;
+  serviceId: string;
+  serviceCode: string;
+  serviceNameAr: string;
+  amountUsd: number;
+  amountDzd: number;
+  paymentMethod: 'card' | 'paypal' | 'baridimob' | 'instant';
+  clientName: string;
+  clientEmail?: string;
+  clientPhone?: string;
+  referenceNumber?: string;
+  generatedKey: string;
+  timestamp: string;
+  expiresAt: string;
+  status: 'completed';
+}
+
+/**
+ * Get all automated orders history
+ */
+export function getAutoOrdersHistory(): AutoOrderRecord[] {
+  if (typeof window === 'undefined') return [];
+  try {
+    const raw = localStorage.getItem(AUTO_ORDERS_STORAGE_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Clear automated orders history
+ */
+export function clearAutoOrdersHistory(): void {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.removeItem(AUTO_ORDERS_STORAGE_KEY);
+  } catch {}
+}
+
+/**
+ * Automatically generates an authentic cryptographic license key upon payment ($3),
+ * activates the service directly on the user's device, and records the order.
+ */
+export function autoPurchaseAndActivate(params: {
+  serviceIdOrCode: string;
+  clientName?: string;
+  clientEmail?: string;
+  clientPhone?: string;
+  paymentMethod?: 'card' | 'paypal' | 'baridimob' | 'instant';
+  referenceNumber?: string;
+  durationDays?: number;
+}): {
+  success: boolean;
+  order: AutoOrderRecord;
+  message: string;
+} {
+  const {
+    serviceIdOrCode,
+    clientName = 'مشترك معتمد',
+    clientEmail,
+    clientPhone,
+    paymentMethod = 'instant',
+    referenceNumber,
+    durationDays = 30
+  } = params;
+
+  // Resolve target service
+  let service = getServiceByCode(serviceIdOrCode) || getServiceById(serviceIdOrCode);
+  if (!service) {
+    if (serviceIdOrCode.toUpperCase() === 'ALL' || serviceIdOrCode.toLowerCase() === 'all') {
+      service = { id: 'all', code: 'ALL', nameAr: 'الباقة الشاملة VIP (كافة الأيقونات)', nameEn: 'All Species VIP', emoji: '👑' };
+    } else {
+      service = LOCKABLE_SERVICES[0];
+    }
+  }
+
+  // 1. Generate real cryptographic key
+  const keyInfo = generateClientKey(clientName, durationDays, service.code);
+
+  // 2. Automatically activate key in current session / localStorage
+  const activationRes = activateApp(keyInfo.key, clientName);
+
+  // 3. Create completed order record
+  const isBundle = service.code === 'ALL';
+  const orderRecord: AutoOrderRecord = {
+    id: `ORD-${Date.now().toString(36).toUpperCase()}-${Math.floor(Math.random() * 900 + 100)}`,
+    serviceId: service.id,
+    serviceCode: service.code,
+    serviceNameAr: service.nameAr,
+    amountUsd: isBundle ? ALL_SERVICES_BUNDLE_PRICE_USD : SINGLE_SERVICE_PRICE_USD,
+    amountDzd: isBundle ? ALL_SERVICES_BUNDLE_PRICE_DZD : SINGLE_SERVICE_PRICE_DZD,
+    paymentMethod,
+    clientName: clientName.trim() || 'مشترك معتمد',
+    clientEmail: clientEmail?.trim(),
+    clientPhone: clientPhone?.trim(),
+    referenceNumber: referenceNumber?.trim() || `TXN-${Math.floor(Math.random() * 900000 + 100000)}`,
+    generatedKey: keyInfo.key,
+    timestamp: new Date().toISOString(),
+    expiresAt: keyInfo.expiryDate.toISOString(),
+    status: 'completed'
+  };
+
+  // 4. Save to orders history
+  try {
+    const existing = getAutoOrdersHistory();
+    existing.unshift(orderRecord);
+    localStorage.setItem(AUTO_ORDERS_STORAGE_KEY, JSON.stringify(existing.slice(0, 100)));
+  } catch {}
+
+  return {
+    success: true,
+    order: orderRecord,
+    message: activationRes.message || `🎉 تم الدفع وتوليد الكود (${keyInfo.key}) وتفعيل [${service.nameAr}] بنجاح لمدة ${durationDays} يوماً!`
+  };
+}

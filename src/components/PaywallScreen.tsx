@@ -22,13 +22,15 @@ interface PaywallScreenProps {
   onActivated: () => void;
   onOpenActivationModal: () => void;
   onOpenAdmin?: () => void;
+  onOpenAutoCheckout?: (speciesId?: string) => void;
 }
 
 export const PaywallScreen: React.FC<PaywallScreenProps> = ({
   lang,
   onActivated,
   onOpenActivationModal,
-  onOpenAdmin
+  onOpenAdmin,
+  onOpenAutoCheckout
 }) => {
   const [keyInput, setKeyInput] = useState('');
   const [clientName, setClientName] = useState('');
@@ -86,6 +88,23 @@ export const PaywallScreen: React.FC<PaywallScreenProps> = ({
               ? 'هذا التطبيق مخصص لأصحاب المزارع والمربين ومصانع الأعلاف المرخصين. للاستفادة من حساب تركيبات الأعلاف بدقة عالية لجميع أنواع الحيوانات، يرجى تفعيل اشتراكك.'
               : 'This application is dedicated to licensed breeders, farms, and feed factories. Please activate your monthly subscription key to access all formulation tools.'}
           </p>
+
+          {/* Automated $3 Instant Checkout CTA */}
+          {onOpenAutoCheckout && (
+            <div className="w-full max-w-md mb-4">
+              <button
+                type="button"
+                onClick={() => onOpenAutoCheckout()}
+                className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-amber-400 via-amber-300 to-amber-500 hover:from-amber-500 hover:to-amber-400 text-slate-950 font-black text-sm shadow-lg shadow-amber-500/20 transition cursor-pointer flex items-center justify-center gap-2"
+              >
+                <Zap className="w-4 h-4 text-slate-950 fill-slate-950" />
+                <span>{lang === 'ar' ? '⚡ شراء وتفعيل فوري بـ 3$ (توليد الكود آلياً)' : '⚡ Instant Buy & Auto-Activate for $3'}</span>
+              </button>
+              <div className="text-[11px] text-amber-200/90 text-center mt-1.5 font-medium">
+                {lang === 'ar' ? 'توليد الكود المشفر وتنشيط التطبيق فوراً بدون انتظار' : 'Instant key generation & direct activation'}
+              </div>
+            </div>
+          )}
 
           {/* Quick Activation Form */}
           <div className="w-full max-w-md bg-white/10 backdrop-blur-md p-5 rounded-xl border border-white/20 shadow-xl mb-6 text-right">

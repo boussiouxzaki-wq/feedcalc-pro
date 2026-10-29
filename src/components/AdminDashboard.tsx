@@ -16,9 +16,20 @@ import {
   ExternalLink,
   Phone,
   Sparkles,
-  ChevronLeft
+  ChevronLeft,
+  Zap
 } from 'lucide-react';
-import { generateClientKey, activateMasterAdmin, resetToVisitorMode, LOCKABLE_SERVICES, getServiceByCode } from '../utils/license';
+import { 
+  generateClientKey, 
+  activateMasterAdmin, 
+  resetToVisitorMode, 
+  LOCKABLE_SERVICES, 
+  getServiceByCode,
+  getAutoOrdersHistory,
+  clearAutoOrdersHistory,
+  AutoOrderRecord,
+  SINGLE_SERVICE_PRICE_USD
+} from '../utils/license';
 import { isMasterAdminPassword } from '../utils/adminSecret';
 
 interface GeneratedKeyRecord {
@@ -47,7 +58,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToApp, onS
   // Key generation form
   const [clientName, setClientName] = useState('');
   const [durationMonths, setDurationMonths] = useState<number>(1);
-  const [selectedServiceCode, setSelectedServiceCode] = useState<string>('LAY');
+  const [selectedServiceCode, setSelectedServiceCode] = useState<string>('BRL');
   const [clientPhone, setClientPhone] = useState('');
   const [lastGeneratedKey, setLastGeneratedKey] = useState<string | null>(null);
   const [lastGeneratedExpiry, setLastGeneratedExpiry] = useState<string | null>(null);
@@ -65,12 +76,15 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToApp, onS
     }
   });
 
+  const [autoOrders, setAutoOrders] = useState<AutoOrderRecord[]>(() => getAutoOrdersHistory());
+
   // Check if admin is already logged in session
   useEffect(() => {
     const adminSession = sessionStorage.getItem('fc_admin_auth');
     if (adminSession === 'authorized_zaki') {
       setIsAuthenticated(true);
     }
+    setAutoOrders(getAutoOrdersHistory());
   }, []);
 
   const handleLogin = (e: React.FormEvent) => {
@@ -317,6 +331,32 @@ ${currentUrl}
           </div>
         </header>
 
+        {/* Automated $3 Payment System Active Banner */}
+        <div className="rounded-2xl border border-emerald-500/40 bg-gradient-to-r from-emerald-950/80 via-slate-900 to-slate-900 p-4 sm:p-5 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-xl">
+          <div className="flex items-center gap-3.5">
+            <div className="size-11 rounded-xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 shrink-0">
+              <Zap className="size-6 text-amber-300" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h3 className="text-sm sm:text-base font-extrabold text-white">
+                  النظام الآلي لتوليد الأكواد عند الدفع ($3) شغال ونشط ⚡
+                </h3>
+                <span className="bg-emerald-500 text-slate-950 font-black text-[10px] px-2 py-0.5 rounded-full uppercase">
+                  تلقائي 100%
+                </span>
+              </div>
+              <p className="text-xs text-slate-300 mt-1 leading-relaxed">
+                لم تعد بحاجة لتوليد الأكواد يدوياً لكل زبون! بمجرد نقر الزبون على أيقونة الحيوان والدفع ($3 أو 650 دج)، يُولّد الكود المشفر آلياً ويُفعل مباشرة في جهازه.
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 shrink-0 bg-slate-950/80 px-3 py-2 rounded-xl border border-slate-800 text-xs">
+            <span className="text-slate-400">سعر الأيقونة:</span>
+            <span className="font-extrabold text-emerald-400 text-sm">$3.00 USD</span>
+          </div>
+        </div>
+
         {/* Grid: Generator & Result */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
           {/* Form (7 cols) */}
@@ -509,6 +549,78 @@ ${currentUrl}
               </ol>
             </div>
           </div>
+        </div>
+
+        {/* Automated Orders & Key Generations List ($3 USD) */}
+        <div className="rounded-2xl bg-slate-900 border border-emerald-500/30 p-5 sm:p-6 shadow-xl space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="text-base font-bold text-white flex items-center gap-2">
+              <Zap className="size-4 text-amber-300" />
+              <span>سجل عمليات الدفع الآلية وتوليد الأكواد فوراً ($3) ({autoOrders.length})</span>
+            </h3>
+            {autoOrders.length > 0 && (
+              <button
+                type="button"
+                onClick={() => {
+                  if (confirm('هل أنت متأكد من مسح سجل العمليات الآلية؟')) {
+                    clearAutoOrdersHistory();
+                    setAutoOrders([]);
+                  }
+                }}
+                className="text-[11px] text-slate-500 hover:text-rose-400 transition flex items-center gap-1 cursor-pointer"
+              >
+                <Trash2 className="size-3" />
+                <span>مسح السجل</span>
+              </button>
+            )}
+          </div>
+
+          {autoOrders.length === 0 ? (
+            <div className="rounded-xl border border-dashed border-slate-800 p-6 text-center text-xs text-slate-500">
+              لا توجد عمليات دفع آلية مسجلة بعد على هذا الجهاز. عندما يقوم زبون بالشراء بـ $3 من واجهة التطبيق، ستُدرج عمليته هنا تلقائياً مع الكود وتاريخ التفعيل!
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-right text-xs">
+                <thead>
+                  <tr className="border-b border-slate-800 text-slate-400">
+                    <th className="pb-2 font-semibold">المشتري</th>
+                    <th className="pb-2 font-semibold">الخدمة</th>
+                    <th className="pb-2 font-semibold">المبلغ</th>
+                    <th className="pb-2 font-semibold">طريقة الدفع</th>
+                    <th className="pb-2 font-semibold">كود التفعيل المولد</th>
+                    <th className="pb-2 font-semibold">تاريخ الانتهاء</th>
+                    <th className="pb-2 text-center font-semibold">إجراء</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-800/60">
+                  {autoOrders.map((order) => (
+                    <tr key={order.id} className="hover:bg-slate-800/40 transition">
+                      <td className="py-3 font-bold text-white">{order.clientName}</td>
+                      <td className="py-3 text-emerald-300 font-bold">{order.serviceNameAr}</td>
+                      <td className="py-3 font-extrabold text-amber-400">${order.amountUsd} ({order.amountDzd} دج)</td>
+                      <td className="py-3 text-slate-400 uppercase text-[11px]">{order.paymentMethod}</td>
+                      <td className="py-3 font-mono text-emerald-400 select-all" dir="ltr">{order.generatedKey}</td>
+                      <td className="py-3 text-slate-400">{new Date(order.expiresAt).toLocaleDateString('ar-u-nu-latn')}</td>
+                      <td className="py-3 text-center">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            navigator.clipboard.writeText(order.generatedKey);
+                            alert('تم نسخ الكود: ' + order.generatedKey);
+                          }}
+                          className="p-1.5 rounded-md bg-slate-800 hover:bg-slate-700 text-emerald-400 transition cursor-pointer"
+                          title="نسخ الكود"
+                        >
+                          <Copy className="size-3" />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
 
         {/* Generated Keys History */}

@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
-import { Lock, KeyRound, Sun } from 'lucide-react';
+import { Lock, KeyRound, Sun, Zap } from 'lucide-react';
 import { CalculationInput, Language, FeedType } from './types';
 import { SPECIES_LIST, FEEDS_BY_SPECIES, QuickPreset } from './data/speciesData';
 import { calculateFeed } from './utils/calculator';
@@ -13,6 +13,7 @@ import { AppExportModal } from './components/AppExportModal';
 import { GlobalPricingModal } from './components/GlobalPricingModal';
 import { IntellectualPropertyModal } from './components/IntellectualPropertyModal';
 import { ActivationModal } from './components/ActivationModal';
+import { AutoCheckoutModal } from './components/AutoCheckoutModal';
 import { PaywallScreen } from './components/PaywallScreen';
 import { AdminDashboard } from './components/AdminDashboard';
 import { AdminModal } from './components/AdminModal';
@@ -37,6 +38,8 @@ export default function App() {
   const [isPricingModalOpen, setIsPricingModalOpen] = useState(false);
   const [isIpModalOpen, setIsIpModalOpen] = useState(false);
   const [isActivationModalOpen, setIsActivationModalOpen] = useState(false);
+  const [isAutoCheckoutOpen, setIsAutoCheckoutOpen] = useState(false);
+  const [autoCheckoutSpeciesId, setAutoCheckoutSpeciesId] = useState<string>('broiler');
   const [isAdminModalOpen, setIsAdminModalOpen] = useState(false);
   const [isSolarModalOpen, setIsSolarModalOpen] = useState(false);
   const [isAdminDirectMode, setIsAdminDirectMode] = useState(false);
@@ -137,6 +140,20 @@ export default function App() {
     }));
   };
 
+  const openCheckoutForSpecies = (speciesId?: string) => {
+    if (speciesId && speciesId !== 'tilapia') {
+      setAutoCheckoutSpeciesId(speciesId);
+    }
+    setIsAutoCheckoutOpen(true);
+  };
+
+  const handleAutoCheckoutSuccess = (unlockedServiceId: string) => {
+    setIsActivated(true);
+    if (unlockedServiceId && unlockedServiceId !== 'all') {
+      handleSelectSpecies(unlockedServiceId);
+    }
+  };
+
   const handleInputChange = (key: keyof CalculationInput, value: string | boolean) => {
     setInput((prev) => ({
       ...prev,
@@ -145,9 +162,9 @@ export default function App() {
   };
 
   const handleSelectPreset = (preset: QuickPreset) => {
-    const isFreePreset = preset.speciesId === 'broiler' || preset.speciesId === 'tilapia';
+    const isFreePreset = preset.speciesId === 'tilapia';
     if (!isActivated && !isFreePreset) {
-      setIsActivationModalOpen(true);
+      openCheckoutForSpecies(preset.speciesId);
       return;
     }
 
@@ -331,8 +348,8 @@ export default function App() {
     setIsActivated(false);
     showToast(
       lang === 'ar'
-        ? '🔒 تم التحويل إلى وضع الزائر (المعاينة): دجاج اللحم وسمك البلطي متاحان للتجربة مجاناً، وباقي السلالات مقفلة.'
-        : 'Switched to Visitor Trial Mode: Broiler and Tilapia are free, other species locked.',
+        ? '🔒 تم التحويل إلى وضع الزائر (المعاينة): سمك البلطي متاح للتجربة مجاناً، ودجاج اللحم وباقي السلالات تتطلب كود تفعيل بـ 3$.'
+        : 'Switched to Visitor Trial Mode: Tilapia is free, Broiler and other species require $3 license.',
       'info'
     );
   };
@@ -393,24 +410,34 @@ export default function App() {
                   <div className="text-xs sm:text-sm font-bold flex items-center gap-2">
                     <span>{lang === 'ar' ? 'وضع الزائر (معاينة تجريبية مجانية)' : 'Visitor Trial Mode'}</span>
                     <span className="rounded-full bg-emerald-600 text-white text-[10px] px-2 py-0.5 font-bold">
-                      {lang === 'ar' ? 'دجاج اللحم وسمك البلطي متاحان مجاناً' : 'Broiler & Tilapia Unlocked'}
+                      {lang === 'ar' ? 'سمك البلطي متاح مجاناً للتجربة' : 'Tilapia Free Demo'}
                     </span>
                   </div>
                   <p className="text-[11px] sm:text-xs text-amber-800/85 mt-0.5">
                     {lang === 'ar'
-                      ? 'دجاج اللحم وتسمين سمك البلطي متاحان بالكامل للاستخدام والتجربة الحرة مجاناً. باقي السلالات تتطلب كود تفعيل.'
-                      : 'Broiler chicken and Tilapia aquaculture calculations are 100% free. The other species require activation key.'}
+                      ? 'سمك البلطي متاح للتجربة الحرة مجاناً. دجاج اللحم وباقي السلالات تتطلب كود تفعيل بـ 3$ مع توليد فوري.'
+                      : 'Tilapia aquaculture is 100% free for demo. Broiler chicken and all other species require $3 license.'}
                   </p>
                 </div>
               </div>
-              <button
-                type="button"
-                onClick={() => setIsActivationModalOpen(true)}
-                className="inline-flex items-center gap-1.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold px-3.5 py-2 text-xs shadow-xs transition cursor-pointer shrink-0"
-              >
-                <KeyRound className="size-3.5" />
-                <span>{lang === 'ar' ? 'تفعيل باقي السلالات 🔑' : 'Unlock All Species 🔑'}</span>
-              </button>
+              <div className="flex flex-wrap items-center gap-2 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => openCheckoutForSpecies()}
+                  className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-black px-3.5 py-2 text-xs shadow-xs transition cursor-pointer"
+                >
+                  <Zap className="size-3.5 text-amber-300 fill-amber-300" />
+                  <span>{lang === 'ar' ? 'تفعيل فوري بـ 3$ ⚡' : 'Instant Unlock ($3) ⚡'}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsActivationModalOpen(true)}
+                  className="inline-flex items-center gap-1.5 rounded-xl bg-amber-400 hover:bg-amber-500 text-slate-950 font-bold px-3 py-2 text-xs shadow-xs transition cursor-pointer"
+                >
+                  <KeyRound className="size-3.5" />
+                  <span>{lang === 'ar' ? 'إدخال كود 🔑' : 'Enter Key 🔑'}</span>
+                </button>
+              </div>
             </div>
           )}
 
@@ -454,7 +481,7 @@ export default function App() {
                 onSelectSpecies={handleSelectSpecies}
                 lang={lang}
                 isActivated={isActivated}
-                onRequireActivation={() => setIsActivationModalOpen(true)}
+                onRequireActivation={(speciesId) => openCheckoutForSpecies(speciesId)}
               />
 
               {selectedSpecies && (
@@ -501,6 +528,7 @@ export default function App() {
         isOpen={isPricingModalOpen}
         onClose={() => setIsPricingModalOpen(false)}
         lang={lang}
+        onOpenCheckout={(speciesId) => openCheckoutForSpecies(speciesId)}
       />
       <IntellectualPropertyModal
         isOpen={isIpModalOpen}
@@ -516,6 +544,7 @@ export default function App() {
         }}
         lang={lang}
         initialAdminMode={isAdminDirectMode}
+        onOpenAutoCheckout={(speciesId) => openCheckoutForSpecies(speciesId)}
         onActivationSuccess={() => {
           setIsActivated(true);
           showToast(
@@ -524,6 +553,16 @@ export default function App() {
           );
         }}
         onDeactivate={handleSwitchToVisitor}
+      />
+      <AutoCheckoutModal
+        isOpen={isAutoCheckoutOpen}
+        onClose={() => {
+          setIsAutoCheckoutOpen(false);
+          setIsActivated(getLicenseStatus().isActivated);
+        }}
+        lang={lang}
+        initialSpeciesId={autoCheckoutSpeciesId}
+        onSuccess={handleAutoCheckoutSuccess}
       />
       <AdminModal
         isOpen={isAdminModalOpen}

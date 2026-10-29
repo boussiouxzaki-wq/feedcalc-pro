@@ -3,13 +3,14 @@ import { Bird, Egg, Wheat, Milestone, TrendingUp, Fish, PiggyBank, Hexagon, Spar
 import { Species, Language, AnimalCategory } from '../types';
 import { SPECIES_LIST } from '../data/speciesData';
 import { TRANSLATIONS } from '../utils/translations';
+import { isSpeciesUnlocked } from '../utils/license';
 
 interface SpeciesSelectorProps {
   selectedSpeciesId: string;
   onSelectSpecies: (speciesId: string) => void;
   lang: Language;
   isActivated?: boolean;
-  onRequireActivation?: () => void;
+  onRequireActivation?: (speciesId?: string) => void;
 }
 
 export const SpeciesSelector: React.FC<SpeciesSelectorProps> = ({
@@ -176,13 +177,13 @@ export const SpeciesSelector: React.FC<SpeciesSelectorProps> = ({
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-4">
         {filteredSpecies.map((species) => {
           const isSelected = species.id === selectedSpeciesId;
-          // دجاج اللحم وسمك البلطي متاحان دائماً ومجاناً للجميع بدون تفعيل
-          const isFreeSpecies = species.id === 'broiler' || species.id === 'tilapia';
-          const isLocked = !isActivated && !isFreeSpecies;
+          // فحص حالة الفتح الدقيقة للسلالة (دجاج اللحم والبلطي مجاناً، أو سلالة تم شراؤها بـ 3$)
+          const isUnlocked = isSpeciesUnlocked(species.id);
+          const isLocked = !isUnlocked;
 
           const handleClick = () => {
             if (isLocked && onRequireActivation) {
-              onRequireActivation();
+              onRequireActivation(species.id);
               return;
             }
             onSelectSpecies(species.id);
@@ -203,9 +204,12 @@ export const SpeciesSelector: React.FC<SpeciesSelectorProps> = ({
               }`}
             >
               {isLocked && (
-                <div className="absolute top-2.5 end-2.5 flex items-center gap-1 rounded-md bg-amber-100/90 text-amber-900 border border-amber-300 px-1.5 py-0.5 text-[10px] font-black shadow-2xs">
-                  <Lock className="size-2.5" />
-                  <span>PRO</span>
+                <div 
+                  title="3$ تفعيل فوري مع توليد الكود آلياً"
+                  className="absolute top-2.5 end-2.5 flex items-center gap-1 rounded-md bg-amber-400 text-slate-950 px-1.5 py-0.5 text-[10px] font-black shadow-2xs"
+                >
+                  <Lock className="size-2.5 text-slate-950" />
+                  <span>3$ تفعيل</span>
                 </div>
               )}
 

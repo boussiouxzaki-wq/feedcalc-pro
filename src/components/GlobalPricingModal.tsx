@@ -7,9 +7,15 @@ interface GlobalPricingModalProps {
   isOpen: boolean;
   onClose: () => void;
   lang: Language;
+  onOpenCheckout?: (speciesId?: string) => void;
 }
 
-export const GlobalPricingModal: React.FC<GlobalPricingModalProps> = ({ isOpen, onClose, lang }) => {
+export const GlobalPricingModal: React.FC<GlobalPricingModalProps> = ({ 
+  isOpen, 
+  onClose, 
+  lang,
+  onOpenCheckout 
+}) => {
   const t = TRANSLATIONS[lang];
 
   if (!isOpen) return null;
@@ -96,8 +102,8 @@ export const GlobalPricingModal: React.FC<GlobalPricingModalProps> = ({ isOpen, 
                 </div>
                 <p className="mt-2 text-xs text-slate-600">
                   {lang === 'ar'
-                    ? 'الحسابات الأساسية لدواجن اللحم والأسماك مع الجداول القياسية'
-                    : 'Standard calculations for broilers & aquaculture with default FCR tables.'}
+                    ? 'الحسابات الأساسية لسمك البلطي ومعاينة الجداول القياسية'
+                    : 'Standard demo calculations for aquaculture with default FCR tables.'}
                 </p>
 
                 <ul className="mt-4 space-y-2 text-xs text-slate-600 border-t border-slate-100 pt-3">
@@ -121,57 +127,62 @@ export const GlobalPricingModal: React.FC<GlobalPricingModalProps> = ({ isOpen, 
               </div>
             </div>
 
-            {/* Tier 2: Pro Global (Highlighted) */}
+            {/* Tier 2: Pro Single Species ($3 Instant Auto-Activation) */}
             <div className="relative rounded-xl border-2 border-emerald-500 bg-gradient-to-b from-emerald-50/50 via-white to-white p-4 flex flex-col justify-between space-y-4 shadow-md">
               <div className="absolute -top-2.5 end-4">
                 <span className="rounded-full bg-emerald-600 px-2.5 py-0.5 text-[10px] font-black text-white uppercase tracking-wide shadow-xs">
-                  {lang === 'ar' ? 'الأكثر طلباً' : 'Most Popular'}
+                  {lang === 'ar' ? 'توليد الكود آلياً ⚡' : 'Auto Generated ⚡'}
                 </span>
               </div>
 
               <div>
                 <span className="text-xs font-bold text-emerald-800 uppercase tracking-wider flex items-center gap-1">
                   <Sparkles className="size-3 text-emerald-600" />
-                  {lang === 'ar' ? 'الترخيص الاحترافي' : 'Pro Global'}
+                  {lang === 'ar' ? 'ترخيص أيقونة / سلالة محددة' : 'Single Species License'}
                 </span>
                 <div className="mt-1 flex items-baseline gap-1">
-                  <span className="text-2xl font-black text-slate-900">$9.99</span>
-                  <span className="text-xs text-slate-500">
-                    {lang === 'ar' ? '/ شهر أو $79 سنوياً' : '/ mo or $79/yr'}
+                  <span className="text-3xl font-black text-slate-900">$3.00</span>
+                  <span className="text-xs font-bold text-emerald-700">
+                    {lang === 'ar' ? 'لكل حيوان (تفعيل فوري)' : 'per species (instant)'}
                   </span>
                 </div>
                 <p className="mt-2 text-xs text-slate-600">
                   {lang === 'ar'
-                    ? 'للمزارع ومربي الثروة الحيوانية والمهندسين الزراعيين الراغبين في أقصى دقة وتوفير.'
-                    : 'For commercial farms & nutritionists requiring customized nutrients & multi-currency.'}
+                    ? 'يتم توليد كود التفعيل الرقمي وتفعيله تلقائياً بمجرد إتمام الدفع (3 دولار فقط أو 650 دج).'
+                    : 'Key is generated automatically upon payment ($3 USD or ~650 DZD) with instant unlock.'}
                 </p>
 
                 <ul className="mt-4 space-y-2 text-xs text-slate-700 border-t border-emerald-100 pt-3">
                   <li className="flex items-center gap-2 font-medium">
                     <Check className="size-3.5 text-emerald-600 shrink-0" />
-                    <span>{lang === 'ar' ? 'تخصيص مكونات العلف الستة' : 'Custom 6-Nutrient Feed Builder'}</span>
+                    <span>{lang === 'ar' ? 'توليد الكود فوراً بدون انتظار المهندس' : 'Automatic instant key generation'}</span>
                   </li>
                   <li className="flex items-center gap-2 font-medium">
                     <Check className="size-3.5 text-emerald-600 shrink-0" />
-                    <span>{lang === 'ar' ? 'دعم جميع العملات ($ / € / £ / DA)' : 'All Currencies ($ / € / £ / etc.)'}</span>
+                    <span>{lang === 'ar' ? 'تفعيل تلقائي مباشر على جهازك' : '1-click browser auto-activation'}</span>
                   </li>
                   <li className="flex items-center gap-2 font-medium">
                     <Check className="size-3.5 text-emerald-600 shrink-0" />
-                    <span>{lang === 'ar' ? 'تقارير باسم وشعار مزرعتك' : 'Custom Farm Logo on PDF'}</span>
+                    <span>{lang === 'ar' ? 'صلاحية كاملة لمدة شهر (30 يوماً)' : 'Full 30-day active license'}</span>
                   </li>
                   <li className="flex items-center gap-2 font-medium">
                     <Check className="size-3.5 text-emerald-600 shrink-0" />
-                    <span>{lang === 'ar' ? 'دعم التحويل (kg / lbs)' : 'Metric & Imperial (kg / lbs)'}</span>
+                    <span>{lang === 'ar' ? 'تقارير PDF علمية دقيقة' : 'Comprehensive PDF exports'}</span>
                   </li>
                 </ul>
               </div>
 
               <button
                 type="button"
-                onClick={() => handleInquire('Pro Global - $9.99/mo')}
-                className="w-full flex items-center justify-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-2 text-xs font-bold text-white shadow-xs hover:bg-emerald-700 transition cursor-pointer"
+                onClick={() => {
+                  onClose();
+                  if (onOpenCheckout) {
+                    onOpenCheckout();
+                  }
+                }}
+                className="w-full flex items-center justify-center gap-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 px-3 py-2.5 text-xs font-bold text-white shadow-xs transition cursor-pointer"
               >
-                <span>{lang === 'ar' ? 'طلب ترخيص Pro' : 'Inquire / Order License'}</span>
+                <span>{lang === 'ar' ? 'شراء وتفعيل فوري بـ 3$ ⚡' : 'Pay $3 & Activate Instantly ⚡'}</span>
                 <ArrowRight className={`size-3.5 ${isRtl ? 'rotate-180' : ''}`} />
               </button>
             </div>
