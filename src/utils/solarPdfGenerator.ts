@@ -125,8 +125,8 @@ export async function exportSolarPumpPdfReport(
     <!-- Engineer Attribution Strip -->
     <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 7px; padding: 7px 12px; margin-bottom: 14px; font-size: 10.5px; display: flex; justify-content: space-between; align-items: center;">
       <div>
-        <span style="color: #64748b;">${isAr ? 'إعداد وتصميم المهندس:' : 'Engineered by:'}</span>
-        <strong style="color: #0f172a; margin: 0 4px;">ZAKARYA Bessioud (زكريا بسيود)</strong>
+        <span style="color: #64748b;">${isAr ? 'إعداد وبرمجة:' : 'Developed by:'}</span>
+        <strong style="color: #0f172a; margin: 0 4px;">${isAr ? 'مطور تطبيقات وبرامج حر: زكريا بسيود (ZAKARYA Bessioud)' : 'Freelance Developer ZAKARYA Bessioud'}</strong>
       </div>
       <div>
         <span style="color: #64748b;">${isAr ? 'هاتف التواصل / واتساب:' : 'Contact Phone / WhatsApp:'}</span>
@@ -342,13 +342,13 @@ export async function exportSolarPumpPdfReport(
       <div>
         <div style="font-weight: 800; color: #047857; font-size: 11px;">FeedCalc Pro — Solar Water Pumping Module</div>
         <div style="color: #64748b; font-size: 9px; margin-top: 2px;">
-          ${isAr ? 'حقوق التصميم والبرمجة محفوظة © المهندس زكريا بسيود ZAKARYA Bessioud' : 'Designed & engineered by Eng. ZAKARYA Bessioud — All Rights Reserved'}
+          ${isAr ? 'حقوق التصميم والبرمجة محفوظة © مطور تطبيقات وبرامج حر: زكريا بسيود ZAKARYA Bessioud' : 'Designed & programmed by Freelance Developer ZAKARYA Bessioud — All Rights Reserved'}
         </div>
       </div>
 
       <div style="text-align: center; border: 1px solid #cbd5e1; border-radius: 6px; padding: 5px 12px; background: #ffffff;">
-        <div style="font-size: 8.5px; color: #64748b; margin-bottom: 2px;">${isAr ? 'ختم واعتماد المهندس المصمم' : 'Engineering Approval Seal'}</div>
-        <div style="font-size: 11.5px; font-weight: 900; color: #047857; letter-spacing: 0.5px;">ENG. ZAKARYA BESSIOUD</div>
+        <div style="font-size: 8.5px; color: #64748b; margin-bottom: 2px;">${isAr ? 'مطور تطبيقات وبرامج حر' : 'Freelance App Developer'}</div>
+        <div style="font-size: 11.5px; font-weight: 900; color: #047857; letter-spacing: 0.5px;">ZAKARYA BESSIOUD</div>
         <div style="font-size: 8px; color: #0f172a; font-weight: 700;">+213 655 87 03 92</div>
       </div>
     </div>
@@ -409,7 +409,7 @@ export async function exportSolarPumpPdfReport(
       blob,
       filename: fileName,
       title: isAr ? 'تقرير منظومة الضخ الشمسي للآبار الفلاحية' : 'Solar Well Pumping Engineering Report',
-      text: isAr ? 'تقرير التصميم الفني لمنظومة الضخ الشمسي - المهندس زكريا بسيود' : 'Solar Pumping System Report - Eng. ZAKARYA Bessioud',
+      text: isAr ? 'تقرير التصميم الفني لمنظومة الضخ الشمسي - مطور تطبيقات وبرامج حر: زكريا بسيود' : 'Solar Pumping System Report - Freelance Developer ZAKARYA Bessioud',
       mimeType: 'application/pdf',
     });
 
@@ -451,7 +451,7 @@ export async function exportSolarPumpPdfReport(
     // Author
     fallbackDoc.setTextColor(51, 65, 85);
     fallbackDoc.setFontSize(8.5);
-    fallbackDoc.text(`Lead Engineer: ZAKARYA Bessioud (+213655870392) | ${dateFormatted} ${timeFormatted}`, 15, 40);
+    fallbackDoc.text(`Freelance Developer: ZAKARYA Bessioud (+213655870392) | ${dateFormatted} ${timeFormatted}`, 15, 40);
 
     // Highlight Box
     fallbackDoc.setFillColor(240, 253, 244);
@@ -515,7 +515,7 @@ export async function exportSolarPumpPdfReport(
     fallbackDoc.line(10, 275, pw - 10, 275);
     fallbackDoc.setTextColor(148, 163, 184);
     fallbackDoc.setFontSize(7.5);
-    fallbackDoc.text('FeedCalc Pro Solar | Cambridge & FAO 56 Standards | Designer: Eng. ZAKARYA Bessioud (+213655870392)', 10, 281);
+    fallbackDoc.text('FeedCalc Pro Solar | Cambridge & FAO 56 Standards | Developer: ZAKARYA Bessioud (+213655870392)', 10, 281);
 
     const fallbackBlob = fallbackDoc.output('blob');
     const fallbackBlobUrl = URL.createObjectURL(fallbackBlob);

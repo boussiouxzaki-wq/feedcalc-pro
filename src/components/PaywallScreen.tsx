@@ -50,7 +50,7 @@ export const PaywallScreen: React.FC<PaywallScreenProps> = ({
 
     // If master password or key
     if (isMasterAdminPassword(keyInput.trim())) {
-      activateApp('FC-MASTER-UNLIMITED', 'المهندس زكريا بسيود (المطور)');
+      activateApp('FC-MASTER-UNLIMITED', 'زكريا بسيود (مطور تطبيقات وبرامج حر)');
       onActivated();
       setIsActivating(false);
       return;
@@ -157,7 +157,7 @@ export const PaywallScreen: React.FC<PaywallScreenProps> = ({
           {/* Contact Developer Section */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3 w-full max-w-lg">
             <a
-              href="https://wa.me/213655870392?text=مرحباً%20مهندس%20زكريا،%20أريد%20طلب%20كود%20اشتراك%20في%20تطبيق%20FeedCalc%20Pro"
+              href="https://wa.me/213655870392?text=مرحباً%20زكريا،%20أريد%20طلب%20كود%20اشتراك%20في%20تطبيق%20FeedCalc%20Pro"
               target="_blank"
               rel="noopener noreferrer"
               className="w-full sm:w-auto flex-1 inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 px-4 py-2.5 text-xs font-bold text-white transition shadow-md shadow-emerald-950/30 cursor-pointer"
@@ -171,14 +171,14 @@ export const PaywallScreen: React.FC<PaywallScreenProps> = ({
               className="w-full sm:w-auto flex-1 inline-flex items-center justify-center gap-2 rounded-xl bg-slate-700 hover:bg-slate-600 px-4 py-2.5 text-xs font-bold text-white transition border border-slate-600 cursor-pointer"
             >
               <Phone className="w-4 h-4 text-emerald-400" />
-              <span>{lang === 'ar' ? 'اتصال بالمهندس: 0655870392' : 'Call: 0655870392'}</span>
+              <span>{lang === 'ar' ? 'اتصال بمطور التطبيق: 0655870392' : 'Call Developer: 0655870392'}</span>
             </a>
           </div>
 
           <div className="mt-4 text-xs text-slate-400">
             {lang === 'ar' 
-              ? 'تطوير المهندس: زكريا بسيود (Zakarya Boussioux) - جميع الحقوق محفوظة 2026'
-              : 'Developed by Eng. Zakarya Boussioux - All rights reserved 2026'}
+              ? 'تطوير وبرمجة: مطور تطبيقات وبرامج حر زكريا بسيود (Zakarya Boussioux) - جميع الحقوق محفوظة 2026'
+              : 'Developed by Freelance Software & App Developer Zakarya Boussioux - All rights reserved 2026'}
           </div>
         </div>
       </div>

@@ -78,7 +78,7 @@ export const AdminModal: React.FC<AdminModalProps> = ({ isOpen, onClose, onSwitc
       setAuthError('');
       setPasswordInput('');
     } else {
-      setAuthError('كلمة المرور غير صحيحة، الوصول مقتصر على المهندس زكريا فقط.');
+      setAuthError('كلمة المرور غير صحيحة، الوصول مقتصر على مطور التطبيقات والبرامج زكريا فقط.');
     }
   };
 
@@ -152,7 +152,7 @@ ${currentUrl}
 3. ألصق كود التفعيل واضغط "تفعيل".
 
 بالتوفيق في مشروعك!
-المهندس زكريا بسيود (0655870392)`;
+مطور تطبيقات وبرامج حر: زكريا بسيود (0655870392)`;
   };
 
   const handleCopyWhatsApp = () => {
@@ -187,7 +187,7 @@ ${currentUrl}
             <div className="size-14 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 mx-auto mb-3 shadow-inner">
               <Lock className="size-7" />
             </div>
-            <h2 className="text-lg font-black text-white">بوابة التحكم للمهندس زكريا</h2>
+            <h2 className="text-lg font-black text-white">بوابة التحكم لمطور التطبيقات زكريا</h2>
             <p className="text-xs text-slate-400 mt-1 mb-5">
               هذه النافذة مخصصة لك فقط لتوليد أكواد الاشتراكات للزبائن، أدخل كلمة السر للمتابعة:
             </p>
@@ -233,7 +233,7 @@ ${currentUrl}
                   <h3 className="font-bold text-base text-white flex items-center gap-2">
                     <span>توليد أكواد الاشتراكات</span>
                     <span className="text-[10px] bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-2 py-0.5 rounded-md font-mono">
-                      المهندس زكريا
+                      مطور تطبيقات وبرامج حر: زكريا
                     </span>
                   </h3>
                   <p className="text-[11px] text-slate-400">إنشاء كود فوري وإرسال رسالة الواتساب للزبون</p>

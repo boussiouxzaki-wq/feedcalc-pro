@@ -1,5 +1,5 @@
 // FeedCalc Pro - Licensing and Single-Service Subscription Engine
-// Intellectual Property of Eng. ZAKARYA Bessioud (+213 655 870 392)
+// Intellectual Property of Freelance Software & App Developer ZAKARYA Bessioud (+213 655 870 392)
 
 const STORAGE_VERSION = 'v4';
 const MASTER_ACTIVATED_KEY = `feedcalc_master_activated_${STORAGE_VERSION}`;
@@ -68,7 +68,7 @@ export interface LicenseStatus {
 }
 
 /**
- * Permanent VIP master keys for Eng. Zakarya himself
+ * Permanent VIP master keys for Freelance Developer Zakarya himself
  */
 const MASTER_LIFETIME_KEYS = [
   'ZAKI-2026-PRO',
@@ -126,7 +126,7 @@ export function verifyLicenseKey(rawKey: string): KeyVerificationResult {
       daysRemaining: 9999,
       planName: 'ترخيص المطور الشامل الدائم (VIP Master)',
       tier: 'lifetime',
-      client: 'المهندس زكريا بسيود / ترخيص دائم',
+      client: 'زكريا بسيود (مطور تطبيقات وبرامج حر) / ترخيص دائم',
       serviceId: 'all',
       serviceCode: 'ALL',
       serviceNameAr: 'الباقة الشاملة VIP (كافة الأيقونات)',
@@ -179,7 +179,7 @@ export function verifyLicenseKey(rawKey: string): KeyVerificationResult {
         serviceCode: service.code,
         serviceNameAr: service.nameAr,
         isSingleService: service.id !== 'all',
-        error: `انتهت صلاحية اشتراك خدمة [${service.nameAr}]! يرجى التواصل مع المهندس زكريا للتجديد.`
+        error: `انتهت صلاحية اشتراك خدمة [${service.nameAr}]! يرجى التواصل مع مطور التطبيقات زكريا للتجديد.`
       };
     }
 
@@ -352,7 +352,7 @@ export function getLicenseStatus(): LicenseStatus {
     hasMasterAccess: masterActive || Boolean(activeMap['all']),
     unlockedServicesCount: masterActive || activeMap['all'] ? LOCKABLE_SERVICES.length : activeList.length,
     activeServices: activeList,
-    clientName: activeList[0]?.clientName || (masterActive ? 'المهندس زكريا بسيود (المطور)' : null),
+    clientName: activeList[0]?.clientName || (masterActive ? 'زكريا بسيود (مطور تطبيقات وبرامج حر)' : null),
     tier: masterActive ? 'lifetime' : activeList.length > 1 ? 'multi' : activeList.length === 1 ? 'single' : 'free'
   };
 }
@@ -472,11 +472,11 @@ export function resetToVisitorMode(): void {
  * Activate master VIP unlimited developer license directly
  */
 export function activateMasterAdmin(): { success: boolean; message: string } {
-  return activateApp('FC-MASTER-UNLIMITED', 'المهندس زكريا بسيود (المطور)');
+  return activateApp('FC-MASTER-UNLIMITED', 'زكريا بسيود (مطور تطبيقات وبرامج حر)');
 }
 
 /**
- * Tool for Eng. Zakarya to generate new keys for his clients!
+ * Tool for Freelance Developer Zakarya to generate new keys for his clients!
  * Can target a SINGLE service/icon (e.g. 'SHP', 'RAB', 'LAY') or 'ALL'
  */
 export function generateClientKey(

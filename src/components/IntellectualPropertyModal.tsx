@@ -42,7 +42,7 @@ CERTIFICATE OF SOLE AUTHORSHIP AND EXCLUSIVE COPYRIGHT
 ================================================================================
 
 PROJECT: FeedCalc Pro - Smart Livestock & Aquaculture Nutrition System
-SOLE AUTHOR & EXCLUSIVE PROPRIETOR: Eng. ZAKARYA Bessioud (م. زكريا بسيود)
+SOLE AUTHOR & EXCLUSIVE PROPRIETOR: Freelance Software & App Developer: ZAKARYA Bessioud (مطور تطبيقات وبرامج حر: زكريا بسيود)
 OFFICIAL CONTACT:
   - Phone / WhatsApp: +213655870392
   - Email: boussiouxzaki@gmail.com
@@ -74,10 +74,10 @@ COPYRIGHT NOTICE:
     or source tampering is strictly prohibited by international law.
   - Commercial Redistribution: No entity, company, or third party may resell, white-label,
     re-host, or repackage this software or its databases without explicit, written,
-    and signed commercial authorization from Eng. ZAKARYA Bessioud.
+    and signed commercial authorization from Freelance Developer ZAKARYA Bessioud.
 
 SIGNED & ISSUED BY SOLE CREATOR:
-Eng. ZAKARYA Bessioud
+ZAKARYA Bessioud (Freelance Software & App Developer / مطور تطبيقات وبرامج حر)
 Algiers, 2026
 ================================================================================`;
 

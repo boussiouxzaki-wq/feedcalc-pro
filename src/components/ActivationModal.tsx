@@ -46,7 +46,7 @@ export const ActivationModal: React.FC<ActivationModalProps> = ({
   const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
   
-  // Admin generator mode (for Eng. Zakarya)
+  // Admin generator mode (for Freelance Developer Zakarya)
   const [showAdminGenerator, setShowAdminGenerator] = useState(initialAdminMode);
   const [newClientName, setNewClientName] = useState('');
   const [selectedDurationDays, setSelectedDurationDays] = useState<number>(30); // Default: 30 days monthly
@@ -61,13 +61,13 @@ export const ActivationModal: React.FC<ActivationModalProps> = ({
 
   useEffect(() => {
     if (isOpen && initialAdminMode) {
-      // تفعيل التطبيق للمهندس زكريا تلقائياً بترخيص دائم VIP Master
-      activateApp('FC-MASTER-UNLIMITED', 'المهندس زكريا بسيود (المطور)');
+      // تفعيل التطبيق تلقائياً بترخيص دائم VIP Master لمطور البرامج زكريا
+      activateApp('FC-MASTER-UNLIMITED', 'زكريا بسيود (مطور تطبيقات وبرامج حر)');
       setLicenseStatus(getLicenseStatus());
       if (onActivationSuccess) onActivationSuccess();
 
       setShowAdminGenerator(true);
-      setSuccessMsg('مرحباً بك يا مهندس زكريا! تم تفعيل نسختك بالكامل كـ VIP Master وفتح لوحة توليد الاشتراكات لزبائنك.');
+      setSuccessMsg('مرحباً بك يا زكريا! تم تفعيل نسختك بالكامل كـ VIP Master وفتح لوحة توليد الاشتراكات لزبائنك.');
     }
   }, [isOpen, initialAdminMode]);
 
@@ -83,16 +83,16 @@ export const ActivationModal: React.FC<ActivationModalProps> = ({
       return;
     }
 
-    // Special secret code to unlock developer key generator for Eng. Zakarya
+    // Special secret code to unlock developer key generator for Zakarya
     if (isMasterAdminPassword(inputKey)) {
-      // تفعيل التطبيق للمهندس زكريا تلقائياً بترخيص دائم VIP Master حتى لا يتعامل معه كتجريبي أو زبون أبداً
-      activateApp('FC-MASTER-UNLIMITED', 'المهندس زكريا بسيود (المطور)');
+      // تفعيل التطبيق تلقائياً بترخيص دائم VIP Master لمطور البرامج زكريا
+      activateApp('FC-MASTER-UNLIMITED', 'زكريا بسيود (مطور تطبيقات وبرامج حر)');
       setLicenseStatus(getLicenseStatus());
       if (onActivationSuccess) onActivationSuccess();
 
       setShowAdminGenerator(true);
       setInputKey('');
-      setSuccessMsg('مرحباً بك يا مهندس زكريا! تم تفعيل نسختك بالكامل كـ VIP Master وفتح لوحة توليد الاشتراكات لزبائنك.');
+      setSuccessMsg('مرحباً بك يا زكريا! تم تفعيل نسختك بالكامل كـ VIP Master وفتح لوحة توليد الاشتراكات لزبائنك.');
       return;
     }
 
@@ -158,7 +158,7 @@ ${generatedInfo.key}
 2. الصق الكود أعلاه واضغط "تفعيل النسخة الآن".
 
 لأي استفسار أو تجديد الاشتراك القادم، يسعدنا تواصلكم:
-المهندس زكريا بسيود | هاتف: +213 655 870 392`;
+مطور تطبيقات وبرامج حر: زكريا بسيود | هاتف: +213 655 870 392`;
   };
 
   return (
@@ -255,8 +255,8 @@ ${generatedInfo.key}
                       : `Key: ${licenseStatus.licenseKey}`)
                   : licenseStatus.isExpired
                   ? (lang === 'ar' 
-                      ? 'انتهت فترة الـ 30 يوماً لهذا الشهر. لتجديد الاشتراك واستمرار حسابات الأعلاف لمزرعتك، تواصل مع المهندس زكريا بسيود.'
-                      : 'Your 30-day subscription has ended. Contact Eng. Zakarya to renew.')
+                      ? 'انتهت فترة الـ 30 يوماً لهذا الشهر. لتجديد الاشتراك واستمرار حسابات الأعلاف لمزرعتك، تواصل مع مطور التطبيقات زكريا بسيود.'
+                      : 'Your 30-day subscription has ended. Contact Developer Zakarya to renew.')
                   : (lang === 'ar' 
                       ? 'لفتح حسابات كافة الـ 13 كائناً حياً (أغنام، أبقار، دواجن، أسماك) وتصدير التقارير، يرجى تفعيل اشتراكك الشهري.'
                       : 'To unlock all 13 species and advanced PDF exports, please activate your monthly license.')}
@@ -356,19 +356,19 @@ ${generatedInfo.key}
                 {lang === 'ar' ? 'طلب كود التفعيل / تجديد الاشتراك الشهري:' : 'Request Monthly Key / Renewal:'}
               </span>
               <span className="text-[10px] font-bold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-full">
-                المهندس زكريا بسيود
+                مطور تطبيقات وبرامج حر: زكريا بسيود
               </span>
             </div>
 
             <p className="text-xs text-slate-600 leading-relaxed">
               {lang === 'ar' 
-                ? 'للحصول على كود الاشتراك الشهري أو تجديد باقتك، تواصل مباشرة مع المهندس زكريا عبر الهاتف أو واتساب:'
+                ? 'للحصول على كود الاشتراك الشهري أو تجديد باقتك، تواصل مباشرة مع مطور التطبيق زكريا عبر الهاتف أو واتساب:'
                 : 'To get your monthly activation key or renew your subscription, contact the developer directly:'}
             </p>
 
             <div className="grid grid-cols-2 gap-2.5 pt-1">
               <a
-                href="https://wa.me/213655870392?text=%D9%85%D8%B1%D8%AD%D8%A8%D8%A7%20%D9%85%D9%87%D9%86%D8%AF%D8%B3%20%D8%B2%D9%83%D8%B1%D9%8A%D8%A7%D8%8C%20%D8%A3%D8%B1%D9%8A%D8%AF%20%D8%A7%D9%84%D8%A7%D8%B4%D8%AA%D8%B1%D8%A7%D9%83%20%D8%A7%D9%84%D8%B4%D9%87%D8%B1%D9%8A%20%D9%81%D9%8A%20%D8%AA%D8%B7%D8%A8%D9%8A%D9%82%20FeedCalc%20Pro"
+                href="https://wa.me/213655870392?text=%D9%85%D8%B1%D8%AD%D8%A8%D8%A7%20%D8%B2%D9%83%D8%B1%D9%8A%D8%A7%D8%8C%20%D8%A3%D8%B1%D9%8A%D8%AF%20%D8%A7%D9%84%D8%A7%D8%B4%D8%AA%D8%B1%D8%A7%D9%83%20%D8%A7%D9%84%D8%B4%D9%87%D8%B1%D9%8A%20%D9%81%D9%8A%20%D8%AA%D8%B7%D8%A8%D9%8A%D9%82%20FeedCalc%20Pro"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center justify-center gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white p-2.5 text-xs font-bold transition shadow-xs cursor-pointer"
@@ -387,12 +387,12 @@ ${generatedInfo.key}
             </div>
           </div>
 
-          {/* Admin Generator Section (Special Access for Eng. Zakarya) */}
+          {/* Admin Generator Section (Special Access for Zakarya) */}
           {showAdminGenerator && (
             <div className="rounded-xl border-2 border-emerald-600 bg-emerald-50/60 p-4 space-y-3.5 animate-in zoom-in-95">
               <div className="flex items-center justify-between border-b border-emerald-200 pb-2">
                 <h4 className="text-xs font-black text-emerald-950 flex items-center gap-1.5">
-                  <span>🛠️</span> لوحة المهندس زكريا لتوليد اشتراكات الزبائن
+                  <span>🛠️</span> لوحة مطور التطبيقات زكريا لتوليد اشتراكات الزبائن
                 </h4>
                 <span className="text-[10px] bg-emerald-200 text-emerald-900 font-bold px-2 py-0.5 rounded-full">
                   Admin Master

@@ -87,7 +87,7 @@ const REPORT_I18N: Record<Language, ReportDictionary> = {
     reportTitle: 'تقرير الحسابات الغذائية ومقننات العلف اليومية',
     reportSubtitle: 'وثيقة فنية حسابية رسمية معتمدة على معادلات معدل التحويل الغذائي القياسية (FCR)',
     issuedAt: 'تاريخ وتوقيت الإصدار:',
-    devLabel: 'إعداد وتطوير المهندس:',
+    devLabel: 'مطور تطبيقات وبرامج حر:',
     devName: 'ZAKARYA Bessioud',
     devPhone: '+213655870392',
     devEmail: 'boussiouxzaki@gmail.com',
@@ -139,7 +139,7 @@ const REPORT_I18N: Record<Language, ReportDictionary> = {
     moistureRole: 'حفظ واستقرار العلف وتحديد تركيز المادة الجافة الفعالة',
     mineralAsh: 'الرماد المعدني الكلي (Total Ash)',
     mineralAshRole: 'بناء الهيكل العظمي وضبط التوازن الشاردي والإلكتروليتي',
-    footerTagline: 'FeedCalc Pro  |  نظام الحسابات الغذائية الذكي  |  المطور: المهندس ZAKARYA Bessioud (+213655870392)',
+    footerTagline: 'FeedCalc Pro  |  نظام الحسابات الغذائية الذكي  |  مطور تطبيقات وبرامج حر: ZAKARYA Bessioud (+213655870392)',
     pageNumber: 'صفحة 1 من 1',
   },
   en: {
@@ -149,7 +149,7 @@ const REPORT_I18N: Record<Language, ReportDictionary> = {
     reportTitle: 'Daily Feeding Allocation & Nutritional Calculation Report',
     reportSubtitle: 'Official technical calculation document based on Feed Conversion Ratio (FCR) standards',
     issuedAt: 'Issued on:',
-    devLabel: 'Author & Lead Engineer:',
+    devLabel: 'Freelance Software & App Developer:',
     devName: 'ZAKARYA Bessioud',
     devPhone: '+213655870392',
     devEmail: 'boussiouxzaki@gmail.com',
@@ -211,7 +211,7 @@ const REPORT_I18N: Record<Language, ReportDictionary> = {
     reportTitle: 'Rapport de Calcul Nutritionnel et Rations Quotidiennes',
     reportSubtitle: "Document officiel de calcul basé sur l'indice de consommation alimentaire (IC / FCR)",
     issuedAt: 'Date et heure :',
-    devLabel: 'Ingénieur Concepteur :',
+    devLabel: 'Développeur Indépendant d’Applications :',
     devName: 'ZAKARYA Bessioud',
     devPhone: '+213655870392',
     devEmail: 'boussiouxzaki@gmail.com',
@@ -273,7 +273,7 @@ const REPORT_I18N: Record<Language, ReportDictionary> = {
     reportTitle: 'Informe de Asignación y Cálculo Nutricional Diario',
     reportSubtitle: 'Documento técnico oficial basado en el índice de conversión alimenticia (FCR)',
     issuedAt: 'Fecha y hora de emisión:',
-    devLabel: 'Ingeniero Desarrollador:',
+    devLabel: 'Desarrollador de Software y Apps Autónomo:',
     devName: 'ZAKARYA Bessioud',
     devPhone: '+213655870392',
     devEmail: 'boussiouxzaki@gmail.com',
@@ -335,7 +335,7 @@ const REPORT_I18N: Record<Language, ReportDictionary> = {
     reportTitle: 'Tagesfutter- und Nährwertberechnungsbericht',
     reportSubtitle: 'Offizielles Berechnungsdokument basierend auf dem Futterverwertungsquotienten (FCR)',
     issuedAt: 'Erstellungsdatum:',
-    devLabel: 'Leitender Entwicklungsingenieur:',
+    devLabel: 'Freiberuflicher App- & Softwareentwickler:',
     devName: 'ZAKARYA Bessioud',
     devPhone: '+213655870392',
     devEmail: 'boussiouxzaki@gmail.com',
@@ -397,7 +397,7 @@ const REPORT_I18N: Record<Language, ReportDictionary> = {
     reportTitle: '每日饲料投喂配给与营养计算报告',
     reportSubtitle: '基于料肉比 (FCR) 科学养殖标准的官方数据测算技术报告',
     issuedAt: '报告生成时间:',
-    devLabel: '系统研发工程师:',
+    devLabel: '自由职业应用与软件开发者:',
     devName: 'ZAKARYA Bessioud',
     devPhone: '+213655870392',
     devEmail: 'boussiouxzaki@gmail.com',
@@ -931,7 +931,7 @@ export async function generatePdfReport(params: {
     // Meta attribution
     doc.setTextColor(51, 65, 85);
     doc.setFontSize(8.5);
-    doc.text(`Lead Engineer: ZAKARYA Bessioud (+213655870392) | ${dateFormatted} - ${timeFormatted}`, 15, 38);
+    doc.text(`Freelance Developer: ZAKARYA Bessioud (+213655870392) | ${dateFormatted} - ${timeFormatted}`, 15, 38);
 
     // Card highlight
     doc.setFillColor(240, 253, 244);
@@ -989,7 +989,7 @@ export async function generatePdfReport(params: {
     doc.line(10, 278, pageWidth - 10, 278);
     doc.setTextColor(148, 163, 184);
     doc.setFontSize(7.5);
-    doc.text('FeedCalc Pro | Smart Feed Calculation System | Developer: Eng. ZAKARYA Bessioud (+213655870392)', 10, 283);
+    doc.text('FeedCalc Pro | Smart Feed Calculation System | Developer: ZAKARYA Bessioud (+213655870392)', 10, 283);
 
     const fallbackBlob = doc.output('blob');
     const fallbackBlobUrl = URL.createObjectURL(fallbackBlob);

@@ -445,7 +445,7 @@ export const SolarPumpCalculator: React.FC<SolarPumpCalculatorProps> = ({
       : ''
   }
 --------------------------------------------------
-إعداد وتصميم: المهندس زكريا بسيود ZAKARYA Bessioud
+إعداد وتصميم: مطور تطبيقات وبرامج حر: زكريا بسيود ZAKARYA Bessioud
 هاتف / واتساب: 0655870392 (+213655870392)
 البريد الإلكتروني: boussiouxzaki@gmail.com
 FeedCalc Pro Solar — المنظومة الهندسية المعتمدة`
@@ -546,7 +546,7 @@ Email: boussiouxzaki@gmail.com`;
         await navigator.share({
           files: [preparedPdf.file],
           title: lang === 'ar' ? 'تقرير منظومة الضخ الشمسي' : 'Solar Pump System Report',
-          text: lang === 'ar' ? 'تقرير التصميم الفني لمنظومة الضخ الشمسي - المهندس زكريا بسيود' : 'Solar Pump System Report - Eng. ZAKARYA Bessioud',
+          text: lang === 'ar' ? 'تقرير التصميم الفني لمنظومة الضخ الشمسي - مطور تطبيقات وبرامج حر: زكريا بسيود' : 'Solar Pump System Report - Freelance Developer ZAKARYA Bessioud',
         });
         if (onToast) onToast(lang === 'ar' ? 'تم فتح الحفظ والمشاركة بنجاح!' : 'Shared successfully!', 'success');
         return;
@@ -1658,8 +1658,8 @@ Email: boussiouxzaki@gmail.com`;
           <div className="pt-2 border-t border-slate-100 text-[11px] text-slate-500 flex flex-col sm:flex-row items-center justify-between gap-1 text-center sm:text-start">
             <div>
               {lang === 'ar'
-                ? 'إعداد وتصميم: المهندس زكريا بسيود ZAKARYA Bessioud | FeedCalc Pro Solar'
-                : 'Engineered by: ZAKARYA Bessioud | FeedCalc Pro Solar'}
+                ? 'إعداد وتصميم: مطور تطبيقات وبرامج حر: زكريا بسيود ZAKARYA Bessioud | FeedCalc Pro Solar'
+                : 'Developed by: Freelance Software & App Developer ZAKARYA Bessioud | FeedCalc Pro Solar'}
             </div>
             <div className="font-semibold text-emerald-700">
               {lang === 'ar' ? 'هاتف: +213655870392' : 'Tel: +213655870392'}
@@ -1849,13 +1849,14 @@ Email: boussiouxzaki@gmail.com`;
       {/* Engineering Contact & Stamp Footer */}
       <div className="mt-4 pt-3 border-t-2 border-slate-300 flex items-end justify-between">
         <div className="text-[11px] text-slate-600 space-y-0.5">
-          <div><strong>{lang === 'ar' ? 'إعداد وتصميم:' : 'Engineered by:'}</strong> المهندس زكريا بسيود ZAKARYA Bessioud</div>
+          <div><strong>{lang === 'ar' ? 'إعداد وتصميم:' : 'Developed by:'}</strong> مطور تطبيقات وبرامج حر: زكريا بسيود ZAKARYA Bessioud</div>
           <div><strong>{lang === 'ar' ? 'هاتف / واتساب:' : 'Phone / WhatsApp:'}</strong> 0655870392 (+213655870392)</div>
           <div><strong>{lang === 'ar' ? 'البريد الإلكتروني:' : 'Email:'}</strong> boussiouxzaki@gmail.com</div>
           <div><strong>{lang === 'ar' ? 'المنصة:' : 'Platform:'}</strong> FeedCalc Pro Solar — {lang === 'ar' ? 'المنظومة الهندسية المعتمدة' : 'Certified Engineering Platform'}</div>
         </div>
         <div className="text-center p-3 border-2 border-dashed border-emerald-700 rounded-lg min-w-[170px]">
-          <div className="text-[11px] font-bold text-emerald-800">المهندس زكريا بسيود</div>
+          <div className="text-[11px] font-bold text-emerald-800">زكريا بسيود</div>
+          <div className="text-[9px] text-emerald-700 font-semibold">مطور تطبيقات وبرامج حر</div>
           <div className="text-[9px] text-slate-500 font-mono">ZAKARYA Bessioud</div>
           <div className="text-[10px] text-emerald-700 font-semibold mt-0.5">★ معتمد فلاحياً وهندسياً ★</div>
         </div>

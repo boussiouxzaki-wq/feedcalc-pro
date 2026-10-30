@@ -22,7 +22,7 @@ export const GlobalPricingModal: React.FC<GlobalPricingModalProps> = ({
 
   const handleInquire = (planName: string) => {
     const text = encodeURIComponent(
-      `Hello Eng. ZAKARYA Bessioud, I am interested in FeedCalc Pro Global Commercial License (${planName}). Please send details.`
+      `Hello ZAKARYA Bessioud (Freelance Software & App Developer), I am interested in FeedCalc Pro Global Commercial License (${planName}). Please send details.`
     );
     window.open(`https://wa.me/213655870392?text=${text}`, '_blank');
   };
@@ -155,7 +155,7 @@ export const GlobalPricingModal: React.FC<GlobalPricingModalProps> = ({
                 <ul className="mt-4 space-y-2 text-xs text-slate-700 border-t border-emerald-100 pt-3">
                   <li className="flex items-center gap-2 font-medium">
                     <Check className="size-3.5 text-emerald-600 shrink-0" />
-                    <span>{lang === 'ar' ? 'توليد الكود فوراً بدون انتظار المهندس' : 'Automatic instant key generation'}</span>
+                    <span>{lang === 'ar' ? 'توليد الكود فوراً وبشكل آلي لحظي' : 'Automatic instant key generation'}</span>
                   </li>
                   <li className="flex items-center gap-2 font-medium">
                     <Check className="size-3.5 text-emerald-600 shrink-0" />
@@ -238,8 +238,8 @@ export const GlobalPricingModal: React.FC<GlobalPricingModalProps> = ({
             <div className="space-y-1 text-center sm:text-start">
               <h4 className="text-sm font-bold text-slate-900">
                 {lang === 'ar'
-                  ? 'مطور ومالك حقوق التطبيق: المهندس زكريا بسيود'
-                  : 'Sole Developer & Intellectual Property Owner: Eng. ZAKARYA Bessioud'}
+                  ? 'مطور ومالك حقوق التطبيق: مطور تطبيقات وبرامج حر زكريا بسيود'
+                  : 'Sole Developer & Intellectual Property Owner: Freelance Software & App Developer ZAKARYA Bessioud'}
               </h4>
               <p className="text-xs text-slate-600">
                 {lang === 'ar'
@@ -250,7 +250,7 @@ export const GlobalPricingModal: React.FC<GlobalPricingModalProps> = ({
 
             <div className="flex items-center gap-2 shrink-0">
               <a
-                href="https://wa.me/213655870392?text=Hello%20Eng.%20ZAKARYA%20Bessioud,%20I%20am%20interested%20in%20FeedCalc%20Pro%20License"
+                href="https://wa.me/213655870392?text=Hello%20ZAKARYA%20Bessioud,%20I%20am%20interested%20in%20FeedCalc%20Pro%20License"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-bold text-white shadow-xs hover:bg-emerald-700 transition"

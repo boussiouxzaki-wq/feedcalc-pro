@@ -240,8 +240,8 @@ export function generateSolarOfflineHtmlReport(
 
     <div class="engineer-card">
       <div>
-        <span>${isAr ? 'إعداد المهندس المصمم:' : 'Lead Engineer:'}</span>
-        <strong style="color: #0f172a;">ZAKARYA Bessioud (زكريا بسيود)</strong>
+        <span>${isAr ? 'إعداد وبرمجة:' : 'Developed by:'}</span>
+        <strong style="color: #0f172a;">${isAr ? 'مطور تطبيقات وبرامج حر: زكريا بسيود (ZAKARYA Bessioud)' : 'Freelance Developer ZAKARYA Bessioud'}</strong>
       </div>
       <div>
         <span>${isAr ? 'هاتف / واتساب:' : 'Contact:'}</span>
@@ -380,11 +380,12 @@ export function generateSolarOfflineHtmlReport(
       <!-- Footer Stamp -->
       <div class="footer-stamp">
         <div>
-          <strong>FeedCalc Pro Solar</strong> — ${isAr ? 'تصميم المهندس زكريا بسيود ZAKARYA Bessioud' : 'Engineered by ZAKARYA Bessioud'}<br>
+          <strong>FeedCalc Pro Solar</strong> — ${isAr ? 'مطور تطبيقات وبرامج حر: زكريا بسيود ZAKARYA Bessioud' : 'Developed by Freelance Developer ZAKARYA Bessioud'}<br>
           ${isAr ? 'هاتف / واتساب: +213655870392 | البريد: boussiouxzaki@gmail.com' : 'Tel: +213655870392 | Email: boussiouxzaki@gmail.com'}
         </div>
         <div class="seal-box">
-          ENG. ZAKARYA BESSIOUD<br>
+          ZAKARYA BESSIOUD<br>
+          <span style="font-size: 8.5px; font-weight: normal;">${isAr ? 'مطور تطبيقات وبرامج حر' : 'Freelance App Developer'}</span><br>
           <span style="font-size: 9px; font-weight: normal;">★ CERTIFIED AGRICULTURAL DESIGN ★</span>
         </div>
       </div>
@@ -518,7 +519,7 @@ export function generateFeedOfflineHtmlReport(
       </table>
 
       <div style="margin-top: 20px; font-size: 11px; color: #64748b; border-top: 1px solid #e2e8f0; padding-top: 12px; display: flex; justify-content: space-between;">
-        <div>FeedCalc Pro — ${isAr ? 'تطوير المهندس زكريا بسيود ZAKARYA Bessioud (+213655870392)' : 'Eng. ZAKARYA Bessioud'}</div>
+        <div>FeedCalc Pro — ${isAr ? 'مطور تطبيقات وبرامج حر: زكريا بسيود ZAKARYA Bessioud (+213655870392)' : 'Freelance Developer ZAKARYA Bessioud'}</div>
         <div>${refCode} | ${dateFormatted}</div>
       </div>
     </div>

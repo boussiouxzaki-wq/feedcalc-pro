@@ -82,7 +82,7 @@ export const Footer: React.FC<FooterProps> = ({ lang, onOpenIpModal, onOpenAdmin
               title="لوحة تحكم وتوليد أكواد الاشتراكات للزبائن"
             >
               <span className="text-amber-400">🔑</span>
-              <span>لوحة التحكم وتوليد الأكواد (للمهندس زكريا)</span>
+              <span>لوحة التحكم وتوليد الأكواد (لمطور التطبيقات زكريا)</span>
             </button>
           </div>
         )}

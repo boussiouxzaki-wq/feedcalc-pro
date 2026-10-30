@@ -275,7 +275,7 @@ export const Header: React.FC<HeaderProps> = ({
               id="btn-secret-admin"
               onClick={onOpenAdmin}
               className="inline-flex items-center gap-1 rounded-lg border border-slate-700/80 bg-slate-900 px-2 py-1.5 text-xs font-bold text-emerald-400 shadow-2xs hover:bg-slate-800 hover:text-emerald-300 transition cursor-pointer"
-              title="لوحة تحكم وتوليد الأكواد (المهندس زكريا)"
+              title="لوحة تحكم وتوليد الأكواد (مطور التطبيقات والبرامج زكريا)"
             >
               <ShieldCheck className="size-3.5" />
               <span className="hidden lg:inline text-[11px]">لوحة الإدارة</span>

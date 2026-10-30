@@ -439,7 +439,7 @@ export const AutoCheckoutModal: React.FC<AutoCheckoutModalProps> = ({
                 <div className="rounded-xl border border-teal-200 bg-teal-50/70 p-3.5 space-y-2.5 text-xs text-slate-700">
                   <div className="font-bold text-teal-950 flex items-center gap-1.5">
                     <Smartphone className="size-4 text-teal-600" />
-                    <span>حساب بريدي موب / CCP للمهندس زكريا بسيود:</span>
+                    <span>حساب بريدي موب / CCP لمطور التطبيقات زكريا بسيود:</span>
                   </div>
 
                   <div className="bg-white p-2.5 rounded-lg border border-teal-200 font-mono text-[11px] space-y-1">
@@ -518,7 +518,7 @@ export const AutoCheckoutModal: React.FC<AutoCheckoutModalProps> = ({
         {/* Modal Footer */}
         <div className="border-t border-slate-100 bg-slate-50/70 px-6 py-3 flex items-center justify-between text-xs text-slate-500">
           <span>
-            المهندس زكريا بسيود • دعم: 0655870392
+            مطور تطبيقات وبرامج حر: زكريا بسيود • دعم: 0655870392
           </span>
           <button
             type="button"

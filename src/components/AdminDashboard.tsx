@@ -94,7 +94,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToApp, onS
       sessionStorage.setItem('fc_admin_auth', 'authorized_zaki');
       setAuthError('');
     } else {
-      setAuthError('كلمة المرور غير صحيحة، الوصول مقتصر على المهندس زكريا فقط.');
+      setAuthError('كلمة المرور غير صحيحة، الوصول مقتصر على مطور التطبيقات والبرامج زكريا فقط.');
     }
   };
 
@@ -175,7 +175,7 @@ ${currentUrl}
 3. ألصق كود التفعيل واضغط "تفعيل الاشتراك".
 
 بالتوفيق في مشروعك ومزرعتك!
-المهندس زكريا بسيود (0655870392)`;
+مطور تطبيقات وبرامج حر: زكريا بسيود (0655870392)`;
   };
 
   const handleCopyWhatsApp = () => {
@@ -219,7 +219,7 @@ ${currentUrl}
               <ShieldCheck className="size-8" />
             </div>
             <h1 className="text-xl sm:text-2xl font-black text-white">
-              لوحة تحكم المهندس زكريا
+              لوحة تحكم مطور التطبيقات والبرامج زكريا بسيود
             </h1>
             <p className="text-xs sm:text-sm text-slate-400 mt-1">
               نظام إدارة الاشتراكات وتوليد الأكواد لـ FeedCalc Pro
@@ -293,7 +293,7 @@ ${currentUrl}
               <h1 className="text-lg sm:text-xl font-black text-white flex items-center gap-2">
                 <span>لوحة التحكم وتوليد الأكواد</span>
                 <span className="rounded-md bg-emerald-500/20 px-2 py-0.5 text-[10px] font-bold text-emerald-300 border border-emerald-500/30">
-                  المهندس زكريا
+                  مطور تطبيقات وبرامج حر: زكريا
                 </span>
               </h1>
               <p className="text-xs text-slate-400">توليد أكواد الاشتراكات الشهرية وتصدير رسائل الواتساب للزبائن</p>

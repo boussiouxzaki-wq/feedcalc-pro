@@ -376,7 +376,7 @@ ${devLine}`;
         await navigator.share({
           files: [pdfReportData.file],
           title: 'FeedCalc Pro Report',
-          text: 'FeedCalc Pro Technical Nutritional Report - Eng. ZAKARYA Bessioud',
+          text: 'FeedCalc Pro Technical Nutritional Report - Freelance Developer ZAKARYA Bessioud',
         });
         if (onToast) onToast(lang === 'ar' ? 'تم الحفظ والمشاركة بنجاح!' : 'Shared successfully!', 'success');
         return;

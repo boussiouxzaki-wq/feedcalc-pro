@@ -14,7 +14,6 @@ import { GlobalPricingModal } from './components/GlobalPricingModal';
 import { IntellectualPropertyModal } from './components/IntellectualPropertyModal';
 import { ActivationModal } from './components/ActivationModal';
 import { AutoCheckoutModal } from './components/AutoCheckoutModal';
-import { PaywallScreen } from './components/PaywallScreen';
 import { AdminDashboard } from './components/AdminDashboard';
 import { AdminModal } from './components/AdminModal';
 import { SolarPumpCalculator } from './components/SolarPumpCalculator';
@@ -77,7 +76,7 @@ export default function App() {
     } catch {}
   }, [lang]);
 
-  // فحص الرابط السري للمهندس زكريا للدخول الفوري للوحة الإدارة المستقلة
+  // فحص الرابط السري لمطور التطبيقات زكريا للدخول الفوري للوحة الإدارة المستقلة
   useEffect(() => {
     if (isMasterAdminUrl()) {
       setIsAdminView(true);
@@ -359,7 +358,7 @@ export default function App() {
     return <SolarReportPage lang={lang} />;
   }
 
-  // إذا كان المهندس زكريا في وضع لوحة التحكم المستقلة
+  // إذا كان مطور التطبيقات زكريا في وضع لوحة التحكم المستقلة
   if (isAdminView) {
     return (
       <AdminDashboard
@@ -441,7 +440,7 @@ export default function App() {
             </div>
           )}
 
-          {/* بطاقة حاسبة الطاقة الشمسية للآبار الفلاحية - إعداد وتطوير م. زكريا بسيود */}
+          {/* بطاقة حاسبة الطاقة الشمسية للآبار الفلاحية - إعداد وتطوير مطور التطبيقات والبرامج الحر زكريا بسيود */}
           <div className="mb-8 rounded-2xl border border-amber-200/90 bg-gradient-to-r from-amber-50/90 via-white to-emerald-50/70 p-4 sm:p-5 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 no-print">
             <div className="flex items-start sm:items-center gap-3.5">
               <div className="size-11 rounded-xl bg-gradient-to-br from-amber-400 to-amber-500 text-white flex items-center justify-center shadow-xs shrink-0">
