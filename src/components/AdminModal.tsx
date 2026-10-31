@@ -10,10 +10,20 @@ import {
   Trash2, 
   ExternalLink,
   Sparkles,
-  ShieldCheck
+  ShieldCheck,
+  Building2,
+  Save
 } from 'lucide-react';
 import { generateClientKey, activateMasterAdmin, resetToVisitorMode, LOCKABLE_SERVICES, getServiceByCode } from '../utils/license';
 import { isMasterAdminPassword } from '../utils/adminSecret';
+import { 
+  getPaymentSettings, 
+  savePaymentSettings, 
+  DEFAULT_PAYMENT_SETTINGS, 
+  PaymentSettings, 
+  hasConfiguredPayment,
+  hasBankOrCcp
+} from '../utils/paymentSettings';
 
 interface AdminModalProps {
   isOpen: boolean;
@@ -61,12 +71,36 @@ export const AdminModal: React.FC<AdminModalProps> = ({ isOpen, onClose, onSwitc
     }
   });
 
+  // Admin active sub-view
+  const [adminTab, setAdminTab] = useState<'generator' | 'payment'>('generator');
+  const [paymentSettings, setPaymentSettings] = useState<PaymentSettings>(getPaymentSettings);
+  const [savePaymentSuccess, setSavePaymentSuccess] = useState(false);
+
   useEffect(() => {
     const adminSession = sessionStorage.getItem('fc_admin_auth');
     if (adminSession === 'authorized_zaki') {
       setIsAuthenticated(true);
     }
-  }, []);
+    if (isOpen) {
+      setPaymentSettings(getPaymentSettings());
+    }
+  }, [isOpen]);
+
+  const handleSavePaymentSettings = (e: React.FormEvent) => {
+    e.preventDefault();
+    savePaymentSettings(paymentSettings);
+    setSavePaymentSuccess(true);
+    setTimeout(() => setSavePaymentSuccess(false), 3000);
+  };
+
+  const handleClearPaymentSettings = () => {
+    if (window.confirm('هل أنت متأكد من تفريغ كافة بيانات الحسابات؟ ستبقى الحقول فارغة.')) {
+      savePaymentSettings(DEFAULT_PAYMENT_SETTINGS);
+      setPaymentSettings(DEFAULT_PAYMENT_SETTINGS);
+      setSavePaymentSuccess(true);
+      setTimeout(() => setSavePaymentSuccess(false), 3000);
+    }
+  };
 
   if (!isOpen) return null;
 
@@ -241,15 +275,233 @@ ${currentUrl}
               </div>
             </div>
 
-            {/* Form */}
-            <form onSubmit={handleGenerate} className="space-y-3 bg-slate-950/60 p-4 rounded-xl border border-slate-800">
-              <div>
-                <label className="block text-xs font-bold text-slate-300 mb-1">
-                  الأيقونة / الخدمة المراد فتحها للزبون بهذا الكود (كود أحادي الخدمة):
-                </label>
-                <select
-                  value={selectedServiceCode}
-                  onChange={(e) => setSelectedServiceCode(e.target.value)}
+            {/* Admin Sub-Tabs */}
+            <div className="flex items-center gap-2 border-b border-slate-800 pb-2">
+              <button
+                type="button"
+                onClick={() => setAdminTab('generator')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
+                  adminTab === 'generator'
+                    ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
+                    : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+                }`}
+              >
+                <Key className="size-3.5" />
+                <span>🔑 توليد الأكواد</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setAdminTab('payment')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
+                  adminTab === 'payment'
+                    ? 'bg-teal-500/20 text-teal-300 border border-teal-500/40'
+                    : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+                }`}
+              >
+                <Building2 className="size-3.5" />
+                <span>💳 بيانات الدفع (BaridiMob / CCP)</span>
+                {hasConfiguredPayment(paymentSettings) ? (
+                  <span className="size-2 rounded-full bg-emerald-400" title="معرّفة" />
+                ) : (
+                  <span className="size-2 rounded-full bg-amber-400" title="فارغة" />
+                )}
+              </button>
+            </div>
+
+            {adminTab === 'payment' ? (
+              <form onSubmit={handleSavePaymentSettings} className="space-y-3 bg-slate-950/60 p-4 rounded-xl border border-slate-800">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-2.5 border-b border-slate-800 gap-2">
+                  <div>
+                    <span className="text-xs font-bold text-teal-300 flex items-center gap-1.5">
+                      <Building2 className="size-4" />
+                      <span>إعداد الحسابات البريدية والبنكية (محمي للمطور فقط)</span>
+                    </span>
+                    <p className="text-[10px] text-slate-400 mt-0.5">
+                      🔒 مخفية تماماً عن الزبائن طالما بقيت فارغة. فور أن تملأها يدوياً هنا وتضغط حفظ تظهر فوراً للزبون للتحويل.
+                    </p>
+                  </div>
+                  {hasBankOrCcp(paymentSettings) ? (
+                    <span className="text-[10px] text-emerald-400 bg-emerald-500/20 px-2 py-0.5 rounded font-bold shrink-0">
+                      ✓ معبأة وتظهر حالياً للزبائن
+                    </span>
+                  ) : (
+                    <span className="text-[10px] text-amber-400 bg-amber-500/20 px-2 py-0.5 rounded font-bold shrink-0">
+                      🔒 فارغة ومخفية تماماً عن الزبائن
+                    </span>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-300 mb-1">
+                      اسم صاحب الحساب (Nom du Titulaire):
+                    </label>
+                    <input
+                      type="text"
+                      value={paymentSettings.accountHolderName}
+                      onChange={(e) => setPaymentSettings({ ...paymentSettings, accountHolderName: e.target.value })}
+                      placeholder="مثال: بسيود زكريا (BESSIOUD ZAKARYA)"
+                      className="w-full rounded-lg bg-slate-900 border border-slate-700 px-3 py-2 text-xs text-white placeholder-slate-600 focus:border-teal-500 focus:outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-300 mb-1">
+                      رقم RIP لتطبيق بريدي موب:
+                    </label>
+                    <input
+                      type="text"
+                      value={paymentSettings.baridiMobRip}
+                      onChange={(e) => setPaymentSettings({ ...paymentSettings, baridiMobRip: e.target.value })}
+                      placeholder="أدخل رقم الـ RIP المكون من 20 رقماً"
+                      dir="ltr"
+                      className="w-full rounded-lg bg-slate-900 border border-slate-700 px-3 py-2 text-xs text-teal-300 font-mono placeholder-slate-600 focus:border-teal-500 focus:outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-300 mb-1">
+                      رقم الحساب الجاري CCP:
+                    </label>
+                    <input
+                      type="text"
+                      value={paymentSettings.ccpNumber}
+                      onChange={(e) => setPaymentSettings({ ...paymentSettings, ccpNumber: e.target.value })}
+                      placeholder="رقم حساب الـ CCP"
+                      dir="ltr"
+                      className="w-full rounded-lg bg-slate-900 border border-slate-700 px-3 py-2 text-xs text-white font-mono placeholder-slate-600 focus:border-teal-500 focus:outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-300 mb-1">
+                      مفتاح CCP (Clé):
+                    </label>
+                    <input
+                      type="text"
+                      value={paymentSettings.ccpKey}
+                      onChange={(e) => setPaymentSettings({ ...paymentSettings, ccpKey: e.target.value })}
+                      placeholder="المفتاح (Clé)"
+                      dir="ltr"
+                      className="w-full rounded-lg bg-slate-900 border border-slate-700 px-3 py-2 text-xs text-white font-mono placeholder-slate-600 focus:border-teal-500 focus:outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-300 mb-1">
+                      اسم البنك (اختياري):
+                    </label>
+                    <input
+                      type="text"
+                      value={paymentSettings.bankName}
+                      onChange={(e) => setPaymentSettings({ ...paymentSettings, bankName: e.target.value })}
+                      placeholder="BNA / CPA / BEA..."
+                      className="w-full rounded-lg bg-slate-900 border border-slate-700 px-3 py-2 text-xs text-white placeholder-slate-600 focus:border-teal-500 focus:outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-300 mb-1">
+                      رقم الحساب البنكي / RIB (اختياري):
+                    </label>
+                    <input
+                      type="text"
+                      value={paymentSettings.bankRibIban}
+                      onChange={(e) => setPaymentSettings({ ...paymentSettings, bankRibIban: e.target.value })}
+                      placeholder="001XXXXXXXXXXXXX"
+                      dir="ltr"
+                      className="w-full rounded-lg bg-slate-900 border border-slate-700 px-3 py-2 text-xs text-white font-mono placeholder-slate-600 focus:border-teal-500 focus:outline-none"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-slate-800">
+                  <div>
+                    <label className="block text-xs font-bold text-amber-300 mb-1">
+                      رابط صفحة الدفع Chargily Pay (الدفع التلقائي الآمن بالذهبية CIB):
+                    </label>
+                    <input
+                      type="url"
+                      value={paymentSettings.chargilyPaymentUrl || ''}
+                      onChange={(e) => setPaymentSettings({ ...paymentSettings, chargilyPaymentUrl: e.target.value })}
+                      placeholder="https://pay.chargily.net/link/..."
+                      dir="ltr"
+                      className="w-full rounded-lg bg-slate-900 border border-amber-500/30 px-3 py-2 text-xs text-amber-200 font-mono placeholder-slate-600 focus:border-amber-400 focus:outline-none"
+                    />
+                    <p className="text-[10px] text-slate-400 mt-0.5">
+                      يتم تحويل الزبون لصفحة بنكية رسمية ومشفرة 100% دون أن تلمس بيانات بطاقته
+                    </p>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-sky-300 mb-1">
+                      رابط Stripe Payment Link (الدفع بالبطاقات الدولية Visa/Mastercard):
+                    </label>
+                    <input
+                      type="url"
+                      value={paymentSettings.stripePaymentUrl || ''}
+                      onChange={(e) => setPaymentSettings({ ...paymentSettings, stripePaymentUrl: e.target.value })}
+                      placeholder="https://buy.stripe.com/..."
+                      dir="ltr"
+                      className="w-full rounded-lg bg-slate-900 border border-sky-500/30 px-3 py-2 text-xs text-sky-200 font-mono placeholder-slate-600 focus:border-sky-400 focus:outline-none"
+                    />
+                    <p className="text-[10px] text-slate-400 mt-0.5">
+                      رابط دفع مباشر من Stripe آمن ومعتمد عالمياً
+                    </p>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-300 mb-1">
+                    ملاحظات أو تعليمات تظهر للزبون عند التحويل (اختياري):
+                  </label>
+                  <input
+                    type="text"
+                    value={paymentSettings.customInstructions}
+                    onChange={(e) => setPaymentSettings({ ...paymentSettings, customInstructions: e.target.value })}
+                    placeholder="مثال: يرجى كتابة اسمك في خانة الملاحظات عند التحويل"
+                    className="w-full rounded-lg bg-slate-900 border border-slate-700 px-3 py-2 text-xs text-white placeholder-slate-600 focus:border-teal-500 focus:outline-none"
+                  />
+                </div>
+
+                <div className="flex items-center justify-between pt-2 border-t border-slate-800">
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="submit"
+                      className="inline-flex items-center gap-1.5 rounded-lg bg-teal-600 hover:bg-teal-500 text-white font-bold px-3.5 py-2 text-xs transition cursor-pointer"
+                    >
+                      <Save className="size-3.5" />
+                      <span>حفظ البيانات</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleClearPaymentSettings}
+                      className="inline-flex items-center gap-1 rounded-lg border border-rose-500/30 bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 px-2.5 py-2 text-xs transition cursor-pointer"
+                    >
+                      <Trash2 className="size-3" />
+                      <span>مسح وتفريغ الحسابات</span>
+                    </button>
+                  </div>
+
+                  {savePaymentSuccess && (
+                    <span className="text-emerald-400 text-xs font-bold flex items-center gap-1 animate-fade-in">
+                      <Check className="size-3.5" />
+                      <span>تم الحفظ بنجاح!</span>
+                    </span>
+                  )}
+                </div>
+              </form>
+            ) : (
+              <>
+                {/* Form */}
+                <form onSubmit={handleGenerate} className="space-y-3 bg-slate-950/60 p-4 rounded-xl border border-slate-800">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-300 mb-1">
+                      الأيقونة / الخدمة المراد فتحها للزبون بهذا الكود (كود أحادي الخدمة):
+                    </label>
+                    <select
+                      value={selectedServiceCode}
+                      onChange={(e) => setSelectedServiceCode(e.target.value)}
                   className="w-full rounded-lg bg-slate-900 border border-emerald-500/50 px-3 py-2 text-xs text-emerald-300 font-bold focus:border-emerald-400 focus:outline-none cursor-pointer"
                 >
                   {LOCKABLE_SERVICES.map((s) => (
@@ -472,6 +724,8 @@ ${currentUrl}
                 </div>
               </div>
             )}
+          </>
+        )}
           </div>
         )}
       </div>

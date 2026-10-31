@@ -17,10 +17,15 @@ import {
   Phone,
   Sparkles,
   ChevronLeft,
-  Zap
+  Zap,
+  Building2,
+  Save,
+  Download,
+  FileText
 } from 'lucide-react';
 import { 
   generateClientKey, 
+  generateBulkKeys,
   activateMasterAdmin, 
   resetToVisitorMode, 
   LOCKABLE_SERVICES, 
@@ -31,6 +36,14 @@ import {
   SINGLE_SERVICE_PRICE_USD
 } from '../utils/license';
 import { isMasterAdminPassword } from '../utils/adminSecret';
+import { 
+  getPaymentSettings, 
+  savePaymentSettings, 
+  DEFAULT_PAYMENT_SETTINGS, 
+  PaymentSettings, 
+  hasConfiguredPayment,
+  hasBankOrCcp
+} from '../utils/paymentSettings';
 
 interface GeneratedKeyRecord {
   id: string;
@@ -78,6 +91,41 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToApp, onS
 
   const [autoOrders, setAutoOrders] = useState<AutoOrderRecord[]>(() => getAutoOrdersHistory());
 
+  // Developer manual payment settings (stored persistently in localStorage)
+  const [paymentSettings, setPaymentSettings] = useState<PaymentSettings>(getPaymentSettings);
+  const [savePaymentSuccess, setSavePaymentSuccess] = useState(false);
+
+  // Bulk Keys Generator State
+  const [bulkCount, setBulkCount] = useState<number>(50);
+  const [bulkServiceCode, setBulkServiceCode] = useState<string>('BRL');
+  const [bulkDurationMonths, setBulkDurationMonths] = useState<number>(1);
+  const [bulkBatchTag, setBulkBatchTag] = useState<string>('Batch-1');
+  const [bulkResult, setBulkResult] = useState<{ keys: string[]; csvContent: string; formattedList: string } | null>(null);
+
+  const handleGenerateBulk = (e: React.FormEvent) => {
+    e.preventDefault();
+    const res = generateBulkKeys({
+      count: bulkCount,
+      serviceCode: bulkServiceCode,
+      durationMonths: bulkDurationMonths,
+      batchTag: bulkBatchTag.trim() || 'Store'
+    });
+    setBulkResult(res);
+  };
+
+  const handleDownloadBulkCsv = () => {
+    if (!bulkResult) return;
+    const blob = new Blob([bulkResult.csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `FeedCalc_Keys_${bulkServiceCode}_${bulkCount}_codes.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   // Check if admin is already logged in session
   useEffect(() => {
     const adminSession = sessionStorage.getItem('fc_admin_auth');
@@ -85,7 +133,24 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToApp, onS
       setIsAuthenticated(true);
     }
     setAutoOrders(getAutoOrdersHistory());
+    setPaymentSettings(getPaymentSettings());
   }, []);
+
+  const handleSavePaymentSettings = (e: React.FormEvent) => {
+    e.preventDefault();
+    savePaymentSettings(paymentSettings);
+    setSavePaymentSuccess(true);
+    setTimeout(() => setSavePaymentSuccess(false), 3000);
+  };
+
+  const handleClearPaymentSettings = () => {
+    if (window.confirm('هل أنت متأكد من تفريغ كافة بيانات الحسابات؟ ستبقى فارغة ولن يظهر أي رقم حساب للزبائن.')) {
+      savePaymentSettings(DEFAULT_PAYMENT_SETTINGS);
+      setPaymentSettings(DEFAULT_PAYMENT_SETTINGS);
+      setSavePaymentSuccess(true);
+      setTimeout(() => setSavePaymentSuccess(false), 3000);
+    }
+  };
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
@@ -331,30 +396,370 @@ ${currentUrl}
           </div>
         </header>
 
-        {/* Automated $3 Payment System Active Banner */}
+        {/* Controlled Code Generation Banner */}
         <div className="rounded-2xl border border-emerald-500/40 bg-gradient-to-r from-emerald-950/80 via-slate-900 to-slate-900 p-4 sm:p-5 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-xl">
           <div className="flex items-center gap-3.5">
             <div className="size-11 rounded-xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 shrink-0">
-              <Zap className="size-6 text-amber-300" />
+              <ShieldCheck className="size-6 text-emerald-300" />
             </div>
             <div>
               <div className="flex items-center gap-2">
                 <h3 className="text-sm sm:text-base font-extrabold text-white">
-                  النظام الآلي لتوليد الأكواد عند الدفع ($3) شغال ونشط ⚡
+                  بوابة إصدار وتوليد أكواد الاشتراكات للزبائن (3$ / 650 دج) 🔑
                 </h3>
                 <span className="bg-emerald-500 text-slate-950 font-black text-[10px] px-2 py-0.5 rounded-full uppercase">
-                  تلقائي 100%
+                  تحكم يدوي آمن 100%
                 </span>
               </div>
               <p className="text-xs text-slate-300 mt-1 leading-relaxed">
-                لم تعد بحاجة لتوليد الأكواد يدوياً لكل زبون! بمجرد نقر الزبون على أيقونة الحيوان والدفع ($3 أو 650 دج)، يُولّد الكود المشفر آلياً ويُفعل مباشرة في جهازه.
+                أنت المتحكم الحصري في إصدار التراخيص: عندما يرسل لك الزبون وصل التحويل عبر بريدي موب أو واتساب، اكتب اسمه هنا وولّد له الكود وانسخ له رسالة الواتساب بنقرة واحدة!
               </p>
             </div>
           </div>
           <div className="flex items-center gap-2 shrink-0 bg-slate-950/80 px-3 py-2 rounded-xl border border-slate-800 text-xs">
             <span className="text-slate-400">سعر الأيقونة:</span>
-            <span className="font-extrabold text-emerald-400 text-sm">$3.00 USD</span>
+            <span className="font-extrabold text-emerald-400 text-sm">$3.00 USD (650 دج)</span>
           </div>
+        </div>
+
+        {/* Payment Account Settings (BaridiMob / CCP / Bank) */}
+        <div className="rounded-2xl bg-slate-900 border border-slate-800 p-5 sm:p-6 shadow-xl space-y-4">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-3">
+            <div className="flex items-center gap-2.5">
+              <div className="size-9 rounded-xl bg-teal-500/15 border border-teal-500/30 flex items-center justify-center text-teal-400">
+                <Building2 className="size-5" />
+              </div>
+              <div>
+                <h3 className="text-sm sm:text-base font-black text-white flex items-center gap-2">
+                  <span>إعدادات الحسابات البنكية والبريدية (BaridiMob / CCP) - محمي للمطور فقط</span>
+                  <span className="text-[10px] bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-2 py-0.5 rounded-full font-mono">
+                    خاص بزكريا بسيود
+                  </span>
+                </h3>
+                <p className="text-xs text-slate-400 mt-1">
+                  🔒 هذا المكان محمي ولا يمكن لأي زبون الوصول إليه إلا عبر لوحة تحكمك السرية. طالما بقيت الحقول فارغة، تكون مخفية تماماً عن الزبائن دون أي رسائل. فور أن تملأها يدوياً هنا وتضغط «حفظ»، ستظهر تلقائياً للزبون في نافذة الاشتراك للتحويل المباشر.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              {hasBankOrCcp(paymentSettings) ? (
+                <span className="rounded-lg bg-emerald-500/20 border border-emerald-500/40 px-3 py-1.5 text-xs font-bold text-emerald-300 flex items-center gap-1.5 shadow-xs">
+                  <Check className="size-3.5" />
+                  <span>الحسابات معبأة وتظهر حالياً للزبائن للتحويل</span>
+                </span>
+              ) : (
+                <span className="rounded-lg bg-amber-500/15 border border-amber-500/30 px-3 py-1.5 text-xs font-bold text-amber-300 flex items-center gap-1.5">
+                  <Lock className="size-3.5" />
+                  <span>فارغة ومخفية تماماً عن الزبائن حالياً</span>
+                </span>
+              )}
+            </div>
+          </div>
+
+          <form onSubmit={handleSavePaymentSettings} className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-300 mb-1.5">
+                  اسم صاحب الحساب (Nom du Titulaire):
+                </label>
+                <input
+                  type="text"
+                  value={paymentSettings.accountHolderName}
+                  onChange={(e) => setPaymentSettings({ ...paymentSettings, accountHolderName: e.target.value })}
+                  placeholder="مثال: بسيود زكريا (BESSIOUD ZAKARYA)"
+                  className="w-full rounded-xl bg-slate-950 border border-slate-700 px-3.5 py-2.5 text-xs text-white placeholder-slate-600 focus:border-teal-500 focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-300 mb-1.5">
+                  رقم RIP لتطبيق بريدي موب (BaridiMob RIP):
+                </label>
+                <input
+                  type="text"
+                  value={paymentSettings.baridiMobRip}
+                  onChange={(e) => setPaymentSettings({ ...paymentSettings, baridiMobRip: e.target.value })}
+                  placeholder="أدخل رقم الـ RIP المكون من 20 رقماً"
+                  dir="ltr"
+                  className="w-full rounded-xl bg-slate-950 border border-slate-700 px-3.5 py-2.5 text-xs text-teal-300 font-mono placeholder-slate-600 focus:border-teal-500 focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-300 mb-1.5">
+                  رقم الحساب البريدي الجاري (Numéro CCP):
+                </label>
+                <input
+                  type="text"
+                  value={paymentSettings.ccpNumber}
+                  onChange={(e) => setPaymentSettings({ ...paymentSettings, ccpNumber: e.target.value })}
+                  placeholder="رقم حساب الـ CCP"
+                  dir="ltr"
+                  className="w-full rounded-xl bg-slate-950 border border-slate-700 px-3.5 py-2.5 text-xs text-white font-mono placeholder-slate-600 focus:border-teal-500 focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-300 mb-1.5">
+                  مفتاح الحساب الجاري (Clé CCP):
+                </label>
+                <input
+                  type="text"
+                  value={paymentSettings.ccpKey}
+                  onChange={(e) => setPaymentSettings({ ...paymentSettings, ccpKey: e.target.value })}
+                  placeholder="المفتاح (Clé)"
+                  dir="ltr"
+                  className="w-full rounded-xl bg-slate-950 border border-slate-700 px-3.5 py-2.5 text-xs text-white font-mono placeholder-slate-600 focus:border-teal-500 focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-300 mb-1.5">
+                  اسم البنك (اختياري):
+                </label>
+                <input
+                  type="text"
+                  value={paymentSettings.bankName}
+                  onChange={(e) => setPaymentSettings({ ...paymentSettings, bankName: e.target.value })}
+                  placeholder="مثال: BNA / CPA / BEA / BADR"
+                  className="w-full rounded-xl bg-slate-950 border border-slate-700 px-3.5 py-2.5 text-xs text-white placeholder-slate-600 focus:border-teal-500 focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-300 mb-1.5">
+                  رقم الحساب البنكي / RIB / IBAN (اختياري):
+                </label>
+                <input
+                  type="text"
+                  value={paymentSettings.bankRibIban}
+                  onChange={(e) => setPaymentSettings({ ...paymentSettings, bankRibIban: e.target.value })}
+                  placeholder="مثال: 001XXXXXXXXXXXXX"
+                  dir="ltr"
+                  className="w-full rounded-xl bg-slate-950 border border-slate-700 px-3.5 py-2.5 text-xs text-white font-mono placeholder-slate-600 focus:border-teal-500 focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-300 mb-1.5 flex items-center justify-between">
+                  <span>رابط الدفع الآلي لـ Chargily Pay (بريدي موب / البطاقة الذهبية):</span>
+                  <span className="text-[10px] text-teal-400 font-normal">اختياري للأتمتة الكاملة</span>
+                </label>
+                <input
+                  type="url"
+                  value={paymentSettings.chargilyPaymentUrl}
+                  onChange={(e) => setPaymentSettings({ ...paymentSettings, chargilyPaymentUrl: e.target.value })}
+                  placeholder="مثال: https://pay.chargily.net/..."
+                  dir="ltr"
+                  className="w-full rounded-xl bg-slate-950 border border-slate-700 px-3.5 py-2.5 text-xs text-white font-mono placeholder-slate-600 focus:border-teal-500 focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-300 mb-1.5 flex items-center justify-between">
+                  <span>رابط الدفع بالبطاقات الدولية (Stripe Payment Link):</span>
+                  <span className="text-[10px] text-indigo-400 font-normal">اختياري لزبائن الخارج ($3)</span>
+                </label>
+                <input
+                  type="url"
+                  value={paymentSettings.stripePaymentUrl}
+                  onChange={(e) => setPaymentSettings({ ...paymentSettings, stripePaymentUrl: e.target.value })}
+                  placeholder="مثال: https://buy.stripe.com/..."
+                  dir="ltr"
+                  className="w-full rounded-xl bg-slate-950 border border-slate-700 px-3.5 py-2.5 text-xs text-white font-mono placeholder-slate-600 focus:border-teal-500 focus:outline-none"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-300 mb-1.5">
+                تعليمات أو ملاحظات إضافية للمشترك عند الدفع (اختياري):
+              </label>
+              <input
+                type="text"
+                value={paymentSettings.customInstructions}
+                onChange={(e) => setPaymentSettings({ ...paymentSettings, customInstructions: e.target.value })}
+                placeholder="مثال: يرجى كتابة اسمك في وصف التحويل"
+                className="w-full rounded-xl bg-slate-950 border border-slate-700 px-3.5 py-2.5 text-xs text-white placeholder-slate-600 focus:border-teal-500 focus:outline-none"
+              />
+            </div>
+
+            <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
+              <div className="flex items-center gap-2">
+                <button
+                  type="submit"
+                  className="inline-flex items-center gap-2 rounded-xl bg-teal-600 hover:bg-teal-500 text-white font-bold px-4 py-2.5 text-xs transition cursor-pointer shadow-md shadow-teal-950/40"
+                >
+                  <Save className="size-4" />
+                  <span>حفظ معلومات الحسابات</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={handleClearPaymentSettings}
+                  className="inline-flex items-center gap-1.5 rounded-xl border border-rose-500/30 bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 font-semibold px-3 py-2 text-xs transition cursor-pointer"
+                >
+                  <Trash2 className="size-3.5" />
+                  <span>تفريغ الحسابات ومسحها</span>
+                </button>
+              </div>
+
+              {savePaymentSuccess && (
+                <div className="flex items-center gap-1.5 text-emerald-400 text-xs font-bold bg-emerald-500/10 border border-emerald-500/30 px-3 py-1.5 rounded-lg">
+                  <Check className="size-3.5" />
+                  <span>تم حفظ الإعدادات بنجاح!</span>
+                </div>
+              )}
+            </div>
+          </form>
+        </div>
+
+        {/* Bulk Keys Batch Generator (For massive volumes / selling in batch) */}
+        <div className="rounded-2xl bg-slate-900 border border-slate-800 p-5 sm:p-6 shadow-xl space-y-4">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-3">
+            <div className="flex items-center gap-2.5">
+              <div className="size-9 rounded-xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400">
+                <FileText className="size-5" />
+              </div>
+              <div>
+                <h3 className="text-sm sm:text-base font-black text-white flex items-center gap-2">
+                  <span>توليد دفعات كبرى من الأكواد (50، 100، 200 كود) وتصديرها Excel / CSV</span>
+                  <span className="text-[10px] bg-amber-400/20 text-amber-300 border border-amber-400/40 px-2 py-0.5 rounded-full font-bold">
+                    للأتمتة الكبرى والموزعين
+                  </span>
+                </h3>
+                <p className="text-xs text-slate-400">
+                  حل فوري للتعامل مع كميات ضخمة من الطلبات: ولّد مئات الأكواد المشفرة مسبقاً بنقرة واحدة، وقم ببيعها عبر متاجرك الإلكترونية (WooCommerce/Gumroad) أو وزعها لمصانع الأعلاف والصيدليات البيطرية.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <form onSubmit={handleGenerateBulk} className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
+              <div>
+                <label className="block text-xs font-bold text-slate-300 mb-1.5">
+                  عدد الأكواد المراد توليدها:
+                </label>
+                <select
+                  value={bulkCount}
+                  onChange={(e) => setBulkCount(Number(e.target.value))}
+                  className="w-full rounded-xl bg-slate-950 border border-slate-700 px-3.5 py-2.5 text-xs text-amber-300 font-bold focus:border-amber-400 focus:outline-none cursor-pointer"
+                >
+                  <option value={10}>10 أكواد</option>
+                  <option value={25}>25 كوداً</option>
+                  <option value={50}>50 كوداً</option>
+                  <option value={100}>100 كود</option>
+                  <option value={200}>200 كود</option>
+                  <option value={500}>500 كود</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-300 mb-1.5">
+                  الخدمة / الأيقونة:
+                </label>
+                <select
+                  value={bulkServiceCode}
+                  onChange={(e) => setBulkServiceCode(e.target.value)}
+                  className="w-full rounded-xl bg-slate-950 border border-slate-700 px-3.5 py-2.5 text-xs text-white font-bold focus:border-emerald-400 focus:outline-none cursor-pointer"
+                >
+                  {LOCKABLE_SERVICES.map((s) => (
+                    <option key={s.code} value={s.code} className="bg-slate-950 text-white font-medium">
+                      {s.emoji} {s.nameAr}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-300 mb-1.5">
+                  مدة الصلاحية لكل كود:
+                </label>
+                <select
+                  value={bulkDurationMonths}
+                  onChange={(e) => setBulkDurationMonths(Number(e.target.value))}
+                  className="w-full rounded-xl bg-slate-950 border border-slate-700 px-3.5 py-2.5 text-xs text-white focus:border-emerald-400 focus:outline-none cursor-pointer"
+                >
+                  <option value={1}>شهر واحد (30 يوماً)</option>
+                  <option value={2}>شهران (60 يوماً)</option>
+                  <option value={3}>3 أشهر (فصلي)</option>
+                  <option value={6}>6 أشهر</option>
+                  <option value={12}>سنة كاملة (12 شهر)</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-300 mb-1.5">
+                  وسم الدفعة (Tag):
+                </label>
+                <input
+                  type="text"
+                  value={bulkBatchTag}
+                  onChange={(e) => setBulkBatchTag(e.target.value)}
+                  placeholder="مثال: OnlineStore-Nov"
+                  className="w-full rounded-xl bg-slate-950 border border-slate-700 px-3.5 py-2.5 text-xs text-white focus:border-amber-400 focus:outline-none"
+                />
+              </div>
+            </div>
+
+            <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
+              <button
+                type="submit"
+                className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-black px-4 py-2.5 text-xs transition cursor-pointer shadow-md"
+              >
+                <Sparkles className="size-4" />
+                <span>توليد الدفعة ({bulkCount} كود مشفر) الآن</span>
+              </button>
+
+              {bulkResult && (
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={handleDownloadBulkCsv}
+                    className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-3.5 py-2 text-xs transition cursor-pointer shadow-sm"
+                  >
+                    <Download className="size-3.5" />
+                    <span>تحميل ملف Excel / CSV ({bulkResult.keys.length} كود)</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      navigator.clipboard.writeText(bulkResult.formattedList);
+                      alert(`تم نسخ ${bulkResult.keys.length} كود إلى الحافظة بنجاح!`);
+                    }}
+                    className="inline-flex items-center gap-1.5 rounded-xl border border-slate-700 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold px-3 py-2 text-xs transition cursor-pointer"
+                  >
+                    <Copy className="size-3.5" />
+                    <span>نسخ كقائمة نصوص</span>
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {bulkResult && (
+              <div className="mt-3 p-3 rounded-xl bg-slate-950 border border-slate-800 space-y-2">
+                <div className="flex items-center justify-between text-xs text-slate-400">
+                  <span className="font-bold text-emerald-400">✓ تم توليد {bulkResult.keys.length} كود بنجاح:</span>
+                  <span className="text-[11px]">جاهزة للتوزيع الآلي أو البيع المباشر</span>
+                </div>
+                <div className="max-h-28 overflow-y-auto font-mono text-[11px] text-slate-300 space-y-1 select-all bg-slate-900/60 p-2.5 rounded-lg border border-slate-800" dir="ltr">
+                  {bulkResult.keys.slice(0, 15).map((k, idx) => (
+                    <div key={idx} className="flex justify-between text-emerald-400">
+                      <span>{idx + 1}. {k}</span>
+                      <span className="text-slate-500">[{bulkServiceCode}]</span>
+                    </div>
+                  ))}
+                  {bulkResult.keys.length > 15 && (
+                    <div className="text-slate-500 text-center text-[10px] pt-1">
+                      ... و {bulkResult.keys.length - 15} كوداً إضافياً (حمل ملف CSV لعرض الجميع)
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </form>
         </div>
 
         {/* Grid: Generator & Result */}

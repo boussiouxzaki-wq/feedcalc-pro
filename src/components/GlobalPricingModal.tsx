@@ -143,23 +143,23 @@ export const GlobalPricingModal: React.FC<GlobalPricingModalProps> = ({
                 <div className="mt-1 flex items-baseline gap-1">
                   <span className="text-3xl font-black text-slate-900">$3.00</span>
                   <span className="text-xs font-bold text-emerald-700">
-                    {lang === 'ar' ? 'لكل حيوان (تفعيل فوري)' : 'per species (instant)'}
+                    {lang === 'ar' ? 'لكل حيوان (30 يوماً)' : 'per species (30 days)'}
                   </span>
                 </div>
                 <p className="mt-2 text-xs text-slate-600">
                   {lang === 'ar'
-                    ? 'يتم توليد كود التفعيل الرقمي وتفعيله تلقائياً بمجرد إتمام الدفع (3 دولار فقط أو 650 دج).'
-                    : 'Key is generated automatically upon payment ($3 USD or ~650 DZD) with instant unlock.'}
+                    ? 'يتم تزويدك بكود التفعيل المعتمد بمجرد تأكيد التحويل المالي (3 دولار فقط أو 650 دج عبر بريدي موب / CCP).'
+                    : 'Official activation key provided upon transfer confirmation ($3 USD or 650 DZD).'}
                 </p>
 
                 <ul className="mt-4 space-y-2 text-xs text-slate-700 border-t border-emerald-100 pt-3">
                   <li className="flex items-center gap-2 font-medium">
                     <Check className="size-3.5 text-emerald-600 shrink-0" />
-                    <span>{lang === 'ar' ? 'توليد الكود فوراً وبشكل آلي لحظي' : 'Automatic instant key generation'}</span>
+                    <span>{lang === 'ar' ? 'تحويل آمن عبر بريدي موب / CCP' : 'Secure payment via BaridiMob / CCP'}</span>
                   </li>
                   <li className="flex items-center gap-2 font-medium">
                     <Check className="size-3.5 text-emerald-600 shrink-0" />
-                    <span>{lang === 'ar' ? 'تفعيل تلقائي مباشر على جهازك' : '1-click browser auto-activation'}</span>
+                    <span>{lang === 'ar' ? 'كود تفعيل مشفر من المطور زكريا' : 'Encrypted key directly from Zakarya'}</span>
                   </li>
                   <li className="flex items-center gap-2 font-medium">
                     <Check className="size-3.5 text-emerald-600 shrink-0" />
@@ -182,7 +182,7 @@ export const GlobalPricingModal: React.FC<GlobalPricingModalProps> = ({
                 }}
                 className="w-full flex items-center justify-center gap-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 px-3 py-2.5 text-xs font-bold text-white shadow-xs transition cursor-pointer"
               >
-                <span>{lang === 'ar' ? 'شراء وتفعيل فوري بـ 3$ ⚡' : 'Pay $3 & Activate Instantly ⚡'}</span>
+                <span>{lang === 'ar' ? 'طلب كود الاشتراك (3$ / 650 دج) 🔑' : 'Request $3 License Key 🔑'}</span>
                 <ArrowRight className={`size-3.5 ${isRtl ? 'rotate-180' : ''}`} />
               </button>
             </div>

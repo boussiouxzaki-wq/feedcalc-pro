@@ -540,7 +540,7 @@ export interface AutoOrderRecord {
   serviceNameAr: string;
   amountUsd: number;
   amountDzd: number;
-  paymentMethod: 'card' | 'paypal' | 'baridimob' | 'instant';
+  paymentMethod: 'chargily' | 'stripe' | 'card' | 'paypal' | 'baridimob' | 'instant';
   clientName: string;
   clientEmail?: string;
   clientPhone?: string;
@@ -575,20 +575,20 @@ export function clearAutoOrdersHistory(): void {
 }
 
 /**
- * Automatically generates an authentic cryptographic license key upon payment ($3),
- * activates the service directly on the user's device, and records the order.
+ * Automatically validates payment/receipt reference, generates cryptographic key,
+ * prevents duplicate reference replay, and activates the service directly.
  */
 export function autoPurchaseAndActivate(params: {
   serviceIdOrCode: string;
   clientName?: string;
   clientEmail?: string;
   clientPhone?: string;
-  paymentMethod?: 'card' | 'paypal' | 'baridimob' | 'instant';
-  referenceNumber?: string;
+  paymentMethod?: 'chargily' | 'stripe' | 'paypal' | 'baridimob' | 'instant';
+  referenceNumber: string;
   durationDays?: number;
 }): {
   success: boolean;
-  order: AutoOrderRecord;
+  order?: AutoOrderRecord;
   message: string;
 } {
   const {
@@ -596,10 +596,28 @@ export function autoPurchaseAndActivate(params: {
     clientName = 'مشترك معتمد',
     clientEmail,
     clientPhone,
-    paymentMethod = 'instant',
+    paymentMethod = 'baridimob',
     referenceNumber,
     durationDays = 30
   } = params;
+
+  const cleanRef = referenceNumber.trim().toUpperCase();
+  if (!cleanRef || cleanRef.length < 5) {
+    return {
+      success: false,
+      message: 'رقم المعاملة أو وصل التحويل غير صحيح، يرجى كتابة الرقم المطبوع بالإشعار بدقة (5 أرقام/حروف على الأقل).'
+    };
+  }
+
+  // Anti-Replay: check if this transaction reference was already used
+  const existingOrders = getAutoOrdersHistory();
+  const duplicate = existingOrders.find(o => o.referenceNumber && o.referenceNumber.trim().toUpperCase() === cleanRef);
+  if (duplicate) {
+    return {
+      success: false,
+      message: `عذراً! رقم العملية هذا (${cleanRef}) تم استخدامه مسبقاً لتفعيل اشتراك بتاريخ ${duplicate.timestamp.split('T')[0]}. لا يمكن تكرار استخدام نفس الوصل.`
+    };
+  }
 
   // Resolve target service
   let service = getServiceByCode(serviceIdOrCode) || getServiceById(serviceIdOrCode);
@@ -617,7 +635,7 @@ export function autoPurchaseAndActivate(params: {
   // 2. Automatically activate key in current session / localStorage
   const activationRes = activateApp(keyInfo.key, clientName);
 
-  // 3. Create completed order record
+  // 3. Create completed order record with anti-replay stamp
   const isBundle = service.code === 'ALL';
   const orderRecord: AutoOrderRecord = {
     id: `ORD-${Date.now().toString(36).toUpperCase()}-${Math.floor(Math.random() * 900 + 100)}`,
@@ -630,23 +648,54 @@ export function autoPurchaseAndActivate(params: {
     clientName: clientName.trim() || 'مشترك معتمد',
     clientEmail: clientEmail?.trim(),
     clientPhone: clientPhone?.trim(),
-    referenceNumber: referenceNumber?.trim() || `TXN-${Math.floor(Math.random() * 900000 + 100000)}`,
+    referenceNumber: cleanRef,
     generatedKey: keyInfo.key,
     timestamp: new Date().toISOString(),
     expiresAt: keyInfo.expiryDate.toISOString(),
     status: 'completed'
   };
 
-  // 4. Save to orders history
+  // 4. Save to orders history to block any future reuse
   try {
-    const existing = getAutoOrdersHistory();
-    existing.unshift(orderRecord);
-    localStorage.setItem(AUTO_ORDERS_STORAGE_KEY, JSON.stringify(existing.slice(0, 100)));
+    existingOrders.unshift(orderRecord);
+    localStorage.setItem(AUTO_ORDERS_STORAGE_KEY, JSON.stringify(existingOrders.slice(0, 500)));
   } catch {}
 
   return {
     success: true,
     order: orderRecord,
-    message: activationRes.message || `🎉 تم الدفع وتوليد الكود (${keyInfo.key}) وتفعيل [${service.nameAr}] بنجاح لمدة ${durationDays} يوماً!`
+    message: activationRes.message || `🎉 تم التحقق وتوليد الكود (${keyInfo.key}) وتفعيل [${service.nameAr}] بنجاح لمدة ${durationDays} يوماً!`
+  };
+}
+
+/**
+ * Tool for Developer Zakarya to generate bulk batches of keys (e.g. 50, 100, 200)
+ * and export as CSV / text for automated reselling via digital marketplaces or distributors.
+ */
+export function generateBulkKeys(params: {
+  count: number;
+  serviceCode: string;
+  durationMonths: number;
+  batchTag: string;
+}): { keys: string[]; csvContent: string; formattedList: string } {
+  const { count, serviceCode, durationMonths, batchTag } = params;
+  const days = durationMonths * 30;
+  const keys: string[] = [];
+  const lines = ['Index,ServiceCode,DurationMonths,Key,BatchTag,CreatedAt'];
+  const formattedLines: string[] = [];
+  const today = new Date().toISOString().split('T')[0];
+
+  for (let i = 1; i <= count; i++) {
+    const clientName = `${batchTag || 'Batch'}-${i}`;
+    const generated = generateClientKey(clientName, days, serviceCode);
+    keys.push(generated.key);
+    lines.push(`${i},${serviceCode},${durationMonths},${generated.key},${batchTag || 'Standard'},${today}`);
+    formattedLines.push(`${i}. [${serviceCode}] ${generated.key} (${durationMonths} شهر)`);
+  }
+
+  return {
+    keys,
+    csvContent: lines.join('\n'),
+    formattedList: formattedLines.join('\n')
   };
 }
