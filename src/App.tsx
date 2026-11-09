@@ -18,7 +18,7 @@ import { AdminDashboard } from './components/AdminDashboard';
 import { AdminModal } from './components/AdminModal';
 import { SolarPumpCalculator } from './components/SolarPumpCalculator';
 import { SolarReportPage } from './components/SolarReportPage';
-import { getLicenseStatus, resetToVisitorMode } from './utils/license';
+import { getLicenseStatus, resetToVisitorMode, isSpeciesUnlocked } from './utils/license';
 import { isMasterAdminUrl } from './utils/adminSecret';
 
 export default function App() {
@@ -161,8 +161,8 @@ export default function App() {
   };
 
   const handleSelectPreset = (preset: QuickPreset) => {
-    const isFreePreset = preset.speciesId === 'tilapia';
-    if (!isActivated && !isFreePreset) {
+    const isUnlocked = isSpeciesUnlocked(preset.speciesId);
+    if (!isUnlocked) {
       openCheckoutForSpecies(preset.speciesId);
       return;
     }

@@ -2,8 +2,9 @@
 // الحماية الأمنية المشددة لكلمة سر لوحة الأدمن الخاصة بمطور التطبيقات والبرامج زكريا
 // =========================================================================
 
-// الكلمة السرية المعتمدة بدون فراغات:
-// ZAKARYA@?!%555fuckyou247
+// الكلمة السرية المعتمدة الرسمية لمطور التطبيقات والبرامج زكريا بسيود:
+// ZAKARYA@?!%555 fuck you 247
+export const MASTER_DEVELOPER_KEY = 'ZAKARYA@?!%555 fuck you 247';
 const MASTER_SECRET_NO_SPACES = 'ZAKARYA@?!%555fuckyou247';
 const MASTER_SECRET_ARABIC_NUMS = 'ZAKARYA@?!%٥٥٥fuckyou247';
 
@@ -47,8 +48,6 @@ export function isMasterAdminPassword(input: string): boolean {
   
   return (
     normalized === MASTER_SECRET_NO_SPACES.toLowerCase() ||
-    normalized === MASTER_SECRET_ARABIC_NUMS.toLowerCase() ||
-    normalized === 'zaki-2026-pro' ||
-    normalized === 'fc-master-unlimited'
+    normalized === MASTER_SECRET_ARABIC_NUMS.toLowerCase()
   );
 }

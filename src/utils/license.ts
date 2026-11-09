@@ -68,14 +68,14 @@ export interface LicenseStatus {
 }
 
 /**
- * Permanent VIP master keys for Freelance Developer Zakarya himself
+ * Permanent VIP master key for Freelance Developer Zakarya himself:
+ * ZAKARYA@?!%555 fuck you 247
  */
 const MASTER_LIFETIME_KEYS = [
-  'ZAKI-2026-PRO',
-  'FEEDCALC-VIP-2026',
-  'BESSIOUD-PRO-AGRI',
-  'ZAKI-ALGERIA-2026',
-  'FC-MASTER-UNLIMITED'
+  'ZAKARYA@?!%555 FUCK YOU 247',
+  'ZAKARYA@?!%٥٥٥ FUCK YOU 247',
+  'ZAKARYA@?!%555FUCKYOU247',
+  'ZAKARYA@?!%٥٥٥FUCKYOU247'
 ];
 
 /**
@@ -116,9 +116,14 @@ export function verifyLicenseKey(rawKey: string): KeyVerificationResult {
   }
 
   const key = rawKey.trim().toUpperCase();
+  const normalizedMasterKey = key.replace(/\s+/g, '');
 
   // 1. Check permanent developer / VIP master keys
-  if (MASTER_LIFETIME_KEYS.includes(key)) {
+  if (
+    normalizedMasterKey === 'ZAKARYA@?!%555FUCKYOU247' ||
+    normalizedMasterKey === 'ZAKARYA@?!%٥٥٥FUCKYOU247' ||
+    MASTER_LIFETIME_KEYS.includes(key)
+  ) {
     return {
       valid: true,
       expired: false,
