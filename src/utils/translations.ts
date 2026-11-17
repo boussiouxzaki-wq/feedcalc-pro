@@ -15,6 +15,7 @@ export interface Translations {
   filterLand: string;
   filterAquatic: string;
   filterSpecialty: string;
+  filterCrops: string;
   fcrRatio: string;
   proteinRange: string;
   
@@ -69,6 +70,7 @@ export interface Translations {
   advisoryTitle: string;
   advisoryAquatic: string;
   advisoryLand: string;
+  advisoryCrops: string;
   breedingAlertTitle: string;
   breedingCycleLabel: string;
   breedingOptimalTimeLabel: string;
@@ -146,6 +148,7 @@ export const TRANSLATIONS: Record<Language, Translations> = {
     filterLand: 'دواجن ومواشي',
     filterAquatic: 'استزراع مائي',
     filterSpecialty: 'مناحل ونحل',
+    filterCrops: 'فطر وأزولا وأعلاف',
     fcrRatio: 'معامل التحويل (FCR)',
     proteinRange: 'البروتين',
 
@@ -198,7 +201,8 @@ export const TRANSLATIONS: Record<Language, Translations> = {
     advisoryTitle: 'توصيات إدارة القطيع والحوض:',
     advisoryAquatic: 'يُنصح بنثر العلف الطافي بانتظام على سطح الماء في أماكن هادئة بالتيار لمراقبة شهية الأسماك وتجنب تراكم العلف غير المأكول في القاع حفاظاً على نسبة الأكسجين الذائب وجودة المياه.',
     advisoryLand: 'يجب توفير مياه شرب عذبة ونظيفة بشكل دائم بمعدل لا يقل عن ضعف كمية العلف المستهلكة. راقب استهلاك العلف اليومي وتأكد من التهوية الجيدة للوقاية من الإجهاد الحراري.',
-    breedingAlertTitle: 'تنبيه مواعيد التلقيح والتناسل (إدارة القطيع):',
+    advisoryCrops: 'تستند حسابات زراعة الفطر والأزولا والبرسيم على مراجع منظمة الأغذية والزراعة (FAO) وقاعدة Feedipedia. التزم بضبط نسبة الكربون للنيتروجين (C/N) ورطوبة 65–70% للفطر، وتوفير الفوسفور والعمق المائي 5–15 سم للأزولا، والحش عند 10% إزهار للبرسيم.',
+    breedingAlertTitle: 'تنبيه مواعيد التلقيح والتناسل / دورة الزراعة والحصاد:',
     breedingCycleLabel: 'دورة الشبق / التكرار:',
     breedingOptimalTimeLabel: 'الموعد والتوقيت الأمثل للتلقيح:',
     breedingGestationLabel: 'مدة الحمل / الحضانة:',
@@ -274,6 +278,7 @@ export const TRANSLATIONS: Record<Language, Translations> = {
     filterLand: 'Livestock & Poultry',
     filterAquatic: 'Aquaculture',
     filterSpecialty: 'Beekeeping & Specialty',
+    filterCrops: 'Mushrooms, Azolla & Forage',
     fcrRatio: 'Feed Conversion (FCR)',
     proteinRange: 'Protein',
 
@@ -326,7 +331,8 @@ export const TRANSLATIONS: Record<Language, Translations> = {
     advisoryTitle: 'Management Recommendations:',
     advisoryAquatic: 'Distribute floating pellets evenly across feeding zones. Monitor feeding response carefully to prevent unconsumed feed decomposition, protecting dissolved oxygen levels.',
     advisoryLand: 'Provide constant access to clean freshwater at a minimum 2:1 ratio relative to feed intake. Maintain proper ventilation and monitor daily intake adjustments.',
-    breedingAlertTitle: 'Breeding & Insemination Alert (Herd Management):',
+    advisoryCrops: 'Mushroom, Azolla, and Alfalfa/Clover formulations follow FAO & Feedipedia standards: maintain 65–70% moisture and balanced C/N for mushrooms, phosphorus (SSP) and 5–15 cm water depth for Azolla, and harvest Alfalfa/Berseem at 10% early bloom.',
+    breedingAlertTitle: 'Breeding / Cultivation & Harvest Schedule Alert:',
     breedingCycleLabel: 'Estrus Cycle / Interval:',
     breedingOptimalTimeLabel: 'Optimal Insemination Window:',
     breedingGestationLabel: 'Gestation / Incubation:',
@@ -402,6 +408,7 @@ export const TRANSLATIONS: Record<Language, Translations> = {
     filterLand: 'Élevage & Volaille',
     filterAquatic: 'Pisciculture',
     filterSpecialty: 'Apiculture & Abeilles',
+    filterCrops: 'Champignons, Azolla & Fourrages',
     fcrRatio: 'Indice de conversion (IC)',
     proteinRange: 'Protéines',
 
@@ -454,7 +461,8 @@ export const TRANSLATIONS: Record<Language, Translations> = {
     advisoryTitle: 'Recommandations d\'élevage :',
     advisoryAquatic: 'Distribuez les granulés de manière homogène sur la surface de l\'eau. Surveillez la prise alimentaire pour éviter l\'accumulation au fond et préserver le taux d\'oxygène dissous.',
     advisoryLand: 'Veillez à un approvisionnement continu en eau propre et fraîche (au moins 2 fois la quantité d\'aliment sec). Surveillez la ventilation pour prévenir le stress thermique.',
-    breedingAlertTitle: 'Alerte Calendrier de Reproduction et Insémination :',
+    advisoryCrops: 'Basé sur les références FAO & Feedipedia : maintenez 65-70% d\'humidité et un ratio C/N optimal pour les champignons, un apport régulier en phosphore (SSP) sur 5-15 cm d\'eau pour l\'Azolla, et fauchez la luzerne/bersim à 10% de floraison.',
+    breedingAlertTitle: 'Alerte Cycle de Reproduction / Culture et Récolte :',
     breedingCycleLabel: 'Cycle œstral / Fréquence :',
     breedingOptimalTimeLabel: 'Période optimale d\'insémination / saillie :',
     breedingGestationLabel: 'Durée de gestation / Incubation :',
@@ -530,6 +538,7 @@ export const TRANSLATIONS: Record<Language, Translations> = {
     filterLand: 'Ganadería y Aves',
     filterAquatic: 'Acuicultura',
     filterSpecialty: 'Apicultura y Abejas',
+    filterCrops: 'Hongos, Azolla y Forrajes',
     fcrRatio: 'Índice de conversión (FCR)',
     proteinRange: 'Proteína',
 
@@ -582,7 +591,8 @@ export const TRANSLATIONS: Record<Language, Translations> = {
     advisoryTitle: 'Recomendaciones de manejo:',
     advisoryAquatic: 'Distribuya los pellets flotantes de manera uniforme en la superficie del agua. Observe el apetito para evitar restos en el fondo y preservar el oxígeno disuelto.',
     advisoryLand: 'Proporcione acceso continuo a agua limpia y fresca (al menos el doble del consumo de alimento). Asegure una buena ventilación para evitar estrés térmico.',
-    breedingAlertTitle: 'Alerta de Calendario de Reproducción e Inseminación:',
+    advisoryCrops: 'Basado en normas FAO y Feedipedia: controle 65-70% de humedad y relación C/N en hongos, fósforo (SSP) y lámina de 5-15 cm en Azolla, y corte la alfalfa/trébol alejandrino al 10% de floración.',
+    breedingAlertTitle: 'Alerta de Ciclo de Reproducción / Cultivo y Cosecha:',
     breedingCycleLabel: 'Ciclo estral / Intervalo:',
     breedingOptimalTimeLabel: 'Momento óptimo de inseminación / monta:',
     breedingGestationLabel: 'Duración de gestación / incubación:',
@@ -657,6 +667,7 @@ export const TRANSLATIONS: Record<Language, Translations> = {
     filterLand: '畜禽家畜',
     filterAquatic: '水产养殖',
     filterSpecialty: '蜜蜂与特产',
+    filterCrops: '食用菌·红萍·牧草栽培',
     fcrRatio: '料肉比 / 转化系数 (FCR)',
     proteinRange: '粗蛋白标准',
 
@@ -709,7 +720,8 @@ export const TRANSLATIONS: Record<Language, Translations> = {
     advisoryTitle: '科学投饲与管理建议:',
     advisoryAquatic: '投喂浮水料应均匀撒布于食台或水面，遵循“定时、定点、定质、定量”四定原则，根据天气、水温及残饵情况及时调控。',
     advisoryLand: '确保畜禽充足洁净饮水（饮水量通常为采食量的2-3倍），保持良好舍内通风与适宜温湿度，避免应激反应。',
-    breedingAlertTitle: '种群繁育周期与人工配种预警提醒:',
+    advisoryCrops: '依据联合国粮农组织(FAO)与Feedipedia标准：食用菌保持65-70%含水量及精准碳氮比(C/N)；红萍/满江红保持5-15厘米水深与磷肥(SSP)供给；紫花苜蓿与三叶草在初花期(10%开花)刈割以获取最高粗蛋白含量。',
+    breedingAlertTitle: '繁育周期 / 栽培生长与采收管理提醒:',
     breedingCycleLabel: '发情周期 / 繁育间隔:',
     breedingOptimalTimeLabel: '最佳配种 / 输精时机:',
     breedingGestationLabel: '妊娠期 / 孵化期:',
@@ -785,6 +797,7 @@ export const TRANSLATIONS: Record<Language, Translations> = {
     filterLand: 'Nutztiere & Geflügel',
     filterAquatic: 'Aquakultur',
     filterSpecialty: 'Imkerei & Spezialarten',
+    filterCrops: 'Pilze, Azolla & Futterbau',
     fcrRatio: 'Futterverwertung (FCR)',
     proteinRange: 'Rohprotein',
 
@@ -837,7 +850,8 @@ export const TRANSLATIONS: Record<Language, Translations> = {
     advisoryTitle: 'Management-Empfehlungen:',
     advisoryAquatic: 'Schwimmfutter gleichmäßig in den Fresszonen verteilen. Fressverhalten beobachten, um Futterreste und Sauerstoffzehrung im Wasser zu vermeiden.',
     advisoryLand: 'Stets frisches, sauberes Trinkwasser bereitstellen (mind. 2:1 zum Futter). Für gute Belüftung sorgen und Futteraufnahme täglich kontrollieren.',
-    breedingAlertTitle: 'Zucht- & Besamungskalender-Hinweis (Herdenmanagement):',
+    advisoryCrops: 'Gemäß FAO- und Feedipedia-Richtlinien: bei Pilzen 65–70% Substratfeuchte und optimales C/N-Verhältnis einhalten, bei Azolla Phosphorgaben (SSP) und 5–15 cm Wassertiefe sichern, und Luzerne/Klee bei 10% Blühbeginn schneiden.',
+    breedingAlertTitle: 'Hinweis Zucht- / Anbau- & Erntezyklus:',
     breedingCycleLabel: 'Brunstzyklus / Intervall:',
     breedingOptimalTimeLabel: 'Optimaler Besamungszeitpunkt:',
     breedingGestationLabel: 'Trächtigkeitsdauer / Brutzeit:',

@@ -188,7 +188,7 @@ export const ResultsView: React.FC<ResultsViewProps> = ({
     if (lang === 'ar') {
       report = `📊 تقرير حاسبة الأعلاف الذكية (FeedCalc Pro)
 ----------------------------------------
-🔹 النوع: ${species.name} (${species.category === 'aquatic' ? 'استزراع مائي وأسماك' : species.category === 'specialty' ? 'مناحل وإنتاج عسل' : 'دواجن وإنتاج حيواني'})
+🔹 النوع: ${species.name} (${species.category === 'aquatic' ? 'استزراع مائي وأسماك' : species.category === 'specialty' ? 'مناحل وإنتاج عسل' : species.category === 'crops' ? 'زراعة فطر وأزولا وأعلاف' : 'دواجن وإنتاج حيواني'})
 🔹 العدد: ${formatNum(input.count, 0)} ${species.unit} | متوسط الوزن: ${formatNum(input.weight, 2)} ${weightUnitStr}
 🔹 نوع العلف: ${feedName} (بروتين: ${formatNum(feedType.protein, 1)}% | طاقة: ${formatNum(feedType.energy, 0)} ك.كال/كجم)
 🔹 معامل التحويل (FCR): ${formatNum(result.fcr, 2)}
@@ -207,7 +207,7 @@ ${result.monthlyCost ? `💰 التكلفة الشهرية (تقدير 30 يوم
     } else if (lang === 'fr') {
       report = `📊 Rapport FeedCalc Pro
 ----------------------------------------
-🔹 Espèce : ${species.nameFr} (${species.category === 'aquatic' ? 'Pisciculture' : 'Élevage'})
+🔹 Espèce : ${species.nameFr} (${species.category === 'aquatic' ? 'Pisciculture' : species.category === 'specialty' ? 'Apiculture' : species.category === 'crops' ? 'Myciculture & Fourrages' : 'Élevage'})
 🔹 Effectif : ${formatNum(input.count, 0)} ${species.unitFr} | Poids moyen : ${formatNum(input.weight, 2)} ${weightUnitStr}
 🔹 Aliment : ${feedName} (Protéines ${formatNum(feedType.protein, 1)}% - Énergie ${formatNum(feedType.energy, 0)} kcal/kg)
 🔹 Indice de conversion (IC) : ${formatNum(result.fcr, 2)}
@@ -226,7 +226,7 @@ Développé par : ${t.devName} | Tél : ${t.devPhone}`;
     } else if (lang === 'es') {
       report = `📊 Informe FeedCalc Pro
 ----------------------------------------
-🔹 Especie: ${species.nameEs} (${species.category === 'aquatic' ? 'Acuicultura' : 'Ganadería'})
+🔹 Especie: ${species.nameEs} (${species.category === 'aquatic' ? 'Acuicultura' : species.category === 'specialty' ? 'Apicultura' : species.category === 'crops' ? 'Hongos y Forrajes' : 'Ganadería'})
 🔹 Cantidad: ${formatNum(input.count, 0)} ${species.unitEs} | Peso promedio: ${formatNum(input.weight, 2)} ${weightUnitStr}
 🔹 Pienso: ${feedName} (Proteína ${formatNum(feedType.protein, 1)}% - Energía ${formatNum(feedType.energy, 0)} kcal/kg)
 🔹 Índice FCR: ${formatNum(result.fcr, 2)}
@@ -245,7 +245,7 @@ Desarrollado por: ${t.devName} | Tel: ${t.devPhone}`;
     } else if (lang === 'zh') {
       report = `📊 智能饲料配比与投喂计算报告 (FeedCalc Pro)
 ----------------------------------------
-🔹 养殖物种: ${species.nameZh || species.nameEn} (${species.category === 'aquatic' ? '水产养殖' : species.category === 'specialty' ? '特种/蜜蜂养殖' : '畜禽养殖'})
+🔹 养殖物种: ${species.nameZh || species.nameEn} (${species.category === 'aquatic' ? '水产养殖' : species.category === 'specialty' ? '特种/蜜蜂养殖' : species.category === 'crops' ? '食用菌与牧草栽培' : '畜禽养殖'})
 🔹 饲养规模: ${formatNum(input.count, 0)} ${species.unitZh || species.unitEn} | 平均体重: ${formatNum(input.weight, 2)} ${weightUnitStr}
 🔹 饲料配方: ${feedName} (粗蛋白 ${formatNum(feedType.protein, 1)}% - 代谢能 ${formatNum(feedType.energy, 0)} kcal/kg)
 🔹 料肉比 / 转化系数 (FCR): ${formatNum(result.fcr, 2)}
@@ -264,7 +264,7 @@ ${result.monthlyCost ? `💰 每月预估成本 (30天): ${currencySymbol} ${for
     } else if (lang === 'de') {
       report = `📊 FeedCalc Pro Berechnungsbericht
 ----------------------------------------
-🔹 Tierart: ${species.nameDe || species.nameEn} (${species.category === 'aquatic' ? 'Aquakultur' : species.category === 'specialty' ? 'Spezialform / Imkerei' : 'Nutztiere / Geflügel'})
+🔹 Tierart: ${species.nameDe || species.nameEn} (${species.category === 'aquatic' ? 'Aquakultur' : species.category === 'specialty' ? 'Spezialform / Imkerei' : species.category === 'crops' ? 'Pilzzucht & Futteranbau' : 'Nutztiere / Geflügel'})
 🔹 Bestand: ${formatNum(input.count, 0)} ${species.unitDe || species.unitEn} | Durchschn. Gewicht: ${formatNum(input.weight, 2)} ${weightUnitStr}
 🔹 Futter: ${feedName} (Rohprotein ${formatNum(feedType.protein, 1)}% - Energie ${formatNum(feedType.energy, 0)} kcal/kg)
 🔹 Futterverwertung (FCR): ${formatNum(result.fcr, 2)}
@@ -283,7 +283,7 @@ Entwickelt von: ${t.devName} | Tel: ${t.devPhone}`;
     } else {
       report = `📊 FeedCalc Pro Calculation Report
 ----------------------------------------
-🔹 Species: ${species.nameEn} (${species.category === 'aquatic' ? 'Aquaculture' : 'Farm'})
+🔹 Species: ${species.nameEn} (${species.category === 'aquatic' ? 'Aquaculture' : species.category === 'specialty' ? 'Beekeeping' : species.category === 'crops' ? 'Mushrooms & Forage Crops' : 'Farm'})
 🔹 Count: ${formatNum(input.count, 0)} ${species.unitEn} | Avg Weight: ${formatNum(input.weight, 2)} ${weightUnitStr}
 🔹 Feed: ${feedName} (${formatNum(feedType.protein, 1)}% Protein, ${formatNum(feedType.energy, 0)} kcal/kg)
 🔹 FCR: ${formatNum(result.fcr, 2)}
@@ -485,7 +485,7 @@ ${devLine}`;
                 {t.resultsCardTitle}
               </h2>
               <p className="text-xs text-slate-500">
-                {species.category === 'aquatic' ? t.aquacultureTank : t.farmLot}
+                {species.category === 'aquatic' ? t.aquacultureTank : species.category === 'crops' ? t.filterCrops : species.category === 'specialty' ? t.filterSpecialty : t.farmLot}
                 {' — '}
                 <span className="tabular-nums">{input.count}</span> {speciesUnit} {t.atWeight}{' '}
                 <span className="tabular-nums">{input.weight}</span> {weightUnitStr}
@@ -706,7 +706,7 @@ ${devLine}`;
               <span>{t.advisoryTitle}</span>
             </div>
             <p>
-              {species.category === 'aquatic' ? t.advisoryAquatic : t.advisoryLand}
+              {species.category === 'aquatic' ? t.advisoryAquatic : species.category === 'crops' ? t.advisoryCrops : t.advisoryLand}
             </p>
           </div>
 

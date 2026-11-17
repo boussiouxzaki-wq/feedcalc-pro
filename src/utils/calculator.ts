@@ -124,6 +124,51 @@ export function getFeedingSchedule(species: Species, lang: Language = 'ar'): {
     };
   }
 
+  if (species.id === 'mushroom') {
+    const times: Record<Language, string[]> = {
+      ar: ['الصباح: ترطيب وتهوية (07:00)', 'الظهيرة: فحص رطوبة 85-92% وCO₂ (13:00)', 'المساء: رذاذ مائي ناعم وإغلاق الإضاءة (19:00)'],
+      en: ['Morning Misting & Fresh Air (7:00 AM)', 'Midday 85-92% RH & CO₂ Check (1:00 PM)', 'Evening Mist & Cycle Check (7:00 PM)'],
+      fr: ['Matin : Brumisation & Aération (07:00)', 'Midi : Contrôle HR 85-92% & CO₂ (13:00)', 'Soir : Brouillard fin & Ventilation (19:00)'],
+      es: ['Mañana: Nebulización y Aire (07:00)', 'Mediodía: Control HR 85-92% y CO₂ (13:00)', 'Tarde: Riego fino y Ventilación (19:00)'],
+      de: ['Morgens: Sprühnebel & Frischluft (07:00)', 'Mittags: 85-92% LF & CO₂-Check (13:00)', 'Abends: Feinbefeuchtung (19:00)'],
+      zh: ['清晨：喷雾保湿与换气 (07:00)', '午间：85-92%湿度与CO₂检测 (13:00)', '傍晚：微雾补湿巡检 (19:00)'],
+    };
+    return {
+      feedingFrequency: 3,
+      feedingTimes: times[lang] || times.en,
+    };
+  }
+
+  if (species.id === 'azolla') {
+    const times: Record<Language, string[]> = {
+      ar: ['الصباح: قشط وحصاد 25-30% من الحوض (07:00)', 'المساء: فحص مستوى الماء 5-15 سم والتسميد الفوسفاتي (17:30)'],
+      en: ['Morning Skim & 25-30% Biomass Harvest (7:00 AM)', 'Evening Water Depth (5-15 cm) & P-Nutrient Check (5:30 PM)'],
+      fr: ['Matin : Récolte 25-30% de la biomasse (07:00)', 'Soir : Niveau d\'eau 5-15 cm & Apport P/SSP (17:30)'],
+      es: ['Mañana: Cosecha diaria 25-30% (07:00)', 'Tarde: Nivel 5-15 cm y Control de Fósforo (17:30)'],
+      de: ['Morgens: 25-30% Biomasse ernten (07:00)', 'Abends: Wasserstand 5-15 cm & P-Check (17:30)'],
+      zh: ['清晨：打捞采收25-30%鲜萍 (07:00)', '傍晚：检查5-15厘米水深与磷肥营养液 (17:30)'],
+    };
+    return {
+      feedingFrequency: 2,
+      feedingTimes: times[lang] || times.en,
+    };
+  }
+
+  if (species.id === 'alfalfa') {
+    const times: Record<Language, string[]> = {
+      ar: ['الصباح الباكر: ري وفحص رطوبة التربة قبل الحرارة (06:30)', 'المساء: فحص التسميد البوتاسي/الفوسفاتي والآفات (18:00)'],
+      en: ['Early Morning Irrigation & Soil Moisture Check (6:30 AM)', 'Evening P-K Nutrient & Pest Inspection (6:00 PM)'],
+      fr: ['Tôt le matin : Irrigation & Humidité du sol (06:30)', 'Soir : Suivi P-K & État sanitaire (18:00)'],
+      es: ['Mañana temprano: Riego y Humedad del suelo (06:30)', 'Tarde: Revisión P-K y Plagas (18:00)'],
+      de: ['Frühmorgens: Bewässerung & Bodenfeuchte (06:30)', 'Abends: P-K-Nährstoff- & Bestandskontrolle (18:00)'],
+      zh: ['清晨：避高温灌溉与土壤墒情巡查 (06:30)', '傍晚：磷钾肥追施与病虫害监测 (18:00)'],
+    };
+    return {
+      feedingFrequency: 2,
+      feedingTimes: times[lang] || times.en,
+    };
+  }
+
   // Default: sheep, beef, layers, rabbits
   const times: Record<Language, string[]> = {
     ar: ['الصباح (7:00)', 'المساء (17:00)'],

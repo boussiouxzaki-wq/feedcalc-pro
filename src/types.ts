@@ -1,4 +1,4 @@
-export type AnimalCategory = 'land' | 'aquatic' | 'specialty';
+export type AnimalCategory = 'land' | 'aquatic' | 'specialty' | 'crops';
 
 export type Language = 'en' | 'ar' | 'fr' | 'es' | 'de' | 'zh';
 
@@ -41,7 +41,7 @@ export interface Species {
   nameEs: string;
   nameZh: string;
   nameDe?: string;
-  iconName: 'bird' | 'egg' | 'wheat' | 'cow' | 'trending-up' | 'fish' | 'pig' | 'bee' | 'rabbit' | 'camel' | 'goat';
+  iconName: 'bird' | 'egg' | 'wheat' | 'cow' | 'trending-up' | 'fish' | 'pig' | 'bee' | 'rabbit' | 'camel' | 'goat' | 'mushroom' | 'azolla' | 'alfalfa';
   unit: string;
   unitEn: string;
   unitFr: string;

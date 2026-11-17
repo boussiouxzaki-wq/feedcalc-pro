@@ -11,16 +11,16 @@ export default defineConfig(() => {
       tailwindcss(),
       VitePWA({
         registerType: 'autoUpdate',
-        includeAssets: ['favicon.ico', 'favicon-32x32.png', 'favicon-16x16.png', 'icon.svg', 'apple-touch-icon.png', 'pwa-192x192.png', 'pwa-512x512.png', 'manifest.json'],
+        includeAssets: ['favicon.ico', 'favicon-32x32.png', 'favicon-16x16.png', 'icon.svg', 'apple-touch-icon.png', 'pwa-192x192.png', 'pwa-512x512.png', 'pwa-maskable-512x512.png', 'manifest.json', '.well-known/assetlinks.json'],
         manifest: {
           id: '/',
           name: 'FeedCalc Pro - ZAKARYA Bessioud',
           short_name: 'FeedCalc',
-          description: 'حاسبة الأعلاف الذكية للدواجن والمواشي والأسماك - م. زكريا بسيود ZAKARYA Bessioud',
+          description: 'حاسبة الأعلاف الذكية للدواجن والمواشي والأسماك - مطور تطبيقات وبرامج حر: زكريا بسيود ZAKARYA Bessioud',
           theme_color: '#059669',
           background_color: '#f8fafc',
           display: 'standalone',
-          orientation: 'portrait-primary',
+          orientation: 'any',
           start_url: '/',
           scope: '/',
           icons: [
@@ -47,6 +47,7 @@ export default defineConfig(() => {
         workbox: {
           globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2}'],
           maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
+          navigateFallbackDenylist: [/^\/\.well-known\//],
           skipWaiting: true,
           clientsClaim: true,
           cleanupOutdatedCaches: true,

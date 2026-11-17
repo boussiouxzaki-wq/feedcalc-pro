@@ -34,6 +34,9 @@ export const LOCKABLE_SERVICES: ServiceItem[] = [
   { id: 'carp', code: 'CRP', nameAr: 'سمك الشبوط', nameEn: 'Carp Fish', emoji: '🐟' },
   { id: 'seabass', code: 'SBA', nameAr: 'سمك القاروص البحري', nameEn: 'European Seabass', emoji: '🐟' },
   { id: 'swine', code: 'SWN', nameAr: 'الخنازير (تسمين)', nameEn: 'Swine', emoji: '🐖' },
+  { id: 'mushroom', code: 'MSH', nameAr: 'زراعة الفطر (كل الأنواع)', nameEn: 'Mushroom Cultivation', emoji: '🍄' },
+  { id: 'azolla', code: 'AZL', nameAr: 'زراعة الأزولا (الإيزولا)', nameEn: 'Azolla Cultivation', emoji: '🌿' },
+  { id: 'alfalfa', code: 'ALF', nameAr: 'زراعة البرسيم (الحجازي والمصري)', nameEn: 'Alfalfa & Berseem Clover', emoji: '🍀' },
   { id: 'all', code: 'ALL', nameAr: 'الباقة الشاملة VIP (كافة الأيقونات)', nameEn: 'All Species (VIP Full)', emoji: '👑' },
 ];
 

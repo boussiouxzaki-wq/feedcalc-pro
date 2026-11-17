@@ -213,7 +213,7 @@ export const InputForm: React.FC<InputFormProps> = ({
               id="input-weight"
               type="text"
               inputMode="decimal"
-              placeholder={species.category === 'aquatic' ? '0.35' : '2.0'}
+              placeholder={species.category === 'aquatic' ? '0.35' : species.category === 'crops' ? '1.0' : '2.0'}
               value={input.weight}
               onChange={(e) => onChange('weight', normalizeDigits(e.target.value))}
               className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 py-2.5 text-sm font-medium text-slate-900 placeholder:text-slate-400 focus:border-emerald-500 focus:bg-white focus:outline-none focus:ring-3 focus:ring-emerald-500/15 transition-all"

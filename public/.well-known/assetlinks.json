@@ -1,0 +1,16 @@
+[
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "app.vercel.feedcalc_pro.twa",
+      "sha256_cert_fingerprints": [
+        "6C:FE:96:75:AF:06:5E:07:38:3E:47:DF:7C:05:C0:9C:2C:8F:4A:1B:C6:FD:93:C2:4E:1D:4F:FC:12:51:03:01",
+        "16:98:BD:AC:8E:78:DF:3F:97:A3:39:0C:91:14:41:3A:2C:4A:16:DE:9C:0F:9A:85:8D:74:F0:BD:BD:26:B4:11",
+        "C6:16:20:DF:43:13:4D:D5:08:F9:62:3A:B7:14:7C:24:A6:3B:29:5F:2F:FF:6E:9A:DF:BC:2E:83:33:3E:1F:B1"
+      ]
+    }
+  }
+]

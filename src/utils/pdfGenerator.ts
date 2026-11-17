@@ -519,10 +519,10 @@ export async function generatePdfReport(params: {
   });
 
   const speciesCategoryNote = lang === 'ar'
-    ? (species.category === 'aquatic' ? 'استزراع مائي وأسماك' : species.category === 'specialty' ? 'مناحل وإنتاج عسل' : 'دواجن وإنتاج حيواني')
+    ? (species.category === 'aquatic' ? 'استزراع مائي وأسماك' : species.category === 'specialty' ? 'مناحل وإنتاج عسل' : species.category === 'crops' ? 'زراعة فطر وأزولا وأعلاف' : 'دواجن وإنتاج حيواني')
     : lang === 'fr'
-    ? (species.category === 'aquatic' ? 'Pisciculture & Aquaculture' : species.category === 'specialty' ? 'Apiculture' : 'Élevage & Aviculture')
-    : (species.category === 'aquatic' ? 'Aquaculture' : species.category === 'specialty' ? 'Beekeeping' : 'Livestock / Poultry');
+    ? (species.category === 'aquatic' ? 'Pisciculture & Aquaculture' : species.category === 'specialty' ? 'Apiculture' : species.category === 'crops' ? 'Myciculture & Fourrages' : 'Élevage & Aviculture')
+    : (species.category === 'aquatic' ? 'Aquaculture' : species.category === 'specialty' ? 'Beekeeping' : species.category === 'crops' ? 'Mushrooms & Forage Crops' : 'Livestock / Poultry');
 
   const stockCountNote = lang === 'ar'
     ? 'إجمالي تعداد القطيع / الحوض المائي'

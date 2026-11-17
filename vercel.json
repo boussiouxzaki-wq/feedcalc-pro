@@ -1,8 +1,26 @@
 {
   "rewrites": [
-    { "source": "/(.*)", "destination": "/index.html" }
+    {
+      "source": "/((?!\\.well-known/|assets/|manifest\\.json|manifest\\.webmanifest|sw\\.js|workbox-|registerSW\\.js|favicon|apple-touch-icon|pwa-|icon\\.svg).*)",
+      "destination": "/index.html"
+    }
   ],
   "headers": [
+    {
+      "source": "/.well-known/(.*)",
+      "headers": [
+        { "key": "Content-Type", "value": "application/json; charset=utf-8" },
+        { "key": "Access-Control-Allow-Origin", "value": "*" },
+        { "key": "Cache-Control", "value": "public, max-age=300, must-revalidate" }
+      ]
+    },
+    {
+      "source": "/manifest\\.(json|webmanifest)",
+      "headers": [
+        { "key": "Content-Type", "value": "application/manifest+json; charset=utf-8" },
+        { "key": "Access-Control-Allow-Origin", "value": "*" }
+      ]
+    },
     {
       "source": "/(.*)",
       "headers": [

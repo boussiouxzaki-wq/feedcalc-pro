@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Bird, Egg, Wheat, Milestone, TrendingUp, Fish, PiggyBank, Hexagon, Sparkles, Sun, Milk, Lock } from 'lucide-react';
+import { Bird, Egg, Wheat, Milestone, TrendingUp, Fish, PiggyBank, Hexagon, Sparkles, Sun, Milk, Lock, Sprout, Leaf, Flower2 } from 'lucide-react';
 import { Species, Language, AnimalCategory } from '../types';
 import { SPECIES_LIST } from '../data/speciesData';
 import { TRANSLATIONS } from '../utils/translations';
@@ -20,7 +20,7 @@ export const SpeciesSelector: React.FC<SpeciesSelectorProps> = ({
   isActivated = false,
   onRequireActivation,
 }) => {
-  const [filter, setFilter] = useState<'all' | 'land' | 'aquatic' | 'specialty'>('all');
+  const [filter, setFilter] = useState<'all' | 'land' | 'aquatic' | 'specialty' | 'crops'>('all');
   const t = TRANSLATIONS[lang];
 
   const filteredSpecies = SPECIES_LIST.filter((s) => {
@@ -106,6 +106,12 @@ export const SpeciesSelector: React.FC<SpeciesSelectorProps> = ({
         return <Sun className={className} />;
       case 'goat':
         return <Milk className={className} />;
+      case 'mushroom':
+        return <Flower2 className={className} />;
+      case 'azolla':
+        return <Sprout className={className} />;
+      case 'alfalfa':
+        return <Leaf className={className} />;
       default:
         return <Wheat className={className} />;
     }
@@ -169,6 +175,17 @@ export const SpeciesSelector: React.FC<SpeciesSelectorProps> = ({
             }`}
           >
             {t.filterSpecialty}
+          </button>
+          <button
+            type="button"
+            onClick={() => setFilter('crops')}
+            className={`rounded-md px-2.5 py-1 font-semibold transition-all cursor-pointer ${
+              filter === 'crops'
+                ? 'bg-white text-emerald-700 shadow-2xs'
+                : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            {t.filterCrops}
           </button>
         </div>
       </div>
