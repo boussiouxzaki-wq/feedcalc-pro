@@ -169,6 +169,51 @@ export function getFeedingSchedule(species: Species, lang: Language = 'ar'): {
     };
   }
 
+  if (species.id === 'snail') {
+    const times: Record<Language, string[]> = {
+      ar: ['المساء عند الغروب: توزيع العلف الكلسي + ترطيب 75-85% RH (18:30)'],
+      en: ['Sunset Feeding & Misting to 75–85% RH (6:30 PM — Nocturnal peak)'],
+      fr: ['Crépuscule : Distribution farine calcique + brumisation 75-85% HR (18:30)'],
+      es: ['Atardecer: Reparto pienso cálcico + nebulización 75-85% HR (18:30)'],
+      de: ['Sonnenuntergang: Kalkfutter-Gabe & Befeuchtung 75-85% LF (18:30)'],
+      zh: ['傍晚日落投喂高钙精料并喷雾保湿 75-85% RH (18:30 夜间采食高峰)'],
+    };
+    return {
+      feedingFrequency: 1,
+      feedingTimes: times[lang] || times.en,
+    };
+  }
+
+  if (species.id === 'mariculture') {
+    const times: Record<Language, string[]> = {
+      ar: ['الصباح: فحص الملوحة 20-40 ppt والتيار المائي وتدفق N-P (07:00)', 'المساء: تقييم امتصاص المغذيات IMTA وتنظيف الطحالب العالقة (17:30)'],
+      en: ['Morning Salinity (20–40 ppt) & Water Circulation Check (7:00 AM)', 'Evening IMTA Nutrient Uptake & Epiphyte Inspection (5:30 PM)'],
+      fr: ['Matin : Contrôle salinité (20-40 ppt) & brassage d\'eau (07:00)', 'Soir : Suivi absorption N-P en IMTA & nettoyage (17:30)'],
+      es: ['Mañana: Control de salinidad (20-40 ppt) y flujo marino (07:00)', 'Tarde: Absorción de nutrientes IMTA y limpieza de epífitos (17:30)'],
+      de: ['Morgens: Salinität (20-40 ppt) & Strömungskontrolle (07:00)', 'Abends: IMTA-Nährstoffaufnahme & Epiphyten-Check (17:30)'],
+      zh: ['清晨：盐度(20-40 ppt)与水体流动换水监测 (07:00)', '傍晚：IMTA氮磷吸收监测与杂藻清理 (17:30)'],
+    };
+    return {
+      feedingFrequency: 2,
+      feedingTimes: times[lang] || times.en,
+    };
+  }
+
+  if (species.id === 'fruit_trees') {
+    const times: Record<Language, string[]> = {
+      ar: ['الصباح الباكر: تسميد بالتنقيط HFLC وضبط الري ETc = ETo×Kc (06:00)', 'المساء: فحص الأوراق والرش الورقي Ca-B دون رياح (18:30)'],
+      en: ['Early Morning HFLC Drip Fertigation & ETc Run (6:00 AM)', 'Calm Evening Foliar Ca/B & Canopy Moisture Check (6:30 PM)'],
+      fr: ['Tôt le matin : Fertigation HFLC & pilotage ETc (06:00)', 'Soir sans vent : Pulvérisation foliaire Ca-B & suivi hydrique (18:30)'],
+      es: ['Mañana temprano: Fertirrigación HFLC y riego ETc (06:00)', 'Tarde sin viento: Aplicación foliar Ca-B y control hídrico (18:30)'],
+      de: ['Frühmorgens: HFLC-Tropffertigation & ETc-Bewässerung (06:00)', 'Windstiller Abend: Blattdüngung Ca-B & Kronenkontrolle (18:30)'],
+      zh: ['清晨：HFLC水肥一体化滴灌与ETc精准补水 (06:00)', '傍晚无风：叶面钙硼喷施及树冠墒情检查 (18:30)'],
+    };
+    return {
+      feedingFrequency: 2,
+      feedingTimes: times[lang] || times.en,
+    };
+  }
+
   // Default: sheep, beef, layers, rabbits
   const times: Record<Language, string[]> = {
     ar: ['الصباح (7:00)', 'المساء (17:00)'],

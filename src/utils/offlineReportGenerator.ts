@@ -503,7 +503,7 @@ export function generateFeedOfflineHtmlReport(
         <div class="kpi-card">
           <div class="kpi-title">${isAr ? 'معامل التحويل (FCR)' : 'Feed Conversion (FCR)'}</div>
           <div class="kpi-value">${formatNum(result.fcr, 2)}</div>
-          <div class="kpi-sub">${formatNum(result.feedConversionEfficiency, 1)}% ${isAr ? 'كفاءة' : 'Eff'}</div>
+          <div class="kpi-sub">${(species.id === 'dairy_cow' || species.id === 'dairy_goat') ? `${formatNum(1 / result.fcr, 2)} ${isAr ? 'كجم حليب/كجم' : 'kg/kg'}` : `${formatNum(result.feedConversionEfficiency, 1)}% ${isAr ? 'كفاءة' : 'Eff'}`}</div>
         </div>
       </div>
 

@@ -519,10 +519,10 @@ export async function generatePdfReport(params: {
   });
 
   const speciesCategoryNote = lang === 'ar'
-    ? (species.category === 'aquatic' ? 'استزراع مائي وأسماك' : species.category === 'specialty' ? 'مناحل وإنتاج عسل' : species.category === 'crops' ? 'زراعة فطر وأزولا وأعلاف' : 'دواجن وإنتاج حيواني')
+    ? (species.id === 'mariculture' ? 'الزراعة البحرية والاقتصاد الأزرق IMTA' : species.category === 'aquatic' ? 'استزراع مائي وأسماك' : species.id === 'snail' ? 'تربية الحلزون (الهليسيكولتور)' : species.category === 'specialty' ? 'مناحل وإنتاج عسل' : species.id === 'fruit_trees' ? 'العناية بالأشجار المثمرة والبساتين' : species.category === 'crops' ? 'زراعة فطر وأزولا وأعلاف' : 'دواجن وإنتاج حيواني')
     : lang === 'fr'
-    ? (species.category === 'aquatic' ? 'Pisciculture & Aquaculture' : species.category === 'specialty' ? 'Apiculture' : species.category === 'crops' ? 'Myciculture & Fourrages' : 'Élevage & Aviculture')
-    : (species.category === 'aquatic' ? 'Aquaculture' : species.category === 'specialty' ? 'Beekeeping' : species.category === 'crops' ? 'Mushrooms & Forage Crops' : 'Livestock / Poultry');
+    ? (species.id === 'mariculture' ? 'Agriculture Marine & Économie Bleue' : species.category === 'aquatic' ? 'Pisciculture & Aquaculture' : species.id === 'snail' ? 'Héliciculture (Escargots)' : species.category === 'specialty' ? 'Apiculture' : species.id === 'fruit_trees' ? 'Arboriculture Fruitière' : species.category === 'crops' ? 'Myciculture & Fourrages' : 'Élevage & Aviculture')
+    : (species.id === 'mariculture' ? 'Blue Economy Marine Agriculture' : species.category === 'aquatic' ? 'Aquaculture' : species.id === 'snail' ? 'Heliciculture (Snail Farming)' : species.category === 'specialty' ? 'Beekeeping' : species.id === 'fruit_trees' ? 'Pomology & Fruit Orchards' : species.category === 'crops' ? 'Mushrooms & Forage Crops' : 'Livestock / Poultry');
 
   const stockCountNote = lang === 'ar'
     ? 'إجمالي تعداد القطيع / الحوض المائي'
@@ -644,7 +644,7 @@ export async function generatePdfReport(params: {
         </div>
         <div style="background: #ffffff; border: 1px solid #bbf7d0; border-radius: 8px; padding: 8px 14px;">
           <div style="font-size: 9.5px; color: #64748b; font-weight: 600;">${dict.efficiencyLabel}</div>
-          <div style="font-size: 16px; font-weight: 800; color: #047857; margin-top: 2px;">${formatNum(result.feedConversionEfficiency, 1)}%</div>
+          <div style="font-size: 16px; font-weight: 800; color: #047857; margin-top: 2px;">${(species.id === 'dairy_cow' || species.id === 'dairy_goat') ? `${formatNum(1 / result.fcr, 2)} ${lang === 'ar' ? 'كجم/كجم' : 'kg/kg'}` : `${formatNum(result.feedConversionEfficiency, 1)}%`}</div>
         </div>
         <div style="background: #ffffff; border: 1px solid #bbf7d0; border-radius: 8px; padding: 8px 14px;">
           <div style="font-size: 9.5px; color: #64748b; font-weight: 600;">${dict.mealsLabel}</div>

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Bird, Egg, Wheat, Milestone, TrendingUp, Fish, PiggyBank, Hexagon, Sparkles, Sun, Milk, Lock, Sprout, Leaf, Flower2 } from 'lucide-react';
+import { Bird, Egg, Wheat, Milestone, TrendingUp, Fish, PiggyBank, Hexagon, Sparkles, Sun, Milk, Lock, Sprout, Leaf, Flower2, Snail, Waves, Trees } from 'lucide-react';
 import { Species, Language, AnimalCategory } from '../types';
 import { SPECIES_LIST } from '../data/speciesData';
 import { TRANSLATIONS } from '../utils/translations';
@@ -112,6 +112,12 @@ export const SpeciesSelector: React.FC<SpeciesSelectorProps> = ({
         return <Sprout className={className} />;
       case 'alfalfa':
         return <Leaf className={className} />;
+      case 'snail':
+        return <Snail className={className} />;
+      case 'mariculture':
+        return <Waves className={className} />;
+      case 'fruit_trees':
+        return <Trees className={className} />;
       default:
         return <Wheat className={className} />;
     }

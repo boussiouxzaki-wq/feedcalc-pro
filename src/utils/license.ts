@@ -37,6 +37,9 @@ export const LOCKABLE_SERVICES: ServiceItem[] = [
   { id: 'mushroom', code: 'MSH', nameAr: 'زراعة الفطر (كل الأنواع)', nameEn: 'Mushroom Cultivation', emoji: '🍄' },
   { id: 'azolla', code: 'AZL', nameAr: 'زراعة الأزولا (الإيزولا)', nameEn: 'Azolla Cultivation', emoji: '🌿' },
   { id: 'alfalfa', code: 'ALF', nameAr: 'زراعة البرسيم (الحجازي والمصري)', nameEn: 'Alfalfa & Berseem Clover', emoji: '🍀' },
+  { id: 'snail', code: 'SNL', nameAr: 'تربية الحلزون بأنواعه', nameEn: 'Snail Farming (Heliciculture)', emoji: '🐌' },
+  { id: 'mariculture', code: 'MAR', nameAr: 'الزراعة البحرية للاقتصاد الأزرق', nameEn: 'Blue Economy Marine Agriculture', emoji: '🌊' },
+  { id: 'fruit_trees', code: 'FRT', nameAr: 'العناية بالأشجار المثمرة', nameEn: 'Fruit Trees & Orchard Care', emoji: '🌳' },
   { id: 'all', code: 'ALL', nameAr: 'الباقة الشاملة VIP (كافة الأيقونات)', nameEn: 'All Species (VIP Full)', emoji: '👑' },
 ];
 

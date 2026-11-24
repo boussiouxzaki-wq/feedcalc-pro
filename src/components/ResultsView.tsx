@@ -181,6 +181,26 @@ export const ResultsView: React.FC<ResultsViewProps> = ({
     }
   };
 
+  const isDairy = species.id === 'dairy_cow' || species.id === 'dairy_goat';
+  const effDisplayAr = isDairy
+    ? `${formatNum(1 / result.fcr, 2)} كجم حليب/كجم علف`
+    : `${formatNum(result.feedConversionEfficiency, 1)}%`;
+  const effDisplayEn = isDairy
+    ? `${formatNum(1 / result.fcr, 2)} kg milk/kg DM`
+    : `${formatNum(result.feedConversionEfficiency, 1)}%`;
+  const effDisplayFr = isDairy
+    ? `${formatNum(1 / result.fcr, 2)} kg lait/kg MS`
+    : `${formatNum(result.feedConversionEfficiency, 1)}%`;
+  const effDisplayEs = isDairy
+    ? `${formatNum(1 / result.fcr, 2)} kg leche/kg MS`
+    : `${formatNum(result.feedConversionEfficiency, 1)}%`;
+  const effDisplayZh = isDairy
+    ? `${formatNum(1 / result.fcr, 2)} 公斤奶/公斤干物质`
+    : `${formatNum(result.feedConversionEfficiency, 1)}%`;
+  const effDisplayDe = isDairy
+    ? `${formatNum(1 / result.fcr, 2)} kg Milch/kg TM`
+    : `${formatNum(result.feedConversionEfficiency, 1)}%`;
+
   const handleCopySummary = () => {
     let report = '';
     const devLine = `Dev: ${t.devName} (${t.devPhone})`;
@@ -199,7 +219,7 @@ export const ResultsView: React.FC<ResultsViewProps> = ({
 📌 مواعيد التغذية: ${result.feedingTimes.join(' | ')}
 📌 البروتين اليومي: ${formatNum(result.dailyProtein, 2)} ${weightUnitStr}
 📌 الطاقة اليومية: ${formatNum(result.dailyEnergy, 2)} ميجا كال
-📌 كفاءة التحويل الغذائي: ${formatNum(result.feedConversionEfficiency, 1)}%
+📌 كفاءة التحويل الغذائي: ${effDisplayAr}
 ${result.dailyCost ? `💰 التكلفة اليومية التقديرية: ${currencySymbol} ${formatNum(result.dailyCost, 2)}` : ''}
 ${result.monthlyCost ? `💰 التكلفة الشهرية (تقدير 30 يوماً): ${currencySymbol} ${formatNum(result.monthlyCost, 2)}` : ''}
 ----------------------------------------
@@ -218,7 +238,7 @@ ${result.monthlyCost ? `💰 التكلفة الشهرية (تقدير 30 يوم
 📌 Horaires : ${result.feedingTimes.join(' | ')}
 📌 Protéines journalières : ${formatNum(result.dailyProtein, 2)} ${weightUnitStr}
 📌 Énergie consommée : ${formatNum(result.dailyEnergy, 2)} Mcal
-📌 Efficacité de conversion : ${formatNum(result.feedConversionEfficiency, 1)}%
+📌 Efficacité de conversion : ${effDisplayFr}
 ${result.dailyCost ? `💰 Coût quotidien estimé : ${currencySymbol} ${formatNum(result.dailyCost, 2)}` : ''}
 ${result.monthlyCost ? `💰 Coût mensuel (30 jours) : ${currencySymbol} ${formatNum(result.monthlyCost, 2)}` : ''}
 ----------------------------------------
@@ -237,7 +257,7 @@ Développé par : ${t.devName} | Tél : ${t.devPhone}`;
 📌 Horarios: ${result.feedingTimes.join(' | ')}
 📌 Proteína diaria: ${formatNum(result.dailyProtein, 2)} ${weightUnitStr}
 📌 Energía diaria: ${formatNum(result.dailyEnergy, 2)} Mcal
-📌 Eficiencia de conversión: ${formatNum(result.feedConversionEfficiency, 1)}%
+📌 Eficiencia de conversión: ${effDisplayEs}
 ${result.dailyCost ? `💰 Coste diario estimado: ${currencySymbol} ${formatNum(result.dailyCost, 2)}` : ''}
 ${result.monthlyCost ? `💰 Coste mensual (30 días): ${currencySymbol} ${formatNum(result.monthlyCost, 2)}` : ''}
 ----------------------------------------
@@ -256,7 +276,7 @@ Desarrollado por: ${t.devName} | Tel: ${t.devPhone}`;
 📌 建议投喂时间: ${result.feedingTimes.join(' | ')}
 📌 全群日摄入粗蛋白: ${formatNum(result.dailyProtein, 2)} ${weightUnitStr}
 📌 全群日消耗代谢能: ${formatNum(result.dailyEnergy, 2)} 兆卡 (Mcal)
-📌 饲料转化效率: ${formatNum(result.feedConversionEfficiency, 1)}%
+📌 饲料转化效率: ${effDisplayZh}
 ${result.dailyCost ? `💰 每日预估饲料成本: ${currencySymbol} ${formatNum(result.dailyCost, 2)}` : ''}
 ${result.monthlyCost ? `💰 每月预估成本 (30天): ${currencySymbol} ${formatNum(result.monthlyCost, 2)}` : ''}
 ----------------------------------------
@@ -275,7 +295,7 @@ ${result.monthlyCost ? `💰 每月预估成本 (30天): ${currencySymbol} ${for
 📌 Fütterungszeiten: ${result.feedingTimes.join(' | ')}
 📌 Tägliches Rohprotein: ${formatNum(result.dailyProtein, 2)} ${weightUnitStr}
 📌 Tägliche Energie: ${formatNum(result.dailyEnergy, 2)} Mcal
-📌 Futterverwertungseffizienz: ${formatNum(result.feedConversionEfficiency, 1)}%
+📌 Futterverwertungseffizienz: ${effDisplayDe}
 ${result.dailyCost ? `💰 Geschätzte Tageskosten: ${currencySymbol} ${formatNum(result.dailyCost, 2)}` : ''}
 ${result.monthlyCost ? `💰 Monatliche Kosten (30 Tage): ${currencySymbol} ${formatNum(result.monthlyCost, 2)}` : ''}
 ----------------------------------------
@@ -294,7 +314,7 @@ Entwickelt von: ${t.devName} | Tel: ${t.devPhone}`;
 📌 Feeding Times: ${result.feedingTimes.join(' | ')}
 📌 Daily Protein: ${formatNum(result.dailyProtein, 2)} ${weightUnitStr}
 📌 Daily Energy: ${formatNum(result.dailyEnergy, 2)} Mcal
-📌 Efficiency: ${formatNum(result.feedConversionEfficiency, 1)}%
+📌 Efficiency: ${effDisplayEn}
 ${result.dailyCost ? `💰 Estimated Daily Cost: ${currencySymbol} ${formatNum(result.dailyCost, 2)}` : ''}
 ${result.monthlyCost ? `💰 30-Day Monthly Cost: ${currencySymbol} ${formatNum(result.monthlyCost, 2)}` : ''}
 ----------------------------------------
@@ -465,7 +485,7 @@ ${devLine}`;
     {
       label: t.totalAsh,
       value: feedType.ash,
-      max: 15,
+      max: 35,
       unit: '%',
       color: 'bg-slate-400',
     },
@@ -485,7 +505,7 @@ ${devLine}`;
                 {t.resultsCardTitle}
               </h2>
               <p className="text-xs text-slate-500">
-                {species.category === 'aquatic' ? t.aquacultureTank : species.category === 'crops' ? t.filterCrops : species.category === 'specialty' ? t.filterSpecialty : t.farmLot}
+                {species.id === 'mariculture' ? t.filterAquatic : species.category === 'aquatic' ? t.aquacultureTank : species.category === 'crops' ? t.filterCrops : species.category === 'specialty' ? t.filterSpecialty : t.farmLot}
                 {' — '}
                 <span className="tabular-nums">{input.count}</span> {speciesUnit} {t.atWeight}{' '}
                 <span className="tabular-nums">{input.weight}</span> {weightUnitStr}
@@ -592,7 +612,7 @@ ${devLine}`;
               {t.conversionEff}
             </span>
             <span className="text-sm font-bold text-slate-900 tabular-nums">
-              {formatNum(result.feedConversionEfficiency, 1)}%
+              {isDairy ? `${formatNum(1 / result.fcr, 2)} ${lang === 'ar' ? 'كجم حليب/كجم' : 'kg/kg'}` : `${formatNum(result.feedConversionEfficiency, 1)}%`}
             </span>
           </div>
         </div>
@@ -706,7 +726,7 @@ ${devLine}`;
               <span>{t.advisoryTitle}</span>
             </div>
             <p>
-              {species.category === 'aquatic' ? t.advisoryAquatic : species.category === 'crops' ? t.advisoryCrops : t.advisoryLand}
+              {species.category === 'aquatic' ? t.advisoryAquatic : species.category === 'crops' ? t.advisoryCrops : species.category === 'specialty' ? t.advisorySpecialty : t.advisoryLand}
             </p>
           </div>
 
